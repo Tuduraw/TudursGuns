@@ -68,33 +68,56 @@
 | 車両連携 | `getEffectiveVehicle(player)`(搭乗判定)、`damage()`, `isPointNearMeshSurface(Vec3d)`(ヒットスキャン用) | `entity/AbstractVehicleEntity.java` |
 | 装備 | `ParachuteItem` / `ParachuteEntity.tudursvehiclemod$spawnAndMount`(個人用パラシュートは前提MODのものを使う) | `item/`, `entity/` |
 
-### 上流に小さな変更を入れれば使える(前提MODへの提案)
+### 前提MODへの変更
 
-優先度の高い順:
+前提MOD側の変更はパッチとして `upstream/tudursvehiclemod/0001-share-weapon-firing-with-non-vehicle-shooters.patch` に置いている。前提MOD `82819f9` に `git am` で適用できる。
 
-1. **弾体生成ファクトリ**
-   - `tryFireWeapon` の内部(`AbstractVehicleEntity.java` 5344〜5582行付近)で行っている弾体設定を、`static spawnProjectile(World, LivingEntity owner, WeaponStats, Vec3d pos, Vec3d dir, ...)` として切り出す。
-   - 車載と携帯で設定手順を二重に保守せずに済む。
-2. **自車被弾の除外**
-   - `firingVehicle == null` の `VehicleProjectileEntity` について、`owner.getVehicle() == this` に戻って判定するようにする(`wasFiredByThisVehicle`)。
-   - これが無いと、同乗者が携帯火器を撃ったときに自分の車両に当たる。
-3. **ロックオン探索の static 化**
-   - 対象: `findLockOnTarget` / `classifyTargetPosition`。
-   - 車両インスタンスに依存している箇所は除外判定だけなので、`(World, LivingEntity shooter, WeaponStats, exclude...)` の形にできる。
-4. **補助関数の公開**
-   - `applyAccuracySpread`, `raycastGroundPoint`, `computeBallisticTargetPoint` を public static にする。
-5. **TVミサイルの操縦解除条件**
-   - `firingVehicle == null` のときは「操縦者が生存していて射程内」だけで判定する(`updateTvMissileServerChecks`)。
-6. **描画ヘルパーの公開**
-   - `VehicleEntityRenderer.renderTriangles(...)` を public にするか、`ObjRenderUtil` に移して overlay を引数で受け取るようにする。
-7. **クライアント側の `WeaponStats`**
-   - 現状、専用サーバー環境ではクライアントの `WeaponStats` が空になる。同期するか、クライアント側でも読み込むようにする。
-8. **拡張ポイント(任意)**
-   - `CustomWeaponBehavior` が車両以外の発射者も扱えるようにする。
-   - 外部の弾がフレアに反応できるようにするインターフェース。
-   - `AddonTextureLoader` が `textures/vehicle/` 以外も読み込むようにする。
+#### 実施した変更
 
-いずれも公開範囲の拡大か関数の切り出しで、既存アドオンとの互換性は壊さない。
+| 変更 | 内容 | 既存の動作への影響 |
+|---|---|---|
+| `WeaponProjectileFactory.create(world, owner, stack, WeaponStats, mode)` を追加 | `tryFireWeapon` の中で武器ファイルから弾体を設定していた部分を切り出した。車両側もこれを呼ぶ | 設定する項目・順序・`ModeNum` の扱いは同じ。`WeaponDefinition` の各アクセサは `WeaponStatsLoader.get(weaponName)` への委譲なので、`WeaponStats` から直接読んでも値は同じ |
+| `WeaponTargeting` を追加 | ロックオン探索、目標の空中/地上/水中判定、対地照準点、`Accuracy` のばらつきを static メソッドにした | 車両側の private/protected メソッドは残し、中身を委譲にした。サブクラスが `classifyTargetPosition` を上書きしている場合も、その上書きが使われる |
+| TVミサイルの操縦終了条件 | 車両なしで発射された場合(`firingVehicle == null`)の条件を追加した。操縦者の死亡・ログアウト・ディメンション移動、または何かへの搭乗で終了する | 車両から発射した TVミサイルは必ず `firingVehicle` を持つので、従来の分岐のまま |
+| TVミサイルの操縦入力(クライアント) | 入力送信処理を「搭乗中」の分岐の外へ移した | 搭乗中は同じ tick・同じ順序で実行される。非搭乗中は、車両から撃ったミサイルは操縦が即座に終了するため送信は起きない |
+| `VehicleEntityRenderer.renderTriangles(..., light, overlay, tint)` を追加 | overlay を受け取る public なオーバーロード | 既存の package-private メソッドは残し、`OverlayTexture.DEFAULT_UV` を渡して新メソッドを呼ぶだけにした。描画結果は同じ |
+| `Readme_Addon_Mod.md`(日本語・英語) | 「8. 車両以外から武器を発射する」を追加し、「制限事項」を 9 に繰り下げた | — |
+
+#### 互換性の確認
+
+- **既存のメソッド**
+  - 削除やシグネチャの変更はしていない。
+  - 削除したのは、参照がなくなった `AbstractVehicleEntity` の private 定数 4 つだけ。これらは `WeaponTargeting` の public 定数に移した。
+- **設定ファイル・データ**
+  - 車両 JSON、武器 txt、Config、セーブデータ(NBT)、通信(ペイロード)の形式は変更していない。
+- **既存アドオン**
+  - `motorcycleaddon`、`humanoidrobotaddon`、`sample_pack_for_tudurs_vehicle` を確認した。
+  - 変更したメソッドの呼び出し、上書き、それらを対象にした Mixin はない。
+  - `humanoidrobotaddon` の `Camera` / `changeLookDirection` への Mixin は、変更箇所と重ならない。
+
+#### 実施しなかった変更と理由
+
+| 項目 | 理由 |
+|---|---|
+| 自車被弾の除外 | 搭乗中は携帯装備を使えない仕様にしたため不要 |
+| `computeBallisticTargetPoint` の公開 | CAS/Carrier 専用の着弾点計算で、携帯装備では使わない。迫撃砲の着弾表示にはクライアントの `MortarMarkerRenderer.tudursvehiclemod$computeCollisionDistance` が既に公開されている |
+| クライアント側の `WeaponStats` | 統合サーバー(シングルプレイ)ではクライアントとサーバーが同じ static マップを共有しているため、クライアントで再読み込みすると競合する。本MODが必要な値だけを自前のパケットで同期する |
+| `CustomWeaponBehavior` の汎用化 | 携帯装備で `Type = ns:id` のカスタム武器を使う予定が現時点でない |
+| 外部の弾向けのフレア対応 | 本MODは `VehicleProjectileEntity` を使うので、既存のフレア処理がそのまま効く |
+| `AddonTextureLoader` の読み込み対象の拡大 | 本MODの jar に入れたテクスチャは通常どおり読み込まれる。アドオンフォルダに置く場合も `textures/vehicle/` に置けば使える |
+
+#### 未検証の点
+
+この環境では Fabric の Maven に接続できないため、前提MODをビルドしていない。確認できているのは次の点だけ。
+
+- 変更したファイルに構文エラーがないこと(`javac` の構文解析)
+- パッチが `82819f9` にそのまま適用できること(`git apply --check`)
+
+適用後に前提MOD側で `./gradlew build` と、次の動作確認を行う必要がある。
+
+- 車両の各武器種の発射
+- AA/AT のロックオン
+- TVミサイルの操縦と、降車したときの操縦終了
 
 ### 流用できず、本MODで実装するもの
 
@@ -124,9 +147,9 @@
 
 | 衝突 | 内容 | 対策 |
 |---|---|---|
-| 右クリック | 前提MODの射撃キーの既定値が右クリック。また `UseItemCallback` が、座席の近く(水平1ブロック以内)での右クリックを乗車として消費する | 搭乗中は本MODの射撃を無効にするのを基本にする。座席付近の乗車動作はしゃがみで回避できることを案内する |
+| 右クリック | 前提MODの射撃キーの既定値が右クリック。また `UseItemCallback` が、座席の近く(水平1ブロック以内)での右クリックを乗車として消費する | **搭乗中は携帯装備を使えない仕様とする(決定)**。座席付近の乗車動作はしゃがみで回避できることを案内する |
 | 既定キー | 前提MODが R / 左Alt / 左Ctrl / Space / N / B などを使っている | リロードなどの既定キーは重ならないよう選ぶ(R を避ける)。キー設定で変更できる前提にする |
-| 搭乗中の手持ち描画 | 前提MODの `HeldItemRendererMixin` が、搭乗中は一人称の手持ち描画を消す | 搭乗中の携帯火器使用は当面サポートしない |
+| 搭乗中の手持ち描画 | 前提MODの `HeldItemRendererMixin` が、搭乗中は一人称の手持ち描画を消す | 搭乗中は使えない仕様なので問題にならない |
 | 武器名の衝突 | 武器 `.txt` は名前空間なしのファイル名が全体で一意なキーになる | 本MODの武器ファイルには `tg_` などの接頭辞を付ける |
 | 定義ファイルの配置 | — | 携帯装備固有の定義(表示・ADS・弾薬アイテムなど)は `data/<ns>/handheld/*.json` に置く。そこから `weapon_name` で武器 `.txt` を参照する。車両の「JSON + 武器txt」の分け方に合わせる |
 | パラシュート | 前提MODは Space と胸スロットで展開する | 本MODでは独自のパラシュートを作らない |
