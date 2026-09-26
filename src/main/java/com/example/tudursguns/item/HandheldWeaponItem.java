@@ -1,9 +1,11 @@
 package com.example.tudursguns.item;
 
+import com.example.tudursguns.handheld.AttachmentDefinition;
 import com.example.tudursguns.handheld.HandheldDefinition;
 import com.example.tudursguns.handheld.HandheldDefinitions;
 import com.example.tudursguns.registry.ModComponents;
 import com.example.tudursguns.weapon.HandheldCombat;
+import com.example.tudursguns.weapon.WeaponModifiers;
 import com.example.tudursvehiclemod.asset.WeaponStats;
 import com.example.tudursvehiclemod.asset.WeaponStatsLoader;
 import net.minecraft.component.type.TooltipDisplayComponent;
@@ -161,9 +163,17 @@ public class HandheldWeaponItem extends Item {
 			return;
 		}
 		HandheldDefinitions.ClientEntry entry = HandheldDefinitions.getClient(id);
-		if (entry != null && entry.weapon().magazineSize() > 0) {
-			textConsumer.accept(Text.translatable("tooltip.tudursguns.ammo",
-					stack.getOrDefault(ModComponents.AMMO, 0), entry.weapon().magazineSize()).formatted(Formatting.GRAY));
+		if (entry != null) {
+			int magazineSize = WeaponModifiers.of(stack, entry.definition()).magazineSize(entry.weapon().magazineSize());
+			if (magazineSize > 0) {
+				textConsumer.accept(Text.translatable("tooltip.tudursguns.ammo",
+						stack.getOrDefault(ModComponents.AMMO, 0), magazineSize).formatted(Formatting.GRAY));
+			}
+		}
+		for (Identifier attachmentId : WeaponModifiers.fitted(stack).values()) {
+			AttachmentDefinition attachment = HandheldDefinitions.getAnyAttachment(attachmentId);
+			textConsumer.accept(Text.literal("+ " + (attachment != null ? attachment.displayName() : attachmentId.toString()))
+					.formatted(Formatting.BLUE));
 		}
 		if (type.isAdvanced()) {
 			textConsumer.accept(Text.literal(id.toString()).formatted(Formatting.DARK_GRAY));

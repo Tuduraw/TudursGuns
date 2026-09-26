@@ -12,6 +12,12 @@
     "main": [ "com.example.tudursguns.TudursGuns" ],
     "client": [ "com.example.tudursguns.client.TudursGunsClient" ]
   },
+  "mixins": [
+    {
+      "config": "tudursguns.client.mixins.json",
+      "environment": "client"
+    }
+  ],
   "depends": {
     "fabricloader": ">=0.18.0",
     "fabric-api": "*",

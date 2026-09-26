@@ -1,12 +1,14 @@
 package com.example.tudursguns.client.hud;
 
 import com.example.tudursguns.TudursGuns;
+import com.example.tudursguns.client.AimController;
 import com.example.tudursguns.client.ClientLockState;
 import com.example.tudursguns.handheld.HandheldDefinition;
 import com.example.tudursguns.handheld.HandheldDefinitions;
 import com.example.tudursguns.item.HandheldWeaponItem;
 import com.example.tudursguns.network.LockStatePayload;
 import com.example.tudursguns.registry.ModComponents;
+import com.example.tudursguns.weapon.WeaponModifiers;
 import com.example.tudursvehiclemod.client.hud.HudExecutionContext;
 import com.example.tudursvehiclemod.client.hud.HudScript;
 import com.example.tudursvehiclemod.client.hud.HudScriptLoader;
@@ -79,26 +81,33 @@ public final class HandheldHud {
 	}
 
 	/** Variables available to a handheld HUD script:
-	 * ammo, max_ammo, reserve_ammo (-1 = unlimited), reloading (0/1), reload_progress (0-1),
+	 * ammo, max_ammo (after attachments), reserve_ammo (-1 = unlimited), reloading (0/1),
+	 * reload_progress (0-1), aiming (0/1), scoped (0/1), zoom (magnification, 1 when not scoped),
 	 * mode (1-based), mode_count, lock_tracking (0/1), locked (0/1), lock_progress (0-1). */
 	private static Map<String, Double> buildVariables(MinecraftClient client, PlayerEntity player, ItemStack stack,
 			HandheldDefinitions.ClientEntry entry) {
 		Map<String, Double> variables = new HashMap<>();
 		HandheldDefinition def = entry.definition();
+		WeaponModifiers modifiers = WeaponModifiers.of(stack, def);
+		int magazineSize = modifiers.magazineSize(entry.weapon().magazineSize());
+		int reloadTicks = modifiers.reloadTicks(entry.weapon().reloadTicks());
 		variables.put("ammo", (double) stack.getOrDefault(ModComponents.AMMO, 0));
-		variables.put("max_ammo", (double) entry.weapon().magazineSize());
+		variables.put("max_ammo", (double) magazineSize);
 		variables.put("reserve_ammo", (double) reserveRounds(player, def));
 
 		Long reloadUntil = stack.get(ModComponents.RELOAD_UNTIL);
 		boolean reloading = reloadUntil != null;
 		double reloadProgress = 0.0;
-		if (reloading && entry.weapon().reloadTicks() > 0) {
+		if (reloading) {
 			long remaining = reloadUntil - client.world.getTime();
-			reloadProgress = Math.max(0.0, Math.min(1.0, 1.0 - remaining / (double) entry.weapon().reloadTicks()));
+			reloadProgress = Math.max(0.0, Math.min(1.0, 1.0 - remaining / (double) reloadTicks));
 		}
 		variables.put("reloading", reloading ? 1.0 : 0.0);
 		variables.put("reload_progress", reloadProgress);
 
+		variables.put("aiming", AimController.isAiming() ? 1.0 : 0.0);
+		variables.put("scoped", AimController.isScoped() ? 1.0 : 0.0);
+		variables.put("zoom", AimController.isScoped() ? (double) AimController.magnification() : 1.0);
 		variables.put("mode", (double) (stack.getOrDefault(ModComponents.MODE, 0) + 1));
 		variables.put("mode_count", (double) entry.weapon().modeCount());
 
@@ -134,10 +143,10 @@ public final class HandheldHud {
 		int y = centerY + 8;
 		int lineHeight = client.textRenderer.fontHeight + 2;
 
-		if (entry.weapon().magazineSize() > 0) {
+		if (variables.get("max_ammo") > 0) {
 			int reserve = variables.get("reserve_ammo").intValue();
 			Text ammo = Text.translatable("hud.tudursguns.ammo",
-					variables.get("ammo").intValue(), entry.weapon().magazineSize(),
+					variables.get("ammo").intValue(), variables.get("max_ammo").intValue(),
 					reserve < 0 ? "-" : Integer.toString(reserve));
 			context.drawTextWithShadow(client.textRenderer, ammo, x, y, 0xFFFFFFFF);
 			y += lineHeight;

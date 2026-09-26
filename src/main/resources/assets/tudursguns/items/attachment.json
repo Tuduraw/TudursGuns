@@ -1,0 +1,18 @@
+{
+  "model": {
+    "type": "minecraft:condition",
+    "property": "minecraft:has_component",
+    "component": "tudursguns:attachment",
+    "on_true": {
+      "type": "minecraft:special",
+      "base": "tudursguns:item/attachment_obj",
+      "model": {
+        "type": "tudursguns:obj_attachment"
+      }
+    },
+    "on_false": {
+      "type": "minecraft:model",
+      "model": "tudursguns:item/attachment"
+    }
+  }
+}

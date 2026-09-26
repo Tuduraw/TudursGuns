@@ -2,6 +2,7 @@ package com.example.tudursguns.registry;
 
 import com.example.tudursguns.TudursGuns;
 import com.example.tudursguns.handheld.HandheldDefinitions;
+import com.example.tudursguns.screen.WeaponWorkbenchScreenHandler;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
@@ -38,6 +39,12 @@ public final class ModItemGroups {
 					for (Map.Entry<Identifier, HandheldDefinitions.ClientEntry> entry : sorted) {
 						entries.add(createStack(entry.getKey(), entry.getValue().weapon().magazineSize()));
 					}
+					List<Identifier> attachmentIds = new ArrayList<>(HandheldDefinitions.clientAttachments().keySet());
+					attachmentIds.sort(Comparator.comparing(Identifier::toString));
+					for (Identifier attachmentId : attachmentIds) {
+						entries.add(WeaponWorkbenchScreenHandler.createAttachmentStack(attachmentId));
+					}
+					entries.add(ModBlocks.WEAPON_WORKBENCH_ITEM);
 				})
 				.build());
 	}

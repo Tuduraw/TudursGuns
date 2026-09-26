@@ -1,0 +1,103 @@
+{
+  "display_name": "Extended Magazine",
+  "model": "tudursguns:models/obj/extended_magazine.obj",
+  "texture": "tudursguns:textures/handheld/weapons.png",
+  "magazine_size_multiplier": 2.0,
+  "reload_time_multiplier": 1.15,
+  "display": {
+    "gui": {
+      "translation": [
+        0.5,
+        0.6,
+        0.5
+      ],
+      "rotation": [
+        20,
+        90,
+        0
+      ],
+      "scale": [
+        2.4,
+        2.4,
+        2.4
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "scale": [
+        1.68,
+        1.68,
+        1.68
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        0,
+        90,
+        0
+      ],
+      "scale": [
+        2.4,
+        2.4,
+        2.4
+      ]
+    },
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.4,
+        0.5
+      ],
+      "scale": [
+        1.92,
+        1.92,
+        1.92
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.4,
+        0.5
+      ],
+      "scale": [
+        1.92,
+        1.92,
+        1.92
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.6,
+        0.4,
+        0.4
+      ],
+      "scale": [
+        2.4,
+        2.4,
+        2.4
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.4,
+        0.4,
+        0.4
+      ],
+      "scale": [
+        2.4,
+        2.4,
+        2.4
+      ]
+    }
+  }
+}

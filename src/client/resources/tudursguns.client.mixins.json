@@ -1,0 +1,18 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.example.tudursguns.client.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "BipedEntityModelAimMixin",
+    "EntityLookSensitivityMixin",
+    "GameRendererAccessor",
+    "GameRendererFovMixin",
+    "HeldItemRendererInvoker",
+    "LivingEntityRendererAimMixin",
+    "MouseScrollMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

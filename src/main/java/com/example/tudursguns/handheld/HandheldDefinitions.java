@@ -45,6 +45,49 @@ public final class HandheldDefinitions {
 		client = Collections.unmodifiableMap(new LinkedHashMap<>(received));
 	}
 
+	private static volatile Map<Identifier, AttachmentDefinition> serverAttachments = Map.of();
+	private static volatile Map<Identifier, AttachmentDefinition> clientAttachments = Map.of();
+
+	public static Map<Identifier, AttachmentDefinition> serverAttachments() {
+		return serverAttachments;
+	}
+
+	static void setServerAttachments(Map<Identifier, AttachmentDefinition> loaded) {
+		serverAttachments = Collections.unmodifiableMap(new LinkedHashMap<>(loaded));
+	}
+
+	public static Map<Identifier, AttachmentDefinition> clientAttachments() {
+		return clientAttachments;
+	}
+
+	public static void setClientAttachments(Map<Identifier, AttachmentDefinition> received) {
+		clientAttachments = Collections.unmodifiableMap(new LinkedHashMap<>(received));
+	}
+
+	/** A weapon definition from whichever side has it - the server's (a server, or singleplayer),
+	 * else the client's synced copy (a client connected to a dedicated server). For code that runs
+	 * on both sides, such as slot checks, names and tooltips. */
+	public static HandheldDefinition getAny(Identifier id) {
+		if (id == null) {
+			return null;
+		}
+		HandheldDefinition def = server.get(id);
+		if (def != null) {
+			return def;
+		}
+		ClientEntry entry = client.get(id);
+		return entry == null ? null : entry.definition();
+	}
+
+	/** Same as getAny, for attachments. */
+	public static AttachmentDefinition getAnyAttachment(Identifier id) {
+		if (id == null) {
+			return null;
+		}
+		AttachmentDefinition def = serverAttachments.get(id);
+		return def != null ? def : clientAttachments.get(id);
+	}
+
 	/** A definition as the client sees it: the definition itself plus the weapon-file values the
 	 * client needs for display (the client can't rely on reading weapon files itself - on a
 	 * dedicated server they may exist only on the server). */

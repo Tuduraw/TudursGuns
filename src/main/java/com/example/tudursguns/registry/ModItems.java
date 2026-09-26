@@ -1,6 +1,7 @@
 package com.example.tudursguns.registry;
 
 import com.example.tudursguns.TudursGuns;
+import com.example.tudursguns.item.AttachmentItem;
 import com.example.tudursguns.item.HandheldWeaponItem;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
@@ -18,6 +19,7 @@ public final class ModItems {
 	}
 
 	public static Item HANDHELD_WEAPON;
+	public static Item ATTACHMENT;
 
 	/** Holding use (right click) fires, so the item is "in use" while the trigger is held. By default
 	 * that slows the player to 20% speed and stops sprinting, like drawing a bow - this keeps full
@@ -29,6 +31,10 @@ public final class ModItems {
 		Item.Settings settings = new Item.Settings().registryKey(key).maxCount(1);
 		settings = withUseEffects(settings);
 		HANDHELD_WEAPON = Registry.register(Registries.ITEM, key, new HandheldWeaponItem(settings));
+
+		RegistryKey<Item> attachmentKey = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(TudursGuns.MOD_ID, "attachment"));
+		ATTACHMENT = Registry.register(Registries.ITEM, attachmentKey,
+				new AttachmentItem(new Item.Settings().registryKey(attachmentKey).maxCount(16)));
 	}
 
 	/** Looked up by id and built through its own codec rather than by class: the component is new in

@@ -1,0 +1,21 @@
+; Sniper rifle - Tudur's Guns. Bolt action, five rounds.
+; Attachments (data/tudursguns/handheld/sniper_rifle.json): sniper scope, silencer, extended magazine.
+
+DisplayName = Sniper Rifle
+Type = MachineGun1
+
+Power = 24.0
+Explosion = 0.0
+Piercing = 1
+Accuracy = 0.1
+Acceleration = 12.0
+Gravity = 0.004
+
+Round = 5
+ReloadTime = 80
+Delay = 30
+
+Sound = tg_sniper_shot
+SoundVolume = 3.0
+SoundPitchRandom = 0.05
+ModelBullet = tg_rifle_round

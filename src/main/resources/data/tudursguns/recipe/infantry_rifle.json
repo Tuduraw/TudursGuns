@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "  I",
+    "IG ",
+    "LS "
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "G": "minecraft:gunpowder",
+    "L": "#minecraft:logs",
+    "S": "minecraft:stick"
+  },
+  "result": {
+    "id": "tudursguns:handheld_weapon",
+    "count": 1,
+    "components": {
+      "tudursguns:weapon": "tudursguns:infantry_rifle",
+      "tudursguns:ammo": 5
+    }
+  }
+}

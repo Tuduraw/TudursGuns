@@ -29,7 +29,10 @@ public record HandheldDefinition(
 		Vector3f muzzleOffset,
 		boolean inheritShooterVelocity,
 		Optional<String> hud,
-		Map<ItemDisplayContext, DisplayTransform> display
+		Map<ItemDisplayContext, DisplayTransform> display,
+		Optional<AimSettings> aim,
+		Map<String, AttachmentSlot> attachments,
+		Optional<String> reloadSound
 ) {
 
 	/** [x, y, z] as a JSON array of three numbers. */
@@ -49,8 +52,113 @@ public record HandheldDefinition(
 			VECTOR_3F.optionalFieldOf("muzzle_offset", new Vector3f(0.25f, -0.2f, 0.8f)).forGetter(HandheldDefinition::muzzleOffset),
 			Codec.BOOL.optionalFieldOf("inherit_shooter_velocity", false).forGetter(HandheldDefinition::inheritShooterVelocity),
 			Codec.STRING.optionalFieldOf("hud").forGetter(HandheldDefinition::hud),
-			Codec.unboundedMap(ItemDisplayContext.CODEC, DisplayTransform.CODEC).optionalFieldOf("display", Map.of()).forGetter(HandheldDefinition::display)
+			Codec.unboundedMap(ItemDisplayContext.CODEC, DisplayTransform.CODEC).optionalFieldOf("display", Map.of()).forGetter(HandheldDefinition::display),
+			AimSettings.CODEC.optionalFieldOf("aim").forGetter(HandheldDefinition::aim),
+			Codec.unboundedMap(Codec.STRING, AttachmentSlot.CODEC).optionalFieldOf("attachments", Map.of()).forGetter(HandheldDefinition::attachments),
+			Codec.STRING.optionalFieldOf("reload_sound").forGetter(HandheldDefinition::reloadSound)
 	).apply(instance, HandheldDefinition::new));
+
+	/** Attachment slot names in a stable order (the workbench lists them in this order). */
+	public List<String> attachmentSlotNames() {
+		List<String> names = new java.util.ArrayList<>(this.attachments.keySet());
+		java.util.Collections.sort(names);
+		return names;
+	}
+
+	/** The mount for this attachment in this slot, or null if the slot doesn't accept it. */
+	public AttachmentMount mountFor(String slot, Identifier attachmentId) {
+		AttachmentSlot attachmentSlot = this.attachments.get(slot);
+		return attachmentSlot == null ? null : attachmentSlot.accepts().get(attachmentId);
+	}
+
+	/** Model groups hidden for the given attachments: every group some mount shows (they're hidden
+	 * unless that attachment is fitted), minus the ones the fitted attachments show, plus the ones
+	 * the fitted attachments hide. See AttachmentMount. */
+	public java.util.Set<String> hiddenGroups(Map<String, Identifier> fitted) {
+		java.util.Set<String> hidden = new java.util.HashSet<>();
+		for (AttachmentSlot slot : this.attachments.values()) {
+			for (AttachmentMount mount : slot.accepts().values()) {
+				hidden.addAll(mount.showGroups());
+			}
+		}
+		for (Map.Entry<String, Identifier> entry : fitted.entrySet()) {
+			AttachmentMount mount = mountFor(entry.getKey(), entry.getValue());
+			if (mount != null) {
+				hidden.removeAll(mount.showGroups());
+			}
+		}
+		for (Map.Entry<String, Identifier> entry : fitted.entrySet()) {
+			AttachmentMount mount = mountFor(entry.getKey(), entry.getValue());
+			if (mount != null) {
+				hidden.addAll(mount.hideGroups());
+			}
+		}
+		return hidden;
+	}
+
+	/** First-person aiming. The model is drawn in camera space: lowered at the hip pose, and when
+	 * aiming moved so sight_position (a point in model space, e.g. the rear sight notch) lands on the
+	 * screen centre, eye_distance blocks in front of the eye. Arms, if given, are placed in model
+	 * space (so they follow the weapon between the two poses).
+	 * third_person_aiming replaces the third-person display transform while the holder is aiming:
+	 * the item follows the raised arm, so the lowered transform would point the weapon upwards. It
+	 * defaults to the lowered one turned by -90 degrees about X - the same difference as between
+	 * vanilla's crossbow and ordinary held items. */
+	public record AimSettings(
+			Vector3f sightPosition,
+			float eyeDistance,
+			float scale,
+			Vector3f hipTranslation,
+			Vector3f hipRotation,
+			Optional<DisplayTransform> rightArm,
+			Optional<DisplayTransform> leftArm,
+			Optional<DisplayTransform> thirdPersonAiming
+	) {
+
+		public static final Codec<AimSettings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+				VECTOR_3F.optionalFieldOf("sight_position", new Vector3f(0f, 0.1f, 0f)).forGetter(AimSettings::sightPosition),
+				Codec.FLOAT.optionalFieldOf("eye_distance", 0.2f).forGetter(AimSettings::eyeDistance),
+				Codec.FLOAT.optionalFieldOf("scale", 0.5f).forGetter(AimSettings::scale),
+				VECTOR_3F.optionalFieldOf("hip_translation", new Vector3f(0.3f, -0.3f, -0.45f)).forGetter(AimSettings::hipTranslation),
+				VECTOR_3F.optionalFieldOf("hip_rotation", new Vector3f()).forGetter(AimSettings::hipRotation),
+				DisplayTransform.CODEC.optionalFieldOf("right_arm").forGetter(AimSettings::rightArm),
+				DisplayTransform.CODEC.optionalFieldOf("left_arm").forGetter(AimSettings::leftArm),
+				DisplayTransform.CODEC.optionalFieldOf("third_person_aiming").forGetter(AimSettings::thirdPersonAiming)
+		).apply(instance, AimSettings::new));
+	}
+
+	/** One attachment slot ("optic", "muzzle", ...): which attachments fit, and how each one sits. */
+	public record AttachmentSlot(Map<Identifier, AttachmentMount> accepts) {
+
+		public static final Codec<AttachmentSlot> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+				Codec.unboundedMap(Identifier.CODEC, AttachmentMount.CODEC).fieldOf("accepts").forGetter(AttachmentSlot::accepts)
+		).apply(instance, AttachmentSlot::new));
+	}
+
+	/** How one attachment is shown on this weapon.
+	 * model/texture: a separate OBJ drawn at transform (in the weapon's model space); texture defaults
+	 * to the weapon's own. show_groups: groups of the WEAPON's own OBJ that only appear with this
+	 * attachment fitted (an alternative to a separate model). hide_groups: weapon groups hidden while
+	 * it's fitted (e.g. the iron sights under a scope, or the standard magazine). sight_position: if
+	 * set, replaces the weapon's aim.sight_position while fitted. */
+	public record AttachmentMount(
+			Optional<Identifier> model,
+			Optional<Identifier> texture,
+			DisplayTransform transform,
+			List<String> showGroups,
+			List<String> hideGroups,
+			Optional<Vector3f> sightPosition
+	) {
+
+		public static final Codec<AttachmentMount> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+				Identifier.CODEC.optionalFieldOf("model").forGetter(AttachmentMount::model),
+				Identifier.CODEC.optionalFieldOf("texture").forGetter(AttachmentMount::texture),
+				DisplayTransform.CODEC.optionalFieldOf("transform", DisplayTransform.IDENTITY).forGetter(AttachmentMount::transform),
+				Codec.STRING.listOf().optionalFieldOf("show_groups", List.of()).forGetter(AttachmentMount::showGroups),
+				Codec.STRING.listOf().optionalFieldOf("hide_groups", List.of()).forGetter(AttachmentMount::hideGroups),
+				VECTOR_3F.optionalFieldOf("sight_position").forGetter(AttachmentMount::sightPosition)
+		).apply(instance, AttachmentMount::new));
+	}
 
 	/** SEMI fires once per press of the use key, AUTO keeps firing while it's held (at the weapon file's own Delay). */
 	public enum FireMode {

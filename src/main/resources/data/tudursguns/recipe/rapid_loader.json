@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "N N",
+    "NLN"
+  ],
+  "key": {
+    "N": "minecraft:iron_nugget",
+    "L": "minecraft:leather"
+  },
+  "result": {
+    "id": "tudursguns:attachment",
+    "count": 1,
+    "components": {
+      "tudursguns:attachment": "tudursguns:rapid_loader"
+    }
+  }
+}

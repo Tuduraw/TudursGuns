@@ -23,3 +23,4 @@ ModeNum = 2
 TrajectoryParticle = largesmoke
 Sound = tg_sample_at_launcher
 SoundVolume = 2.0
+ModelBullet = tg_at_missile

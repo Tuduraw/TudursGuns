@@ -1,0 +1,217 @@
+{
+  "weapon": "tg_sniper_rifle",
+  "model": "tudursguns:models/obj/sniper_rifle.obj",
+  "texture": "tudursguns:textures/handheld/weapons.png",
+  "projectile_item": "minecraft:iron_nugget",
+  "ammo_item": "minecraft:iron_nugget",
+  "rounds_per_ammo_item": 1,
+  "fire_mode": "semi",
+  "muzzle_offset": [
+    0.0,
+    -0.05,
+    1.0
+  ],
+  "reload_sound": "tg_reload_bolt",
+  "aim": {
+    "sight_position": [
+      0,
+      0.115,
+      0.03
+    ],
+    "eye_distance": 0.12,
+    "scale": 0.55,
+    "hip_translation": [
+      0.26,
+      -0.3,
+      -0.4
+    ],
+    "hip_rotation": [
+      0,
+      3,
+      0
+    ],
+    "right_arm": {
+      "translation": [
+        -0.2182,
+        -0.8305,
+        -0.5155
+      ],
+      "rotation": [
+        -85,
+        90,
+        0
+      ],
+      "scale": [
+        1.8182,
+        1.8182,
+        1.8182
+      ]
+    },
+    "left_arm": {
+      "translation": [
+        0.2545,
+        -0.7577,
+        -1.3155
+      ],
+      "rotation": [
+        -85,
+        90,
+        0
+      ],
+      "scale": [
+        1.8182,
+        1.8182,
+        1.8182
+      ]
+    }
+  },
+  "attachments": {
+    "optic": {
+      "accepts": {
+        "tudursguns:sniper_scope": {
+          "model": "tudursguns:models/obj/sniper_scope.obj",
+          "transform": {
+            "translation": [
+              0,
+              0.155,
+              -0.04
+            ]
+          },
+          "show_groups": [
+            "scope_mount"
+          ],
+          "hide_groups": [
+            "iron_sight"
+          ]
+        }
+      }
+    },
+    "muzzle": {
+      "accepts": {
+        "tudursguns:silencer": {
+          "model": "tudursguns:models/obj/silencer.obj",
+          "transform": {
+            "translation": [
+              0,
+              0.038,
+              -1.05
+            ]
+          }
+        }
+      }
+    },
+    "magazine": {
+      "accepts": {
+        "tudursguns:extended_magazine": {
+          "model": "tudursguns:models/obj/extended_magazine.obj",
+          "transform": {
+            "translation": [
+              0,
+              -0.02,
+              -0.075
+            ]
+          },
+          "hide_groups": [
+            "magazine"
+          ]
+        }
+      }
+    }
+  },
+  "display": {
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.4,
+        0.5
+      ],
+      "scale": [
+        0.8,
+        0.8,
+        0.8
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.4,
+        0.5
+      ],
+      "scale": [
+        0.8,
+        0.8,
+        0.8
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.55,
+        0.3,
+        0.3
+      ],
+      "scale": [
+        0.9,
+        0.9,
+        0.9
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.45,
+        0.3,
+        0.3
+      ],
+      "scale": [
+        0.9,
+        0.9,
+        0.9
+      ]
+    },
+    "gui": {
+      "translation": [
+        0.5,
+        0.5,
+        0.45
+      ],
+      "rotation": [
+        0,
+        90,
+        0
+      ],
+      "scale": [
+        0.55,
+        0.55,
+        0.55
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "scale": [
+        0.45,
+        0.45,
+        0.45
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        0.5,
+        0.45
+      ],
+      "rotation": [
+        0,
+        90,
+        0
+      ],
+      "scale": [
+        0.55,
+        0.55,
+        0.55
+      ]
+    }
+  }
+}

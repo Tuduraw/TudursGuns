@@ -11,7 +11,12 @@ import com.example.tudursvehiclemod.entity.projectile.WeaponProjectileFactory;
 import com.example.tudursvehiclemod.network.WeaponFireSoundPayload;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.AttributeModifierSlot;
+import net.minecraft.component.type.AttributeModifiersComponent;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.attribute.EntityAttributeModifier;
+import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -29,6 +34,7 @@ import net.minecraft.world.RaycastContext;
 
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -69,6 +75,7 @@ public final class HandheldCombat {
 	public static void forget(UUID playerId) {
 		NEXT_FIRE_TIME.remove(playerId);
 		LOCKS.remove(playerId);
+		AIM_KEY_HELD.remove(playerId);
 	}
 
 	// ---------------------------------------------------------------- firing
@@ -92,7 +99,8 @@ public final class HandheldCombat {
 		if (isReloading(stack)) {
 			return false;
 		}
-		int magazineSize = stats.magazineSize();
+		WeaponModifiers modifiers = WeaponModifiers.of(stack, def);
+		int magazineSize = modifiers.magazineSize(stats.magazineSize());
 		if (magazineSize > 0 && stack.getOrDefault(ModComponents.AMMO, 0) <= 0) {
 			startReload(player, stack, def, stats, true);
 			return false;
@@ -109,7 +117,7 @@ public final class HandheldCombat {
 		if (def.inheritShooterVelocity()) {
 			velocity = velocity.add(player.getVelocity());
 		}
-		velocity = WeaponTargeting.applyAccuracySpread(velocity, stats.accuracyDegrees(), world.random);
+		velocity = WeaponTargeting.applyAccuracySpread(velocity, stats.accuracyDegrees() * modifiers.accuracyMultiplier(), world.random);
 		projectile.setVelocity(velocity);
 		double speed = velocity.length();
 		if (speed > 1.0E-6) {
@@ -154,7 +162,7 @@ public final class HandheldCombat {
 				startReload(player, stack, def, stats, false);
 			}
 		}
-		playFireSound(player, stats, spawnPos);
+		playFireSound(player, stats, modifiers, spawnPos);
 		return true;
 	}
 
@@ -176,13 +184,21 @@ public final class HandheldCombat {
 	}
 
 	/** Same sound path as a vehicle weapon (WeaponFireSoundPayload, played by Tudur's Vehicle Mod's
-	 * client), sent to everyone tracking the shooter plus the shooter. */
-	private static void playFireSound(ServerPlayerEntity player, WeaponStats stats, Vec3d pos) {
-		if (stats.sound().isEmpty()) {
+	 * client), sent to everyone tracking the shooter plus the shooter. Attachments can replace the
+	 * sound (a silencer) and scale its volume - which also scales how far it carries - and pitch. */
+	private static void playFireSound(ServerPlayerEntity player, WeaponStats stats, WeaponModifiers modifiers, Vec3d pos) {
+		Optional<String> sound = modifiers.soundOverride().isPresent() ? modifiers.soundOverride() : stats.sound();
+		if (sound.isEmpty()) {
 			return;
 		}
-		WeaponFireSoundPayload payload = new WeaponFireSoundPayload(stats.sound().get(), pos.x, pos.y, pos.z,
-				stats.soundVolume(), stats.soundPitch(), stats.soundPitchRandom());
+		playSound(player, sound.get(), pos, stats.soundVolume() * modifiers.volumeMultiplier(),
+				stats.soundPitch() * modifiers.pitchMultiplier(), stats.soundPitchRandom());
+	}
+
+	/** Plays a named sound (any .ogg Tudur's Vehicle Mod's sound loader knows) at pos for everyone
+	 * tracking the player plus the player. */
+	public static void playSound(ServerPlayerEntity player, String sound, Vec3d pos, float volume, float pitch, float pitchRandom) {
+		WeaponFireSoundPayload payload = new WeaponFireSoundPayload(sound, pos.x, pos.y, pos.z, volume, pitch, pitchRandom);
 		for (ServerPlayerEntity tracking : PlayerLookup.tracking(player)) {
 			ServerPlayNetworking.send(tracking, payload);
 		}
@@ -199,7 +215,8 @@ public final class HandheldCombat {
 	 * notifyIfEmpty shows "no ammo" when the player has none. */
 	public static void startReload(ServerPlayerEntity player, ItemStack stack, HandheldDefinition def, WeaponStats stats,
 			boolean notifyIfEmpty) {
-		int magazineSize = stats.magazineSize();
+		WeaponModifiers modifiers = WeaponModifiers.of(stack, def);
+		int magazineSize = modifiers.magazineSize(stats.magazineSize());
 		if (magazineSize <= 0 || isReloading(stack) || stack.getOrDefault(ModComponents.AMMO, 0) >= magazineSize) {
 			return;
 		}
@@ -210,7 +227,8 @@ public final class HandheldCombat {
 			return;
 		}
 		long now = player.getEntityWorld().getTime();
-		stack.set(ModComponents.RELOAD_UNTIL, now + Math.max(1, stats.reloadTicks()));
+		stack.set(ModComponents.RELOAD_UNTIL, now + modifiers.reloadTicks(stats.reloadTicks()));
+		def.reloadSound().ifPresent(sound -> playSound(player, sound, player.getEyePos(), 1.0f, 1.0f, 0.05f));
 	}
 
 	/** Finishes a reload whose time is up: loads as many rounds as the inventory can supply. */
@@ -221,7 +239,7 @@ public final class HandheldCombat {
 		}
 		stack.remove(ModComponents.RELOAD_UNTIL);
 		int loaded = stack.getOrDefault(ModComponents.AMMO, 0);
-		int wanted = Math.max(0, stats.magazineSize() - loaded);
+		int wanted = Math.max(0, WeaponModifiers.of(stack, def).magazineSize(stats.magazineSize()) - loaded);
 		stack.set(ModComponents.AMMO, loaded + takeRounds(player, def, wanted));
 	}
 
@@ -271,6 +289,47 @@ public final class HandheldCombat {
 			}
 		}
 		return Math.min(wanted, itemsTaken * perItem);
+	}
+
+	// ---------------------------------------------------------------- attachments
+
+	private static final net.minecraft.util.Identifier MELEE_BONUS_MODIFIER_ID =
+			net.minecraft.util.Identifier.of(com.example.tudursguns.TudursGuns.MOD_ID, "attachment_melee_bonus");
+
+	/** Re-applies everything that follows from the fitted attachments after they change: loaded
+	 * rounds beyond the new magazine size are removed (taking off an extended magazine takes its
+	 * rounds with it), and melee damage is set from the bayonet-style bonuses. */
+	public static void applyAttachmentEffects(ItemStack stack, HandheldDefinition def, WeaponStats stats) {
+		WeaponModifiers modifiers = WeaponModifiers.of(stack, def);
+		int magazineSize = modifiers.magazineSize(stats.magazineSize());
+		if (magazineSize > 0 && stack.getOrDefault(ModComponents.AMMO, 0) > magazineSize) {
+			stack.set(ModComponents.AMMO, magazineSize);
+		}
+		if (modifiers.meleeDamageBonus() > 0f) {
+			stack.set(DataComponentTypes.ATTRIBUTE_MODIFIERS, AttributeModifiersComponent.builder()
+					.add(EntityAttributes.ATTACK_DAMAGE,
+							new EntityAttributeModifier(MELEE_BONUS_MODIFIER_ID, modifiers.meleeDamageBonus(),
+									EntityAttributeModifier.Operation.ADD_VALUE),
+							AttributeModifierSlot.MAINHAND)
+					.build());
+		} else {
+			stack.remove(DataComponentTypes.ATTRIBUTE_MODIFIERS);
+		}
+	}
+
+	// ---------------------------------------------------------------- aiming
+
+	/** Players holding the aim key (reported by their client). Holding use also aims, but that's
+	 * already visible to everyone through the vanilla "using item" state. Not saved. */
+	private static final Set<UUID> AIM_KEY_HELD = ConcurrentHashMap.newKeySet();
+
+	/** Records the player's aim key state; returns true if it changed. */
+	public static boolean setAimKeyHeld(ServerPlayerEntity player, boolean held) {
+		return held ? AIM_KEY_HELD.add(player.getUuid()) : AIM_KEY_HELD.remove(player.getUuid());
+	}
+
+	public static boolean isAimKeyHeld(ServerPlayerEntity player) {
+		return AIM_KEY_HELD.contains(player.getUuid());
 	}
 
 	// ---------------------------------------------------------------- modes

@@ -1,0 +1,37 @@
+package com.example.tudursguns.registry;
+
+import com.example.tudursguns.TudursGuns;
+import com.example.tudursguns.block.WeaponWorkbenchBlock;
+import net.minecraft.block.AbstractBlock;
+import net.minecraft.block.Block;
+import net.minecraft.block.MapColor;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.Item;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.util.Identifier;
+
+public final class ModBlocks {
+
+	private ModBlocks() {
+	}
+
+	public static Block WEAPON_WORKBENCH;
+	public static Item WEAPON_WORKBENCH_ITEM;
+
+	public static void register() {
+		RegistryKey<Block> blockKey = RegistryKey.of(RegistryKeys.BLOCK, Identifier.of(TudursGuns.MOD_ID, "weapon_workbench"));
+		WEAPON_WORKBENCH = Registry.register(Registries.BLOCK, blockKey,
+				new WeaponWorkbenchBlock(AbstractBlock.Settings.create()
+						.registryKey(blockKey)
+						.mapColor(MapColor.IRON_GRAY)
+						.strength(3.5f)
+						.requiresTool()));
+
+		RegistryKey<Item> itemKey = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(TudursGuns.MOD_ID, "weapon_workbench"));
+		WEAPON_WORKBENCH_ITEM = Registry.register(Registries.ITEM, itemKey,
+				new BlockItem(WEAPON_WORKBENCH, new Item.Settings().registryKey(itemKey).useBlockPrefixedTranslationKey()));
+	}
+}

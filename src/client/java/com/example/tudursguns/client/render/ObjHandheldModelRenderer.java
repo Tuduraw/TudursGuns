@@ -1,78 +1,161 @@
 package com.example.tudursguns.client.render;
 
 import com.example.tudursguns.TudursGuns;
+import com.example.tudursguns.client.AimController;
+import com.example.tudursguns.client.TudursGunsClientConfig;
+import com.example.tudursguns.client.mixin.GameRendererAccessor;
+import com.example.tudursguns.client.mixin.HeldItemRendererInvoker;
 import com.example.tudursguns.handheld.HandheldDefinition;
 import com.example.tudursguns.handheld.HandheldDefinitions;
 import com.example.tudursguns.registry.ModComponents;
-import com.example.tudursvehiclemod.client.render.DitherCutoutLayers;
-import com.example.tudursvehiclemod.client.render.ObjModel;
-import com.example.tudursvehiclemod.client.render.ObjModelLoader;
-import com.example.tudursvehiclemod.client.render.VehicleEntityRenderer;
+import com.example.tudursguns.weapon.WeaponModifiers;
 import com.mojang.serialization.MapCodec;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.command.OrderedRenderCommandQueue;
 import net.minecraft.client.render.item.model.special.SpecialModelRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemDisplayContext;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.Arm;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.RotationAxis;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
 import java.util.function.Consumer;
 
-/** Draws a handheld weapon's OBJ model as its item model, through Tudur's Vehicle Mod's own OBJ
- * loader and render layer - so the same .obj/.png pair a vehicle would use works here, with the same
- * translucency setting.
+/** Draws a handheld weapon (with its fitted attachments) as its item model.
  *
- * The item model JSON supplies the base display transform per context; the definition's own
- * "display" entry for that context is applied on top (see HandheldDefinition.DisplayTransform). */
-public class ObjHandheldModelRenderer implements SpecialModelRenderer<Identifier> {
+ * Everywhere except the local player's first-person main hand, the item model JSON supplies the base
+ * display transform and the definition's "display" entry for that context is applied on top.
+ *
+ * In first person, a weapon whose definition has an "aim" section is instead placed directly in
+ * camera space, ignoring vanilla's held-item placement: lowered at the hip pose, or raised so its
+ * sight lands exactly on the screen centre, blending between the two as the player aims. The
+ * player's arms are drawn holding it. Looking through a scope hides it entirely (the scope overlay
+ * takes over). */
+public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandheldModelRenderer.Data> {
 
 	public static final Identifier TYPE_ID = Identifier.of(TudursGuns.MOD_ID, "obj_handheld");
 
-	/** Only log each missing model/texture once rather than every frame. */
-	private static final Set<Identifier> REPORTED_MISSING = new HashSet<>();
-
-	@Override
-	public Identifier getData(ItemStack stack) {
-		return stack.get(ModComponents.WEAPON);
+	/** What the renderer needs from the stack. raised: the entity holding it is in the aiming pose
+	 * (only meaningful for third-person contexts - see AimRenderState.ENTITY_BEING_UPDATED_AIMS). */
+	public record Data(Identifier weaponId, Map<String, Identifier> fitted, boolean raised) {
 	}
 
 	@Override
-	public void render(Identifier weaponId, ItemDisplayContext displayContext, MatrixStack matrices,
+	public Data getData(ItemStack stack) {
+		Identifier weaponId = stack.get(ModComponents.WEAPON);
+		return weaponId == null ? null
+				: new Data(weaponId, WeaponModifiers.fitted(stack), AimRenderState.entityBeingUpdatedAims());
+	}
+
+	@Override
+	public void render(Data data, ItemDisplayContext displayContext, MatrixStack matrices,
 			OrderedRenderCommandQueue queue, int light, int overlay, boolean glint, int outlineColor) {
-		if (weaponId == null) {
+		if (data == null) {
 			return;
 		}
-		HandheldDefinitions.ClientEntry entry = HandheldDefinitions.getClient(weaponId);
+		HandheldDefinitions.ClientEntry entry = HandheldDefinitions.getClient(data.weaponId());
 		if (entry == null) {
 			return;
 		}
 		HandheldDefinition def = entry.definition();
-		if (def.model().isEmpty() || def.texture().isEmpty()) {
+		if (def.aim().isPresent() && isLocalMainHand(displayContext)) {
+			renderFirstPerson(def, data.fitted(), matrices, queue, light, overlay);
 			return;
 		}
-		ObjModel model = ObjModelLoader.get(def.model().get()).orElse(null);
-		if (model == null) {
-			if (REPORTED_MISSING.add(def.model().get())) {
-				TudursGuns.LOGGER.warn("Handheld weapon '{}' model {} was not found", weaponId, def.model().get());
-			}
-			return;
-		}
-
-		matrices.push();
 		HandheldDefinition.DisplayTransform transform =
 				def.display().getOrDefault(displayContext, HandheldDefinition.DisplayTransform.IDENTITY);
-		matrices.translate(transform.translation().x(), transform.translation().y(), transform.translation().z());
-		matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(transform.rotation().x()));
-		matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(transform.rotation().y()));
-		matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(transform.rotation().z()));
-		matrices.scale(transform.scale().x(), transform.scale().y(), transform.scale().z());
-		VehicleEntityRenderer.renderTriangles(queue, matrices, DitherCutoutLayers.entityDitherCutout(def.texture().get()),
-				model.getTriangles(), light, overlay, 0xFFFFFFFF);
+		if (data.raised() && isThirdPersonHand(displayContext)) {
+			HandheldDefinition.DisplayTransform lowered = transform;
+			transform = def.aim().flatMap(HandheldDefinition.AimSettings::thirdPersonAiming).orElseGet(() ->
+					new HandheldDefinition.DisplayTransform(lowered.translation(),
+							new Vector3f(lowered.rotation()).sub(90f, 0f, 0f), lowered.scale()));
+		}
+		matrices.push();
+		WeaponModelDrawer.applyTransform(matrices, transform);
+		WeaponModelDrawer.drawWeapon(queue, matrices, def, data.fitted(), light, overlay);
+		matrices.pop();
+	}
+
+	private static boolean isThirdPersonHand(ItemDisplayContext displayContext) {
+		return displayContext == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND || displayContext == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
+	}
+
+	/** First-person contexts are only ever the local player's; the main hand is the right one unless
+	 * the player is left-handed. */
+	private static boolean isLocalMainHand(ItemDisplayContext displayContext) {
+		MinecraftClient client = MinecraftClient.getInstance();
+		if (client.player == null) {
+			return false;
+		}
+		boolean leftHanded = client.player.getMainArm() == Arm.LEFT;
+		return displayContext == (leftHanded ? ItemDisplayContext.FIRST_PERSON_LEFT_HAND : ItemDisplayContext.FIRST_PERSON_RIGHT_HAND);
+	}
+
+	private static void renderFirstPerson(HandheldDefinition def, Map<String, Identifier> fitted, MatrixStack matrices,
+			OrderedRenderCommandQueue queue, int light, int overlay) {
+		if (AimController.isScoped()) {
+			return;
+		}
+		MinecraftClient client = MinecraftClient.getInstance();
+		HandheldDefinition.AimSettings aim = def.aim().get();
+		float scale = aim.scale();
+		boolean leftHanded = client.player.getMainArm() == Arm.LEFT;
+
+		float t = AimController.progress(client.getRenderTickCounter().getTickProgress(true));
+		float eased = t * t * (3f - 2f * t);
+
+		// Hip: the definition's pose (mirrored for the left hand) plus the config offset.
+		Vector3f hipTranslation = new Vector3f(aim.hipTranslation()).add(TudursGunsClientConfig.hipOffset());
+		Vector3f hipRotation = new Vector3f(aim.hipRotation());
+		if (leftHanded) {
+			hipTranslation.x = -hipTranslation.x;
+			hipRotation.y = -hipRotation.y;
+			hipRotation.z = -hipRotation.z;
+		}
+		Quaternionf hipQuaternion = new Quaternionf().rotationXYZ(
+				(float) Math.toRadians(hipRotation.x), (float) Math.toRadians(hipRotation.y), (float) Math.toRadians(hipRotation.z));
+
+		// Aiming: no rotation (the model's barrel already points down -Z, the view direction), placed
+		// so the sight is eye_distance straight ahead of the eye - i.e. on the screen centre.
+		WeaponModifiers modifiers = WeaponModifiers.of(client.player.getMainHandStack(), def);
+		Vector3fc sight = modifiers.sightOverride() != null ? modifiers.sightOverride() : aim.sightPosition();
+		Vector3f aimTranslation = new Vector3f(0f, 0f, -aim.eyeDistance())
+				.add(TudursGunsClientConfig.aimOffset())
+				.sub(sight.x() * scale, sight.y() * scale, sight.z() * scale);
+
+		Vector3f translation = hipTranslation.lerp(aimTranslation, eased, new Vector3f());
+		Quaternionf rotation = hipQuaternion.slerp(new Quaternionf(), eased, new Quaternionf());
+
+		matrices.push();
+		// Start from the camera itself: drop vanilla's hand placement, bobbing and sway.
+		MatrixStack.Entry pose = matrices.peek();
+		pose.getPositionMatrix().identity();
+		pose.getNormalMatrix().identity();
+		matrices.translate(translation.x, translation.y, translation.z);
+		matrices.multiply(rotation);
+		matrices.scale(scale, scale, scale);
+
+		WeaponModelDrawer.drawWeapon(queue, matrices, def, fitted, light, overlay);
+		if (TudursGunsClientConfig.showArms()) {
+			HeldItemRendererInvoker arms = (HeldItemRendererInvoker) ((GameRendererAccessor) client.gameRenderer).tudursguns$getFirstPersonRenderer();
+			aim.rightArm().ifPresent(transform -> drawArm(arms, matrices, queue, light, transform,
+					TudursGunsClientConfig.rightArmOffset(), leftHanded ? Arm.LEFT : Arm.RIGHT));
+			aim.leftArm().ifPresent(transform -> drawArm(arms, matrices, queue, light, transform,
+					TudursGunsClientConfig.leftArmOffset(), leftHanded ? Arm.RIGHT : Arm.LEFT));
+		}
+		matrices.pop();
+	}
+
+	private static void drawArm(HeldItemRendererInvoker arms, MatrixStack matrices, OrderedRenderCommandQueue queue, int light,
+			HandheldDefinition.DisplayTransform transform, Vector3f offset, Arm arm) {
+		matrices.push();
+		matrices.translate(offset.x, offset.y, offset.z);
+		WeaponModelDrawer.applyTransform(matrices, transform);
+		arms.tudursguns$renderArm(matrices, queue, light, arm);
 		matrices.pop();
 	}
 

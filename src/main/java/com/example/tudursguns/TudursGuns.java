@@ -2,9 +2,11 @@ package com.example.tudursguns;
 
 import com.example.tudursguns.handheld.HandheldDefinitionLoader;
 import com.example.tudursguns.network.ModNetworking;
+import com.example.tudursguns.registry.ModBlocks;
 import com.example.tudursguns.registry.ModComponents;
 import com.example.tudursguns.registry.ModItemGroups;
 import com.example.tudursguns.registry.ModItems;
+import com.example.tudursguns.registry.ModScreenHandlers;
 import com.example.tudursguns.weapon.HandheldCombat;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -23,10 +25,13 @@ public class TudursGuns implements ModInitializer {
 	public void onInitialize() {
 		ModComponents.register();
 		ModItems.register();
+		ModBlocks.register();
+		ModScreenHandlers.register();
 		ModItemGroups.register();
 		ModNetworking.register();
 
-		ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(new HandheldDefinitionLoader());
+		ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(HandheldDefinitionLoader.handheld());
+		ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(HandheldDefinitionLoader.attachments());
 
 		// Clients get every definition on join and again after /reload (definitions and weapon files
 		// both reload with data packs).

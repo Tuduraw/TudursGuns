@@ -1,0 +1,19 @@
+; Infantry rifle - Tudur's Guns. Bolt action, five rounds. Attachment: bayonet (melee).
+
+DisplayName = Infantry Rifle
+Type = MachineGun1
+
+Power = 16.0
+Explosion = 0.0
+Accuracy = 0.6
+Acceleration = 9.0
+Gravity = 0.008
+
+Round = 5
+ReloadTime = 60
+Delay = 20
+
+Sound = tg_rifle_shot
+SoundVolume = 2.5
+SoundPitchRandom = 0.05
+ModelBullet = tg_rifle_round
