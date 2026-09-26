@@ -100,10 +100,8 @@ public record HandheldDefinition(
 	 * aiming moved so sight_position (a point in model space, e.g. the rear sight notch) lands on the
 	 * screen centre, eye_distance blocks in front of the eye. Arms, if given, are placed in model
 	 * space (so they follow the weapon between the two poses).
-	 * third_person_aiming replaces the third-person display transform while the holder is aiming:
-	 * the item follows the raised arm, so the lowered transform would point the weapon upwards. It
-	 * defaults to the lowered one turned by -66.3 degrees about X - the difference in arm pitch between
-	 * vanilla's loaded-crossbow pose and the plain held-item pose. */
+	 * third_person_aiming, if set, replaces the third-person display transform while the holder is
+	 * aiming (the raised two-handed pose); by default the ordinary one is used for both poses. */
 	public record AimSettings(
 			Vector3f sightPosition,
 			float eyeDistance,

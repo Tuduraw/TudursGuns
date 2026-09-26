@@ -44,12 +44,6 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 	public record Data(Identifier weaponId, Map<String, Identifier> fitted, boolean raised) {
 	}
 
-	/** How much further the holding arm is pitched in the aiming pose than when just holding an item,
-	 * for a level head: vanilla's loaded-crossbow pose puts it at -90 + 5.7 degrees, the plain held-item
-	 * pose at -18. The item turns with the arm, so the lowered transform is turned back by this much
-	 * (a negative X rotation in the item's display space) to keep the weapon level. */
-	private static final float RAISED_ARM_PITCH_DEGREES = 66.3f;
-
 	@Override
 	public Data getData(ItemStack stack) {
 		Identifier weaponId = stack.get(ModComponents.WEAPON);
@@ -74,11 +68,10 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 		}
 		HandheldDefinition.DisplayTransform transform =
 				def.display().getOrDefault(displayContext, HandheldDefinition.DisplayTransform.IDENTITY);
+		// The raised pose normally needs no correction (tested in game: the weapon stays level as the
+		// arm comes up); third_person_aiming is there for a model that does need one.
 		if (data.raised() && isThirdPersonHand(displayContext)) {
-			HandheldDefinition.DisplayTransform lowered = transform;
-			transform = def.aim().flatMap(HandheldDefinition.AimSettings::thirdPersonAiming).orElseGet(() ->
-					new HandheldDefinition.DisplayTransform(lowered.translation(),
-							new Vector3f(lowered.rotation()).sub(RAISED_ARM_PITCH_DEGREES, 0f, 0f), lowered.scale()));
+			transform = def.aim().flatMap(HandheldDefinition.AimSettings::thirdPersonAiming).orElse(transform);
 		}
 		matrices.push();
 		WeaponModelDrawer.applyTransform(matrices, transform);
