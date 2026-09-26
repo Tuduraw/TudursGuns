@@ -6,6 +6,7 @@
   "client": [
     "BipedEntityModelAimMixin",
     "EntityLookSensitivityMixin",
+    "FirstPersonBaseMixin",
     "GameRendererAccessor",
     "GameRendererFovMixin",
     "HeldItemRendererInvoker",

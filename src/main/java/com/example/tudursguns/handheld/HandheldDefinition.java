@@ -102,8 +102,8 @@ public record HandheldDefinition(
 	 * space (so they follow the weapon between the two poses).
 	 * third_person_aiming replaces the third-person display transform while the holder is aiming:
 	 * the item follows the raised arm, so the lowered transform would point the weapon upwards. It
-	 * defaults to the lowered one turned by -90 degrees about X - the same difference as between
-	 * vanilla's crossbow and ordinary held items. */
+	 * defaults to the lowered one turned by -66.3 degrees about X - the difference in arm pitch between
+	 * vanilla's loaded-crossbow pose and the plain held-item pose. */
 	public record AimSettings(
 			Vector3f sightPosition,
 			float eyeDistance,

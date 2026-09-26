@@ -44,6 +44,12 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 	public record Data(Identifier weaponId, Map<String, Identifier> fitted, boolean raised) {
 	}
 
+	/** How much further the holding arm is pitched in the aiming pose than when just holding an item,
+	 * for a level head: vanilla's loaded-crossbow pose puts it at -90 + 5.7 degrees, the plain held-item
+	 * pose at -18. The item turns with the arm, so the lowered transform is turned back by this much
+	 * (a negative X rotation in the item's display space) to keep the weapon level. */
+	private static final float RAISED_ARM_PITCH_DEGREES = 66.3f;
+
 	@Override
 	public Data getData(ItemStack stack) {
 		Identifier weaponId = stack.get(ModComponents.WEAPON);
@@ -72,7 +78,7 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 			HandheldDefinition.DisplayTransform lowered = transform;
 			transform = def.aim().flatMap(HandheldDefinition.AimSettings::thirdPersonAiming).orElseGet(() ->
 					new HandheldDefinition.DisplayTransform(lowered.translation(),
-							new Vector3f(lowered.rotation()).sub(90f, 0f, 0f), lowered.scale()));
+							new Vector3f(lowered.rotation()).sub(RAISED_ARM_PITCH_DEGREES, 0f, 0f), lowered.scale()));
 		}
 		matrices.push();
 		WeaponModelDrawer.applyTransform(matrices, transform);
@@ -131,10 +137,9 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 		Quaternionf rotation = hipQuaternion.slerp(new Quaternionf(), eased, new Quaternionf());
 
 		matrices.push();
-		// Start from the camera itself: drop vanilla's hand placement, bobbing and sway.
-		MatrixStack.Entry pose = matrices.peek();
-		pose.getPositionMatrix().identity();
-		pose.getNormalMatrix().identity();
+		// Start from the camera-relative frame first-person rendering began with (it follows the view
+		// and carries view bobbing), dropping vanilla's own hand placement and sway.
+		FirstPersonBase.apply(matrices);
 		matrices.translate(translation.x, translation.y, translation.z);
 		matrices.multiply(rotation);
 		matrices.scale(scale, scale, scale);
