@@ -88,6 +88,42 @@ public final class HandheldDefinitions {
 		return def != null ? def : clientAttachments.get(id);
 	}
 
+	private static volatile Map<Identifier, ThrowableDefinition> serverThrowables = Map.of();
+	private static volatile Map<Identifier, ClientThrowable> clientThrowables = Map.of();
+
+	public static Map<Identifier, ThrowableDefinition> serverThrowables() {
+		return serverThrowables;
+	}
+
+	static void setServerThrowables(Map<Identifier, ThrowableDefinition> loaded) {
+		serverThrowables = Collections.unmodifiableMap(new LinkedHashMap<>(loaded));
+	}
+
+	public static Map<Identifier, ClientThrowable> clientThrowables() {
+		return clientThrowables;
+	}
+
+	public static void setClientThrowables(Map<Identifier, ClientThrowable> received) {
+		clientThrowables = Collections.unmodifiableMap(new LinkedHashMap<>(received));
+	}
+
+	/** Same as getAny, for throwables. */
+	public static ThrowableDefinition getAnyThrowable(Identifier id) {
+		if (id == null) {
+			return null;
+		}
+		ThrowableDefinition def = serverThrowables.get(id);
+		if (def != null) {
+			return def;
+		}
+		ClientThrowable entry = clientThrowables.get(id);
+		return entry == null ? null : entry.definition();
+	}
+
+	/** A throwable as the client sees it: plus the weapon file's name and gravity (for the landing guide). */
+	public record ClientThrowable(ThrowableDefinition definition, String weaponDisplayName, float gravity) {
+	}
+
 	/** A definition as the client sees it: the definition itself plus the weapon-file values the
 	 * client needs for display (the client can't rely on reading weapon files itself - on a
 	 * dedicated server they may exist only on the server). */

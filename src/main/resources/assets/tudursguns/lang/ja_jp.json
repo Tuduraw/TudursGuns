@@ -30,5 +30,13 @@
   "tooltip.tudursguns.attachment.reload": "リロード時間 x%s",
   "tooltip.tudursguns.attachment.suppressor": "発砲音を抑える",
   "tooltip.tudursguns.attachment.accuracy": "弾のばらつき x%s",
-  "tooltip.tudursguns.attachment.melee": "近接攻撃力 +%s"
+  "tooltip.tudursguns.attachment.melee": "近接攻撃力 +%s",
+  "item.tudursguns.throwable": "投擲物",
+  "block.tudursguns.ammo_box": "弾薬箱",
+  "entity.tudursguns.smoke_cloud": "煙幕",
+  "entity.tudursguns.smoke_decoy": "煙幕",
+  "tooltip.tudursguns.throwable.fuse": "信管: %s 秒",
+  "tooltip.tudursguns.throwable.cookable": "長押しでピンを抜いて待ち、離すと投げる",
+  "hud.tudursguns.fuse": "信管 残り %s 秒",
+  "hud.tudursguns.underhand": "下手投げ"
 }

@@ -115,6 +115,12 @@ public final class AimController {
 		return InputUtil.isKeyPressed(client.getWindow(), key.getCode());
 	}
 
+	/** The aim key's physical state regardless of what's held (throwables use it for an underhand
+	 * throw). Always false while a screen is open. */
+	public static boolean isAimKeyHeldRaw(MinecraftClient client) {
+		return client.currentScreen == null && isAimKeyDown(client);
+	}
+
 	public static void tick(MinecraftClient client) {
 		PlayerEntity player = client.player;
 		previousProgress = progress;
@@ -150,8 +156,11 @@ public final class AimController {
 		float step = 1f / TudursGunsClientConfig.aimTransitionTicks();
 		progress = Math.max(0f, Math.min(1f, progress + (aiming ? step : -step)));
 
-		// Other players only need the aim KEY; aiming with use is visible to them already.
-		boolean sendAimKey = aimKeyDown;
+		// Other players only need the aim KEY; aiming with use is visible to them already. Also sent
+		// while holding a throwable: the server uses it to decide on an underhand throw.
+		boolean holdingThrowable = player.getMainHandStack().getItem() instanceof com.example.tudursguns.item.ThrowableItem
+				|| player.getOffHandStack().getItem() instanceof com.example.tudursguns.item.ThrowableItem;
+		boolean sendAimKey = aimKeyDown || (holdingThrowable && player.getVehicle() == null && isAimKeyHeldRaw(client));
 		if (sendAimKey != lastSentAimKey && client.getNetworkHandler() != null) {
 			lastSentAimKey = sendAimKey;
 			ClientPlayNetworking.send(new AimKeyPayload(sendAimKey));

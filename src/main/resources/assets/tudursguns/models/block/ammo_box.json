@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "tudursguns:block/ammo_box_top",
+    "bottom": "tudursguns:block/ammo_box_bottom",
+    "side": "tudursguns:block/ammo_box_side",
+    "particle": "tudursguns:block/ammo_box_side"
+  }
+}

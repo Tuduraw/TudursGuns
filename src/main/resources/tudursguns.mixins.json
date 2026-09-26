@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.example.tudursguns.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "AbstractVehicleEntityAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -3,6 +3,7 @@ package com.example.tudursguns.registry;
 import com.example.tudursguns.TudursGuns;
 import com.example.tudursguns.item.AttachmentItem;
 import com.example.tudursguns.item.HandheldWeaponItem;
+import com.example.tudursguns.item.ThrowableItem;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.component.ComponentType;
@@ -20,6 +21,7 @@ public final class ModItems {
 
 	public static Item HANDHELD_WEAPON;
 	public static Item ATTACHMENT;
+	public static Item THROWABLE;
 
 	/** Holding use (right click) fires, so the item is "in use" while the trigger is held. By default
 	 * that slows the player to 20% speed and stops sprinting, like drawing a bow - this keeps full
@@ -35,6 +37,10 @@ public final class ModItems {
 		RegistryKey<Item> attachmentKey = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(TudursGuns.MOD_ID, "attachment"));
 		ATTACHMENT = Registry.register(Registries.ITEM, attachmentKey,
 				new AttachmentItem(new Item.Settings().registryKey(attachmentKey).maxCount(16)));
+
+		RegistryKey<Item> throwableKey = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(TudursGuns.MOD_ID, "throwable"));
+		THROWABLE = Registry.register(Registries.ITEM, throwableKey,
+				new ThrowableItem(withUseEffects(new Item.Settings().registryKey(throwableKey).maxCount(16))));
 	}
 
 	/** Looked up by id and built through its own codec rather than by class: the component is new in

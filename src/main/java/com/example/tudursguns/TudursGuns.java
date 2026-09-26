@@ -2,13 +2,17 @@ package com.example.tudursguns;
 
 import com.example.tudursguns.handheld.HandheldDefinitionLoader;
 import com.example.tudursguns.network.ModNetworking;
+import com.example.tudursguns.registry.ModBlockEntities;
 import com.example.tudursguns.registry.ModBlocks;
 import com.example.tudursguns.registry.ModComponents;
+import com.example.tudursguns.registry.ModEntityTypes;
 import com.example.tudursguns.registry.ModItemGroups;
 import com.example.tudursguns.registry.ModItems;
 import com.example.tudursguns.registry.ModScreenHandlers;
 import com.example.tudursguns.weapon.HandheldCombat;
+import com.example.tudursguns.weapon.ThrowableCombat;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
@@ -26,12 +30,17 @@ public class TudursGuns implements ModInitializer {
 		ModComponents.register();
 		ModItems.register();
 		ModBlocks.register();
+		ModBlockEntities.register();
+		ModEntityTypes.register();
 		ModScreenHandlers.register();
 		ModItemGroups.register();
 		ModNetworking.register();
 
 		ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(HandheldDefinitionLoader.handheld());
 		ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(HandheldDefinitionLoader.attachments());
+		ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(HandheldDefinitionLoader.throwables());
+		// A thrown grenade's smoke/flash/fire happens where its projectile ends up - see ThrowableCombat.
+		ServerEntityEvents.ENTITY_UNLOAD.register(ThrowableCombat::onProjectileRemoved);
 
 		// Clients get every definition on join and again after /reload (definitions and weapon files
 		// both reload with data packs).
@@ -41,6 +50,9 @@ public class TudursGuns implements ModInitializer {
 				ModNetworking.syncDefinitionsToAll(server);
 			}
 		});
-		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> HandheldCombat.forget(handler.player.getUuid()));
+		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+			HandheldCombat.forget(handler.player.getUuid());
+			ThrowableCombat.forget(handler.player.getUuid());
+		});
 	}
 }

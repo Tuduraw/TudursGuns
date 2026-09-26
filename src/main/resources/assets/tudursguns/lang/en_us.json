@@ -30,5 +30,13 @@
   "tooltip.tudursguns.attachment.reload": "Reload time x%s",
   "tooltip.tudursguns.attachment.suppressor": "Suppresses the firing sound",
   "tooltip.tudursguns.attachment.accuracy": "Spread x%s",
-  "tooltip.tudursguns.attachment.melee": "Melee damage +%s"
+  "tooltip.tudursguns.attachment.melee": "Melee damage +%s",
+  "item.tudursguns.throwable": "Throwable",
+  "block.tudursguns.ammo_box": "Ammo Box",
+  "entity.tudursguns.smoke_cloud": "Smoke Cloud",
+  "entity.tudursguns.smoke_decoy": "Smoke",
+  "tooltip.tudursguns.throwable.fuse": "Fuse: %s s",
+  "tooltip.tudursguns.throwable.cookable": "Hold use to cook, release to throw",
+  "hud.tudursguns.fuse": "Fuse %s s",
+  "hud.tudursguns.underhand": "Underhand"
 }

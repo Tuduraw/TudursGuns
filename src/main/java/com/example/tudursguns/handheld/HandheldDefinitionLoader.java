@@ -45,6 +45,10 @@ public class HandheldDefinitionLoader<T> implements SimpleSynchronousResourceRel
 		return new HandheldDefinitionLoader<>("attachment", AttachmentDefinition.CODEC, HandheldDefinitions::setServerAttachments);
 	}
 
+	public static HandheldDefinitionLoader<ThrowableDefinition> throwables() {
+		return new HandheldDefinitionLoader<>("throwable", ThrowableDefinition.CODEC, HandheldDefinitions::setServerThrowables);
+	}
+
 	@Override
 	public Identifier getFabricId() {
 		return Identifier.of(TudursGuns.MOD_ID, this.directory + "_definitions");

@@ -44,7 +44,15 @@ public final class ModItemGroups {
 					for (Identifier attachmentId : attachmentIds) {
 						entries.add(WeaponWorkbenchScreenHandler.createAttachmentStack(attachmentId));
 					}
+					List<Identifier> throwableIds = new ArrayList<>(HandheldDefinitions.clientThrowables().keySet());
+					throwableIds.sort(Comparator.comparing(Identifier::toString));
+					for (Identifier throwableId : throwableIds) {
+						ItemStack throwable = new ItemStack(ModItems.THROWABLE);
+						throwable.set(ModComponents.THROWABLE, throwableId);
+						entries.add(throwable);
+					}
 					entries.add(ModBlocks.WEAPON_WORKBENCH_ITEM);
+					entries.add(ModBlocks.AMMO_BOX_ITEM);
 				})
 				.build());
 	}

@@ -1,6 +1,7 @@
 package com.example.tudursguns.registry;
 
 import com.example.tudursguns.TudursGuns;
+import com.example.tudursguns.block.AmmoBoxBlock;
 import com.example.tudursguns.block.WeaponWorkbenchBlock;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
@@ -20,6 +21,8 @@ public final class ModBlocks {
 
 	public static Block WEAPON_WORKBENCH;
 	public static Item WEAPON_WORKBENCH_ITEM;
+	public static Block AMMO_BOX;
+	public static Item AMMO_BOX_ITEM;
 
 	public static void register() {
 		RegistryKey<Block> blockKey = RegistryKey.of(RegistryKeys.BLOCK, Identifier.of(TudursGuns.MOD_ID, "weapon_workbench"));
@@ -33,5 +36,15 @@ public final class ModBlocks {
 		RegistryKey<Item> itemKey = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(TudursGuns.MOD_ID, "weapon_workbench"));
 		WEAPON_WORKBENCH_ITEM = Registry.register(Registries.ITEM, itemKey,
 				new BlockItem(WEAPON_WORKBENCH, new Item.Settings().registryKey(itemKey).useBlockPrefixedTranslationKey()));
+
+		RegistryKey<Block> ammoBoxKey = RegistryKey.of(RegistryKeys.BLOCK, Identifier.of(TudursGuns.MOD_ID, "ammo_box"));
+		AMMO_BOX = Registry.register(Registries.BLOCK, ammoBoxKey,
+				new AmmoBoxBlock(AbstractBlock.Settings.create()
+						.registryKey(ammoBoxKey)
+						.mapColor(MapColor.OAK_TAN)
+						.strength(2.5f)));
+		RegistryKey<Item> ammoBoxItemKey = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(TudursGuns.MOD_ID, "ammo_box"));
+		AMMO_BOX_ITEM = Registry.register(Registries.ITEM, ammoBoxItemKey,
+				new BlockItem(AMMO_BOX, new Item.Settings().registryKey(ammoBoxItemKey).useBlockPrefixedTranslationKey()));
 	}
 }

@@ -3,6 +3,7 @@ package com.example.tudursguns.network;
 import com.example.tudursguns.handheld.AttachmentDefinition;
 import com.example.tudursguns.handheld.HandheldDefinition;
 import com.example.tudursguns.handheld.HandheldDefinitions;
+import com.example.tudursguns.handheld.ThrowableDefinition;
 import com.example.tudursguns.handheld.WeaponSummary;
 import com.example.tudursguns.item.HandheldWeaponItem;
 import com.example.tudursguns.weapon.HandheldCombat;
@@ -36,6 +37,8 @@ public final class ModNetworking {
 		PayloadTypeRegistry.playS2C().register(SyncAttachmentDefinitionsPayload.ID, SyncAttachmentDefinitionsPayload.CODEC);
 		PayloadTypeRegistry.playC2S().register(AimKeyPayload.ID, AimKeyPayload.CODEC);
 		PayloadTypeRegistry.playS2C().register(PlayerAimPayload.ID, PlayerAimPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(SyncThrowableDefinitionsPayload.ID, SyncThrowableDefinitionsPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(FlashPayload.ID, FlashPayload.CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(AimKeyPayload.ID, (payload, context) ->
 				context.server().execute(() -> {
@@ -110,17 +113,31 @@ public final class ModNetworking {
 		return new SyncAttachmentDefinitionsPayload(entries);
 	}
 
+	public static SyncThrowableDefinitionsPayload buildThrowableSyncPayload() {
+		List<SyncThrowableDefinitionsPayload.Entry> entries = new ArrayList<>();
+		for (Map.Entry<Identifier, ThrowableDefinition> entry : HandheldDefinitions.serverThrowables().entrySet()) {
+			WeaponStats stats = WeaponStatsLoader.get(entry.getValue().weapon());
+			ThrowableDefinition.CODEC.encodeStart(JsonOps.INSTANCE, entry.getValue()).result().ifPresent(json ->
+					entries.add(new SyncThrowableDefinitionsPayload.Entry(entry.getKey(), json.toString(),
+							stats.displayName(), stats.gravity())));
+		}
+		return new SyncThrowableDefinitionsPayload(entries);
+	}
+
 	/** Attachments first: the weapon sync is what refreshes the client's weapon-dependent state. */
 	public static void syncDefinitions(ServerPlayerEntity player) {
 		ServerPlayNetworking.send(player, buildAttachmentSyncPayload());
+		ServerPlayNetworking.send(player, buildThrowableSyncPayload());
 		ServerPlayNetworking.send(player, buildSyncPayload());
 	}
 
 	public static void syncDefinitionsToAll(MinecraftServer server) {
 		SyncAttachmentDefinitionsPayload attachments = buildAttachmentSyncPayload();
+		SyncThrowableDefinitionsPayload throwables = buildThrowableSyncPayload();
 		SyncHandheldDefinitionsPayload weapons = buildSyncPayload();
 		for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
 			ServerPlayNetworking.send(player, attachments);
+			ServerPlayNetworking.send(player, throwables);
 			ServerPlayNetworking.send(player, weapons);
 		}
 	}

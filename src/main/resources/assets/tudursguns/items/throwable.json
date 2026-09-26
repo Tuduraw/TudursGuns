@@ -1,0 +1,18 @@
+{
+  "model": {
+    "type": "minecraft:condition",
+    "property": "minecraft:has_component",
+    "component": "tudursguns:throwable",
+    "on_true": {
+      "type": "minecraft:special",
+      "base": "tudursguns:item/throwable_obj",
+      "model": {
+        "type": "tudursguns:obj_throwable"
+      }
+    },
+    "on_false": {
+      "type": "minecraft:model",
+      "model": "tudursguns:item/throwable"
+    }
+  }
+}

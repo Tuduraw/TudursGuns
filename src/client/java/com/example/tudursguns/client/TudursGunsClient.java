@@ -3,6 +3,14 @@ package com.example.tudursguns.client;
 import com.example.tudursguns.TudursGuns;
 import com.example.tudursguns.client.hud.HandheldHud;
 import com.example.tudursguns.client.hud.ScopeOverlay;
+import com.example.tudursguns.client.hud.VisionOverlay;
+import com.example.tudursguns.client.render.InvisibleEntityRenderer;
+import com.example.tudursguns.client.render.ObjThrowableModelRenderer;
+import com.example.tudursguns.handheld.ThrowableDefinition;
+import com.example.tudursguns.network.FlashPayload;
+import com.example.tudursguns.network.SyncThrowableDefinitionsPayload;
+import com.example.tudursguns.registry.ModEntityTypes;
+import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import com.example.tudursguns.client.render.ObjAttachmentModelRenderer;
 import com.example.tudursguns.client.screen.WeaponWorkbenchScreen;
 import com.example.tudursguns.handheld.AttachmentDefinition;
@@ -64,10 +72,17 @@ public class TudursGunsClient implements ClientModInitializer {
 
 		SpecialModelTypes.ID_MAPPER.put(ObjHandheldModelRenderer.TYPE_ID, ObjHandheldModelRenderer.Unbaked.CODEC);
 		SpecialModelTypes.ID_MAPPER.put(ObjAttachmentModelRenderer.TYPE_ID, ObjAttachmentModelRenderer.Unbaked.CODEC);
+		SpecialModelTypes.ID_MAPPER.put(ObjThrowableModelRenderer.TYPE_ID, ObjThrowableModelRenderer.Unbaked.CODEC);
+		EntityRendererRegistry.register(ModEntityTypes.SMOKE_CLOUD, InvisibleEntityRenderer::new);
+		EntityRendererRegistry.register(ModEntityTypes.SMOKE_DECOY, InvisibleEntityRenderer::new);
 		HandledScreens.register(ModScreenHandlers.WEAPON_WORKBENCH, WeaponWorkbenchScreen::new);
 
 		ClientPlayNetworking.registerGlobalReceiver(SyncAttachmentDefinitionsPayload.ID, (payload, context) ->
 				context.client().execute(() -> HandheldDefinitions.setClientAttachments(decodeAttachments(payload))));
+		ClientPlayNetworking.registerGlobalReceiver(SyncThrowableDefinitionsPayload.ID, (payload, context) ->
+				context.client().execute(() -> HandheldDefinitions.setClientThrowables(decodeThrowables(payload))));
+		ClientPlayNetworking.registerGlobalReceiver(FlashPayload.ID, (payload, context) ->
+				context.client().execute(() -> VisionOverlay.flash(payload.intensity(), payload.durationTicks())));
 		ClientPlayNetworking.registerGlobalReceiver(PlayerAimPayload.ID, (payload, context) ->
 				context.client().execute(() -> AimController.setRemoteAimKey(payload.entityId(), payload.held())));
 
@@ -78,6 +93,7 @@ public class TudursGunsClient implements ClientModInitializer {
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
 			HandheldDefinitions.setClient(Map.of());
 			HandheldDefinitions.setClientAttachments(Map.of());
+			HandheldDefinitions.setClientThrowables(Map.of());
 			ClientLockState.set(LockStatePayload.NONE);
 			AimController.reset();
 		});
@@ -98,10 +114,14 @@ public class TudursGunsClient implements ClientModInitializer {
 
 		HandheldHud.register();
 		ScopeOverlay.register();
+		VisionOverlay.register();
+		ThrowGuide.register();
 	}
 
 	private static void onEndTick(MinecraftClient client) {
 		AimController.tick(client);
+		ThrowGuide.tick(client);
+		VisionOverlay.tick();
 		boolean reload = false;
 		while (reloadKey.wasPressed()) {
 			reload = true;
@@ -140,6 +160,21 @@ public class TudursGunsClient implements ClientModInitializer {
 						.ifPresent(def -> received.put(entry.id(), def));
 			} catch (Exception e) {
 				TudursGuns.LOGGER.error("Failed to decode attachment definition '{}'", entry.id(), e);
+			}
+		}
+		return received;
+	}
+
+	private static Map<Identifier, HandheldDefinitions.ClientThrowable> decodeThrowables(SyncThrowableDefinitionsPayload payload) {
+		Map<Identifier, HandheldDefinitions.ClientThrowable> received = new LinkedHashMap<>();
+		for (SyncThrowableDefinitionsPayload.Entry entry : payload.entries()) {
+			try {
+				ThrowableDefinition.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(entry.definitionJson()))
+						.resultOrPartial(error -> TudursGuns.LOGGER.error("Failed to decode throwable definition '{}': {}", entry.id(), error))
+						.ifPresent(def -> received.put(entry.id(),
+								new HandheldDefinitions.ClientThrowable(def, entry.weaponDisplayName(), entry.gravity())));
+			} catch (Exception e) {
+				TudursGuns.LOGGER.error("Failed to decode throwable definition '{}'", entry.id(), e);
 			}
 		}
 		return received;

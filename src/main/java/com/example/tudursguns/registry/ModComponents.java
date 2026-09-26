@@ -32,6 +32,8 @@ public final class ModComponents {
 	public static ComponentType<Map<String, Identifier>> ATTACHMENTS;
 	/** Which AttachmentDefinition an attachment item is (data/<namespace>/attachment/<path>.json). */
 	public static ComponentType<Identifier> ATTACHMENT;
+	/** Which ThrowableDefinition a throwable item is (data/<namespace>/throwable/<path>.json). */
+	public static ComponentType<Identifier> THROWABLE;
 
 	public static void register() {
 		WEAPON = ModComponents.<Identifier>register("weapon", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
@@ -42,6 +44,7 @@ public final class ModComponents {
 		ATTACHMENTS = ModComponents.<Map<String, Identifier>>register("attachments",
 				builder -> builder.codec(attachmentsCodec).packetCodec(PacketCodecs.codec(attachmentsCodec)));
 		ATTACHMENT = ModComponents.<Identifier>register("attachment", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
+		THROWABLE = ModComponents.<Identifier>register("throwable", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
 	}
 
 	private static <T> ComponentType<T> register(String path, UnaryOperator<ComponentType.Builder<T>> builder) {
