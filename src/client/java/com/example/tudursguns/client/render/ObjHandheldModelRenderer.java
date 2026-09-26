@@ -17,6 +17,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.RotationAxis;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -77,7 +78,7 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<Identifier
 
 	/** Extents used for item bounds - the unit cube the item model space is built around. */
 	@Override
-	public void collectVertices(Consumer<Vector3f> consumer) {
+	public void collectVertices(Consumer<Vector3fc> consumer) {
 		for (int x = 0; x <= 1; x++) {
 			for (int y = 0; y <= 1; y++) {
 				for (int z = 0; z <= 1; z++) {
