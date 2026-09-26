@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "tudursguns",
+  "version": "${version}",
+  "name": "Tudur's Guns",
+  "description": "Handheld weapons for Tudur's Vehicle Mod, sharing its weapon files, projectiles, missile guidance and OBJ models.",
+  "authors": [ "Tuduraw" ],
+  "contact": {},
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [ "com.example.tudursguns.TudursGuns" ],
+    "client": [ "com.example.tudursguns.client.TudursGunsClient" ]
+  },
+  "depends": {
+    "fabricloader": ">=0.18.0",
+    "fabric-api": "*",
+    "minecraft": "1.21.11",
+    "java": ">=21",
+    "tudursvehiclemod": ">=1.0.3"
+  }
+}

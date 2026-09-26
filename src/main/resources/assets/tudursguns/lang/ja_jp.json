@@ -1,0 +1,16 @@
+{
+  "item.tudursguns.handheld_weapon": "携帯装備",
+  "itemGroup.tudursguns.handheld": "Tudur's Guns",
+  "key.category.tudursguns.handheld": "Tudur's Guns",
+  "key.tudursguns.reload": "リロード",
+  "key.tudursguns.switch_mode": "武器モード切替",
+  "tooltip.tudursguns.ammo": "装弾数: %s / %s",
+  "hud.tudursguns.ammo": "%s / %s  [%s]",
+  "hud.tudursguns.reloading": "リロード中 %s%%",
+  "hud.tudursguns.mode": "モード %s / %s",
+  "hud.tudursguns.locking": "ロック中 %s%%",
+  "hud.tudursguns.locked": "LOCKED",
+  "message.tudursguns.no_ammo": "弾薬がありません",
+  "message.tudursguns.mode": "モード %s / %s",
+  "message.tudursguns.unsupported_type": "この武器種別(%s)は携帯装備では使用できません"
+}

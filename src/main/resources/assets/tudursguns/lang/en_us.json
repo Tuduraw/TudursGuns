@@ -1,0 +1,16 @@
+{
+  "item.tudursguns.handheld_weapon": "Handheld Weapon",
+  "itemGroup.tudursguns.handheld": "Tudur's Guns",
+  "key.category.tudursguns.handheld": "Tudur's Guns",
+  "key.tudursguns.reload": "Reload",
+  "key.tudursguns.switch_mode": "Switch Weapon Mode",
+  "tooltip.tudursguns.ammo": "Ammo: %s / %s",
+  "hud.tudursguns.ammo": "%s / %s  [%s]",
+  "hud.tudursguns.reloading": "Reloading %s%%",
+  "hud.tudursguns.mode": "Mode %s / %s",
+  "hud.tudursguns.locking": "Locking %s%%",
+  "hud.tudursguns.locked": "LOCKED",
+  "message.tudursguns.no_ammo": "No ammunition",
+  "message.tudursguns.mode": "Mode %s / %s",
+  "message.tudursguns.unsupported_type": "This weapon type (%s) can't be used by hand"
+}

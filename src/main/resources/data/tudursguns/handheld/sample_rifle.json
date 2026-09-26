@@ -1,0 +1,18 @@
+{
+  "weapon": "tg_sample_rifle",
+  "model": "tudursguns:models/obj/sample_rifle.obj",
+  "texture": "tudursguns:textures/handheld/sample_weapons.png",
+  "ammo_item": "minecraft:iron_nugget",
+  "rounds_per_ammo_item": 5,
+  "fire_mode": "auto",
+  "muzzle_offset": [0.25, -0.15, 0.9],
+  "display": {
+    "firstperson_righthand": { "translation": [0.55, 0.3, 0.3], "scale": [0.9, 0.9, 0.9] },
+    "firstperson_lefthand": { "translation": [0.45, 0.3, 0.3], "scale": [0.9, 0.9, 0.9] },
+    "thirdperson_righthand": { "translation": [0.5, 0.4, 0.5], "scale": [0.8, 0.8, 0.8] },
+    "thirdperson_lefthand": { "translation": [0.5, 0.4, 0.5], "scale": [0.8, 0.8, 0.8] },
+    "gui": { "translation": [0.5, 0.5, 0.5], "rotation": [0, 90, 0], "scale": [0.7, 0.7, 0.7] },
+    "ground": { "translation": [0.5, 0.3, 0.5], "scale": [0.5, 0.5, 0.5] },
+    "fixed": { "translation": [0.5, 0.5, 0.5], "rotation": [0, 90, 0], "scale": [0.7, 0.7, 0.7] }
+  }
+}

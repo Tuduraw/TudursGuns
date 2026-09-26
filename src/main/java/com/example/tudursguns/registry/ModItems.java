@@ -1,0 +1,51 @@
+package com.example.tudursguns.registry;
+
+import com.example.tudursguns.TudursGuns;
+import com.example.tudursguns.item.HandheldWeaponItem;
+import com.google.gson.JsonParser;
+import com.mojang.serialization.JsonOps;
+import net.minecraft.component.ComponentType;
+import net.minecraft.item.Item;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.util.Identifier;
+
+public final class ModItems {
+
+	private ModItems() {
+	}
+
+	public static Item HANDHELD_WEAPON;
+
+	/** Holding use (right click) fires, so the item is "in use" while the trigger is held. By default
+	 * that slows the player to 20% speed and stops sprinting, like drawing a bow - this keeps full
+	 * speed and sprinting instead, through vanilla's minecraft:use_effects component. */
+	private static final String USE_EFFECTS_JSON = "{\"can_sprint\": true, \"speed_multiplier\": 1.0}";
+
+	public static void register() {
+		RegistryKey<Item> key = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(TudursGuns.MOD_ID, "handheld_weapon"));
+		Item.Settings settings = new Item.Settings().registryKey(key).maxCount(1);
+		settings = withUseEffects(settings);
+		HANDHELD_WEAPON = Registry.register(Registries.ITEM, key, new HandheldWeaponItem(settings));
+	}
+
+	/** Looked up by id and built through its own codec rather than by class: the component is new in
+	 * 1.21.11 and has no Yarn name yet. If that fails the item simply keeps vanilla's slowdown. */
+	private static Item.Settings withUseEffects(Item.Settings settings) {
+		ComponentType<?> type = Registries.DATA_COMPONENT_TYPE.get(Identifier.ofVanilla("use_effects"));
+		if (type == null) {
+			TudursGuns.LOGGER.warn("minecraft:use_effects not found - handheld weapons will slow the player while firing");
+			return settings;
+		}
+		return applyFromJson(settings, type);
+	}
+
+	private static <T> Item.Settings applyFromJson(Item.Settings settings, ComponentType<T> type) {
+		return type.getCodecOrThrow().parse(JsonOps.INSTANCE, JsonParser.parseString(USE_EFFECTS_JSON))
+				.resultOrPartial(error -> TudursGuns.LOGGER.warn("Couldn't build minecraft:use_effects ({}) - handheld weapons will slow the player while firing", error))
+				.map(value -> settings.component(type, value))
+				.orElse(settings);
+	}
+}
