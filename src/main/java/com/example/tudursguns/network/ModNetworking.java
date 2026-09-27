@@ -114,7 +114,7 @@ public final class ModNetworking {
 	public static SyncHandheldDefinitionsPayload buildSyncPayload() {
 		List<SyncHandheldDefinitionsPayload.Entry> entries = new ArrayList<>();
 		for (Map.Entry<Identifier, HandheldDefinition> entry : HandheldDefinitions.server().entrySet()) {
-			HandheldDefinition.CODEC.encodeStart(JsonOps.INSTANCE, entry.getValue()).result().ifPresent(json ->
+			com.example.tudursguns.handheld.DefinitionSet.encodeForSync(HandheldDefinition.CODEC, entry.getValue(), "handheld", entry.getKey()).ifPresent(json ->
 					entries.add(new SyncHandheldDefinitionsPayload.Entry(entry.getKey(), json.toString(),
 							WeaponSummary.of(WeaponStatsLoader.get(entry.getValue().weapon())))));
 		}
@@ -124,7 +124,7 @@ public final class ModNetworking {
 	public static SyncAttachmentDefinitionsPayload buildAttachmentSyncPayload() {
 		List<SyncAttachmentDefinitionsPayload.Entry> entries = new ArrayList<>();
 		for (Map.Entry<Identifier, AttachmentDefinition> entry : HandheldDefinitions.serverAttachments().entrySet()) {
-			AttachmentDefinition.CODEC.encodeStart(JsonOps.INSTANCE, entry.getValue()).result().ifPresent(json ->
+			com.example.tudursguns.handheld.DefinitionSet.encodeForSync(AttachmentDefinition.CODEC, entry.getValue(), "attachment", entry.getKey()).ifPresent(json ->
 					entries.add(new SyncAttachmentDefinitionsPayload.Entry(entry.getKey(), json.toString())));
 		}
 		return new SyncAttachmentDefinitionsPayload(entries);
@@ -134,7 +134,7 @@ public final class ModNetworking {
 		List<SyncThrowableDefinitionsPayload.Entry> entries = new ArrayList<>();
 		for (Map.Entry<Identifier, ThrowableDefinition> entry : HandheldDefinitions.serverThrowables().entrySet()) {
 			WeaponStats stats = WeaponStatsLoader.get(entry.getValue().weapon());
-			ThrowableDefinition.CODEC.encodeStart(JsonOps.INSTANCE, entry.getValue()).result().ifPresent(json ->
+			com.example.tudursguns.handheld.DefinitionSet.encodeForSync(ThrowableDefinition.CODEC, entry.getValue(), "throwable", entry.getKey()).ifPresent(json ->
 					entries.add(new SyncThrowableDefinitionsPayload.Entry(entry.getKey(), json.toString(),
 							stats.displayName(), stats.gravity())));
 		}

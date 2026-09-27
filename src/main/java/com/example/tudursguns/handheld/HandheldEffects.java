@@ -40,11 +40,12 @@ public record HandheldEffects(Optional<MuzzleFlash> muzzleFlash, Optional<Ejecti
 			Ejection.MAGAZINE_CODEC.optionalFieldOf("magazine").forGetter(HandheldEffects::magazine)
 	).apply(instance, HandheldEffects::new));
 
-	/** false -> off, true -> on, an object -> as given. */
+	/** false -> off, true -> on, an object -> as given. Off is written back as false (the definitions
+	 * are re-encoded to be sent to clients). */
 	static <T> Codec<T> toggle(Codec<T> object, T on, T off) {
 		return Codec.either(Codec.BOOL, object).xmap(
 				either -> either.map(enabled -> enabled ? on : off, value -> value),
-				Either::right);
+				value -> value.equals(off) ? Either.left(false) : Either.right(value));
 	}
 
 
@@ -55,7 +56,7 @@ public record HandheldEffects(Optional<MuzzleFlash> muzzleFlash, Optional<Ejecti
 	public record MuzzleFlash(boolean enabled, float size, int color, int count, int smoke, float distance) {
 
 		public static final MuzzleFlash DEFAULT = new MuzzleFlash(true, 1.2f, 0xFFD27F, 3, 2, 0.1f);
-		public static final MuzzleFlash OFF = new MuzzleFlash(false, 0f, 0, 0, 0, 0f);
+		public static final MuzzleFlash OFF = new MuzzleFlash(false, DEFAULT.size, DEFAULT.color, 0, 0, 0f);
 
 		private static final Codec<MuzzleFlash> OBJECT = RecordCodecBuilder.create(instance -> instance.group(
 				Codec.BOOL.optionalFieldOf("enabled", true).forGetter(MuzzleFlash::enabled),
@@ -108,7 +109,7 @@ public record HandheldEffects(Optional<MuzzleFlash> muzzleFlash, Optional<Ejecti
 		public static final Ejection MAGAZINE = new Ejection(true, "magazine", Optional.empty(), Optional.empty(), 1f,
 				Optional.empty(), new Vector3f(0f, -0.02f, 0.02f), 0.01f, 0.05f, 0.15f, Trigger.RELOAD, 0, 1, 100);
 		public static final Ejection OFF = new Ejection(false, "rifle", Optional.empty(), Optional.empty(), 1f,
-				Optional.empty(), new Vector3f(), 0f, 0f, 0f, Trigger.FIRE, 0, 0, 0);
+				Optional.empty(), new Vector3f(), 0f, 0f, 0f, Trigger.FIRE, 0, 0, 1);
 
 		private static Codec<Ejection> object(Ejection defaults) {
 			return RecordCodecBuilder.create(instance -> instance.group(

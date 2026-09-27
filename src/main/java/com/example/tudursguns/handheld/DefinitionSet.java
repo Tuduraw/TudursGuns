@@ -76,10 +76,20 @@ public final class DefinitionSet<T> {
 		return this.clientNames.get(id);
 	}
 
+	/** A definition as JSON to send to clients. A definition that can't be written back (a value the
+	 * codec reads but won't write) is logged rather than silently left out of the sync. */
+	public static <T> java.util.Optional<com.google.gson.JsonElement> encodeForSync(com.mojang.serialization.Codec<T> codec, T value,
+			String kind, Identifier id) {
+		com.mojang.serialization.DataResult<com.google.gson.JsonElement> result = codec.encodeStart(JsonOps.INSTANCE, value);
+		result.error().ifPresent(error -> TudursGuns.LOGGER.error("Failed to encode {} definition '{}' for clients: {}",
+				kind, id, error.message()));
+		return result.result();
+	}
+
 	public SyncDefinitionsPayload buildPayload() {
 		List<SyncDefinitionsPayload.Entry> entries = new ArrayList<>();
 		for (Map.Entry<Identifier, T> entry : this.server.entrySet()) {
-			this.codec.encodeStart(JsonOps.INSTANCE, entry.getValue()).result().ifPresent(json ->
+			encodeForSync(this.codec, entry.getValue(), this.kind, entry.getKey()).ifPresent(json ->
 					entries.add(new SyncDefinitionsPayload.Entry(entry.getKey(), json.toString(),
 							this.displayName.apply(entry.getKey(), entry.getValue()))));
 		}
