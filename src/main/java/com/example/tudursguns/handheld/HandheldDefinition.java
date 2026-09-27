@@ -103,7 +103,11 @@ public record HandheldDefinition(
 	 * screen centre, eye_distance blocks in front of the eye. Arms, if given, are placed in model
 	 * space (so they follow the weapon between the two poses).
 	 * third_person_aiming, if set, replaces the third-person display transform while the holder is
-	 * aiming (the raised two-handed pose); by default the ordinary one is used for both poses. */
+	 * aiming (the raised two-handed pose); by default the ordinary one is used for both poses.
+	 * sprint_translation/sprint_rotation: the first-person pose while sprinting (camera space, like
+	 * hip_translation/hip_rotation) - by default carried across the body, muzzle to the left and down.
+	 * third_person_sprinting, if set, replaces the third-person display transform while sprinting
+	 * (the arms are put in a cross-body carry either way). */
 	public record AimSettings(
 			Vector3f sightPosition,
 			float eyeDistance,
@@ -112,7 +116,10 @@ public record HandheldDefinition(
 			Vector3f hipRotation,
 			Optional<DisplayTransform> rightArm,
 			Optional<DisplayTransform> leftArm,
-			Optional<DisplayTransform> thirdPersonAiming
+			Optional<DisplayTransform> thirdPersonAiming,
+		Vector3f sprintTranslation,
+		Vector3f sprintRotation,
+		Optional<DisplayTransform> thirdPersonSprinting
 	) {
 
 		public static final Codec<AimSettings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -123,7 +130,10 @@ public record HandheldDefinition(
 				VECTOR_3F.optionalFieldOf("hip_rotation", new Vector3f()).forGetter(AimSettings::hipRotation),
 				DisplayTransform.CODEC.optionalFieldOf("right_arm").forGetter(AimSettings::rightArm),
 				DisplayTransform.CODEC.optionalFieldOf("left_arm").forGetter(AimSettings::leftArm),
-				DisplayTransform.CODEC.optionalFieldOf("third_person_aiming").forGetter(AimSettings::thirdPersonAiming)
+				DisplayTransform.CODEC.optionalFieldOf("third_person_aiming").forGetter(AimSettings::thirdPersonAiming),
+				VECTOR_3F.optionalFieldOf("sprint_translation", new Vector3f(0.1f, -0.36f, -0.42f)).forGetter(AimSettings::sprintTranslation),
+				VECTOR_3F.optionalFieldOf("sprint_rotation", new Vector3f(-20f, 60f, 20f)).forGetter(AimSettings::sprintRotation),
+				DisplayTransform.CODEC.optionalFieldOf("third_person_sprinting").forGetter(AimSettings::thirdPersonSprinting)
 		).apply(instance, AimSettings::new));
 	}
 

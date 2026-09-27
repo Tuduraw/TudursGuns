@@ -41,14 +41,15 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 
 	/** What the renderer needs from the stack. raised: the entity holding it is in the aiming pose
 	 * (only meaningful for third-person contexts - see AimRenderState.ENTITY_BEING_UPDATED_AIMS). */
-	public record Data(Identifier weaponId, Map<String, Identifier> fitted, boolean raised) {
+	public record Data(Identifier weaponId, Map<String, Identifier> fitted, boolean raised, boolean sprintCarry) {
 	}
 
 	@Override
 	public Data getData(ItemStack stack) {
 		Identifier weaponId = stack.get(ModComponents.WEAPON);
 		return weaponId == null ? null
-				: new Data(weaponId, WeaponModifiers.fitted(stack), AimRenderState.entityBeingUpdatedAims());
+				: new Data(weaponId, WeaponModifiers.fitted(stack), AimRenderState.entityBeingUpdatedAims(),
+						AimRenderState.entityBeingUpdatedSprintCarries());
 	}
 
 	@Override
@@ -72,6 +73,8 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 		// arm comes up); third_person_aiming is there for a model that does need one.
 		if (data.raised() && isThirdPersonHand(displayContext)) {
 			transform = def.aim().flatMap(HandheldDefinition.AimSettings::thirdPersonAiming).orElse(transform);
+		} else if (data.sprintCarry() && isThirdPersonHand(displayContext)) {
+			transform = def.aim().flatMap(HandheldDefinition.AimSettings::thirdPersonSprinting).orElse(transform);
 		}
 		matrices.push();
 		WeaponModelDrawer.applyTransform(matrices, transform);
@@ -117,6 +120,24 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 		}
 		Quaternionf hipQuaternion = new Quaternionf().rotationXYZ(
 				(float) Math.toRadians(hipRotation.x), (float) Math.toRadians(hipRotation.y), (float) Math.toRadians(hipRotation.z));
+
+		// Sprinting: the weapon swings across the body (mirrored for the left hand like the hip pose).
+		// Blended in from the hip pose; aiming always wins, as it ends the sprint.
+		float s = AimController.sprintProgress(client.getRenderTickCounter().getTickProgress(true));
+		if (s > 0f) {
+			float sprintEased = s * s * (3f - 2f * s);
+			Vector3f sprintTranslation = new Vector3f(aim.sprintTranslation()).add(TudursGunsClientConfig.hipOffset());
+			Vector3f sprintRotation = new Vector3f(aim.sprintRotation());
+			if (leftHanded) {
+				sprintTranslation.x = -sprintTranslation.x;
+				sprintRotation.y = -sprintRotation.y;
+				sprintRotation.z = -sprintRotation.z;
+			}
+			Quaternionf sprintQuaternion = new Quaternionf().rotationXYZ((float) Math.toRadians(sprintRotation.x),
+					(float) Math.toRadians(sprintRotation.y), (float) Math.toRadians(sprintRotation.z));
+			hipTranslation.lerp(sprintTranslation, sprintEased);
+			hipQuaternion.slerp(sprintQuaternion, sprintEased);
+		}
 
 		// Aiming: no rotation (the model's barrel already points down -Z, the view direction), placed
 		// so the sight is eye_distance straight ahead of the eye - i.e. on the screen centre.

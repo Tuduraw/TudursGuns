@@ -39,6 +39,8 @@ public final class AimController {
 	private static boolean scoped;
 	private static float progress;
 	private static float previousProgress;
+	private static float sprintProgress;
+	private static float previousSprintProgress;
 	private static boolean lastSentAimKey;
 	private static Identifier scopeId;
 	private static AttachmentDefinition.Zoom scopeZoom;
@@ -67,6 +69,8 @@ public final class AimController {
 		scoped = false;
 		progress = 0f;
 		previousProgress = 0f;
+		sprintProgress = 0f;
+		previousSprintProgress = 0f;
 		lastSentAimKey = false;
 	}
 
@@ -90,6 +94,17 @@ public final class AimController {
 	/** The current view has a rangefinder readout. */
 	public static boolean hasRangefinder() {
 		return scoped && rangefinder;
+	}
+
+	/** 0 = not sprinting, 1 = fully in the sprint carry pose; interpolated for the frame. */
+	public static float sprintProgress(float tickProgress) {
+		return previousSprintProgress + (sprintProgress - previousSprintProgress) * tickProgress;
+	}
+
+	/** Whether this player carries their weapon in the sprint pose (sprinting with a weapon in the main
+	 * hand, not aiming). Other players' sprinting is synced by vanilla. */
+	public static boolean isSprintCarrying(PlayerEntity player) {
+		return player.isSprinting() && player.getVehicle() == null && isWeapon(player.getMainHandStack()) && !isAiming(player);
 	}
 
 	/** 0 = lowered at the hip, 1 = fully raised; interpolated for the frame. */
@@ -138,6 +153,7 @@ public final class AimController {
 	public static void tick(MinecraftClient client) {
 		PlayerEntity player = client.player;
 		previousProgress = progress;
+		previousSprintProgress = sprintProgress;
 		if (player == null) {
 			aiming = false;
 			scoped = false;
@@ -150,6 +166,11 @@ public final class AimController {
 		boolean aimKeyDown = available && client.currentScreen == null && isAimKeyDown(client);
 		boolean usingWeapon = available && player.isUsingItem() && player.getActiveHand() == Hand.MAIN_HAND;
 		aiming = aimKeyDown || usingWeapon;
+		// Raising the weapon ends a sprint (ClientPlayerEntityMixin also stops a new one starting while
+		// aiming); the sprint state is sent to the server by vanilla as usual.
+		if (aiming && player.isSprinting()) {
+			player.setSprinting(false);
+		}
 
 		WeaponModifiers modifiers = weapon
 				? WeaponModifiers.of(main, HandheldDefinitions.getAny(main.get(ModComponents.WEAPON)))
@@ -190,6 +211,8 @@ public final class AimController {
 
 		float step = 1f / TudursGunsClientConfig.aimTransitionTicks();
 		progress = Math.max(0f, Math.min(1f, progress + (aiming ? step : -step)));
+		boolean sprintCarry = available && !aiming && player.isSprinting();
+		sprintProgress = Math.max(0f, Math.min(1f, sprintProgress + (sprintCarry ? step : -step)));
 
 		// Other players only need the aim KEY; aiming with use is visible to them already. Also sent
 		// while holding a throwable: the server uses it to decide on an underhand throw.

@@ -20,11 +20,14 @@ public abstract class LivingEntityRendererAimMixin {
 	@Inject(method = "updateRenderState(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;F)V", at = @At("HEAD"))
 	private void tudursguns$beginEntity(LivingEntity entity, LivingEntityRenderState state, float tickProgress, CallbackInfo ci) {
 		AimRenderState.setEntityBeingUpdatedAims(entity instanceof PlayerEntity player && AimController.isAiming(player));
+		AimRenderState.setEntityBeingUpdatedSprintCarries(entity instanceof PlayerEntity player && AimController.isSprintCarrying(player));
 	}
 
 	@Inject(method = "updateRenderState(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;F)V", at = @At("TAIL"))
 	private void tudursguns$markAiming(LivingEntity entity, LivingEntityRenderState state, float tickProgress, CallbackInfo ci) {
 		boolean aiming = entity instanceof PlayerEntity player && AimController.isAiming(player);
 		state.setData(AimRenderState.AIMING, aiming ? Boolean.TRUE : null);
+		boolean sprintCarry = entity instanceof PlayerEntity player && AimController.isSprintCarrying(player);
+		state.setData(AimRenderState.SPRINT_CARRY, sprintCarry ? Boolean.TRUE : null);
 	}
 }

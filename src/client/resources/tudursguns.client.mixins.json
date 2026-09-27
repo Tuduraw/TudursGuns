@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "BipedEntityModelAimMixin",
+    "ClientPlayerEntitySprintMixin",
     "EntityLookSensitivityMixin",
     "FirstPersonBaseMixin",
     "GameRendererAccessor",
