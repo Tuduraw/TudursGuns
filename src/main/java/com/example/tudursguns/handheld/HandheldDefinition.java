@@ -113,13 +113,19 @@ public record HandheldDefinition(
 		return this.presentation.reloadSound();
 	}
 
-	/** "hud" and "reload_sound" - read from the definition's own JSON object (grouped only to keep the
-	 * record within the codec builder's field limit). */
-	public record Presentation(Optional<String> hud, Optional<String> reloadSound) {
+	/** Muzzle flash, thrown-out cartridges and magazines (the "effects" key - see HandheldEffects). */
+	public HandheldEffects effects() {
+		return this.presentation.effects();
+	}
+
+	/** "hud", "reload_sound" and "effects" - read from the definition's own JSON object (grouped only
+	 * to keep the record within the codec builder's field limit). */
+	public record Presentation(Optional<String> hud, Optional<String> reloadSound, HandheldEffects effects) {
 
 		public static final com.mojang.serialization.MapCodec<Presentation> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
 				Codec.STRING.optionalFieldOf("hud").forGetter(Presentation::hud),
-				Codec.STRING.optionalFieldOf("reload_sound").forGetter(Presentation::reloadSound)
+				Codec.STRING.optionalFieldOf("reload_sound").forGetter(Presentation::reloadSound),
+				HandheldEffects.CODEC.optionalFieldOf("effects", HandheldEffects.AUTO).forGetter(Presentation::effects)
 		).apply(instance, Presentation::new));
 	}
 

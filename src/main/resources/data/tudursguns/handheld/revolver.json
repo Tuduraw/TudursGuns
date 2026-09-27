@@ -364,5 +364,18 @@
         ]
       }
     }
+  },
+  "effects": {
+    "cartridge": {
+      "type": "pistol",
+      "on": "reload",
+      "count": 0,
+      "velocity": [
+        0.0,
+        -0.08,
+        0.0
+      ]
+    },
+    "magazine": false
   }
 }

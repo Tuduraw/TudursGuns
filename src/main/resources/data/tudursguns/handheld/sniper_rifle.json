@@ -427,5 +427,11 @@
         ]
       }
     }
+  },
+  "effects": {
+    "cartridge": {
+      "delay": 12
+    },
+    "magazine": false
   }
 }

@@ -369,5 +369,11 @@
         ]
       }
     }
+  },
+  "effects": {
+    "cartridge": {
+      "delay": 10
+    },
+    "magazine": false
   }
 }

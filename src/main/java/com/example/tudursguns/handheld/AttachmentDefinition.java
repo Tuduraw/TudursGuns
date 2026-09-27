@@ -30,7 +30,7 @@ public record AttachmentDefinition(
 		Optional<Zoom> zoom,
 		Optional<Underbarrel> underbarrel,
 		HeldMovement movement,
-		float recoilMultiplier
+		Tuning tuning
 ) {
 
 	public static final Codec<AttachmentDefinition> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -49,8 +49,27 @@ public record AttachmentDefinition(
 			Zoom.CODEC.optionalFieldOf("zoom").forGetter(AttachmentDefinition::zoom),
 			Underbarrel.CODEC.optionalFieldOf("underbarrel").forGetter(AttachmentDefinition::underbarrel),
 			HeldMovement.MAP_CODEC.forGetter(AttachmentDefinition::movement),
-			Codec.floatRange(0f, 100f).optionalFieldOf("recoil_multiplier", 1f).forGetter(AttachmentDefinition::recoilMultiplier)
+			Tuning.MAP_CODEC.forGetter(AttachmentDefinition::tuning)
 	).apply(instance, AttachmentDefinition::new));
+
+	public float recoilMultiplier() {
+		return this.tuning.recoilMultiplier();
+	}
+
+	public float muzzleFlashMultiplier() {
+		return this.tuning.muzzleFlashMultiplier();
+	}
+
+	/** "recoil_multiplier" and "muzzle_flash_multiplier" (the flash's size - 0 hides it, as a
+	 * suppressor does) - read from the attachment's own JSON object (grouped only to keep the record
+	 * within the codec builder's field limit). */
+	public record Tuning(float recoilMultiplier, float muzzleFlashMultiplier) {
+
+		public static final com.mojang.serialization.MapCodec<Tuning> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+				Codec.floatRange(0f, 100f).optionalFieldOf("recoil_multiplier", 1f).forGetter(Tuning::recoilMultiplier),
+				Codec.floatRange(0f, 100f).optionalFieldOf("muzzle_flash_multiplier", 1f).forGetter(Tuning::muzzleFlashMultiplier)
+		).apply(instance, Tuning::new));
+	}
 
 	/** A second weapon under the barrel (a grenade launcher): the weapon it's fitted to can switch
 	 * between its own fire and this one (the underbarrel switch key). It has its own weapon file,

@@ -105,6 +105,9 @@ HMG の標準の音(`handmadeguns.fireRifle` など)は HMG 本体に入って�
 | `GunSound`(1つ目・2つ目)、`GunSoundReload`、`GunSoundCooking` | 発砲音、サプレッサー装着時の音、リロード音、コッキング音(射撃の動作の中で鳴らす) |
 | `Magazine`、`MultiMagazine` | パック内のマガジンなら、その弾薬アイテム。なければ `--default-ammo` |
 | `Canlock`、`Induction_precision` | 対戦車ミサイル(ロックオン)、旋回性能 |
+| `MuzzleFlash` | マズルフラッシュ(`false` なら `effects.muzzle_flash: false`) |
+| `Cartridge`、`CartridgeType`、`CartCount`、`DropCartridgeEndCocked`、`BulletNameCart` | 薬莢の排出(`effects.cartridge`)。種類は収録の模型(1 小銃、2 拳銃、3 散弾、4 擲弾、5 マガジン)、`BulletNameCart` があればその模型。コッキング終了時の排莢は `CockingTime` 後に出す |
+| `DropMagazine`、`MagType`、`MagCount`、`BulletNameMAG` | リロード時のマガジンの排出(`effects.magazine`)。種類の番号は `CartridgeType` と同じ |
 | `ObjModel`、`ObjTexture`、`ModelScala` | 模型とテクスチャ |
 | `BulletNameNormal`、`BulletNameALL` | 弾の模型(`bullets/` の定義から) |
 
@@ -132,7 +135,7 @@ HMG のパーツレンダー(`AddParts`)を、Tudur's Guns のモーション(`a
 | HMG | Tudur's Guns |
 |---|---|
 | `SCOPE`、`RedDot`、`Model_Sight` | スコープ(`Zoom`、`ScopeTexture`) |
-| `Suppressor` | 発砲音の変更と音量 0.3倍。銃の `GunSound` の2つ目があれば、その銃ではその音 |
+| `Suppressor` | 発砲音の変更と音量 0.3倍、マズルフラッシュなし。銃の `GunSound` の2つ目があれば、その銃ではその音 |
 | `Grip`、`Model_Grip` | 拡散(`AntiBure`)とリコイル(`AntiRecoil`)の倍率 |
 | `Laser`、`Light` | 見た目のみ |
 | `Magazine`、`CustomMagazine` | 弾薬アイテム(`data/<ns>/ammo/`)。`BulletRound` が1個あたりの弾数 |
@@ -154,7 +157,8 @@ HMG のパーツレンダー(`AddParts`)を、Tudur's Guns のモーション(`a
 - **位置合わせ:** 一人称・三人称・構えたときの位置(`ModelEquipped`、`ModelHigh`、`ModelRotation*`、腕の位置など)は、HMG と表示の仕組みが違うため変換せず、模型の大きさと Tudur's Guns のサンプル銃の値から計算します。
 - **弾の挙動:** 跳弾、ノックバック、可変拡散。
 - **設置とアンダーバレル:** 依託射撃・設置(タレット)、アンダーバレルへの銃の取り付け。
-- **見た目の演出:** 薬莢・マガジンの排出、マズルフラッシュ、曳光弾。
+- **見た目の演出:** マズルフラッシュの画像(`CustomFlash`。色付きの粒子で表示します)、曳光弾。
+- 薬莢・マガジン・マズルフラッシュの項目がない銃は、Tudur's Guns の既定になります(銃なら、撃つたびに薬莢、リロードでマガジン)。
 - **その他:** スクリプト(`addscripts/`、`RendeScript`、`GunScript`)、ノーマルレンダーの動き(`Mat22`〜`Mat32`)、発射レートの切替、クリエイティブタブ、GVC(ゲリラ)連携、素材アイテム(`SimpleMaterial`)。
 
 ## 模型の変換

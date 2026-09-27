@@ -103,9 +103,7 @@ _UNSUPPORTED_GROUPS = [
     ("クロスヘアの表示切替は未対応", ["rendercross", "renderhmgcross"]),
     ("スコープの暗視は未対応(暗視ゴーグルの防具で代替)", ["nightvision"]),
     ("ズーム時の描画切替は未対応", ["zoomrendertype", "zoomrendertypetxture"]),
-    ("薬莢・マガジンの排出(見た目)は未対応", ["cartridgetype", "cartridge", "cartcount", "magtype", "magcount",
-                                          "dropmagazine", "dropcartridgeendcocked"]),
-    ("マズルフラッシュは未対応", ["muzzleflash", "customflash"]),
+    ("マズルフラッシュの画像の変更は未対応(色付きの粒子で表示)", ["customflash"]),
     ("JavaScript のスクリプトは未対応", ["rendescript", "gunscript"]),
     ("GVC(ゲリラ・連邦軍)との連携は対象外", ["guerrila_cant_use_this", "dont_be_inside_root_chest",
                                           "soldier_cant_storage_this", "class"]),
@@ -151,7 +149,12 @@ USED_GUN_KEYS = {
     "perfireround", "muzzlejump", "attachrestriction", "allowattach", "sightsetpoint", "sightattachrotation",
     "lightsetpoint", "lightsetangle", "muzzlesetpoint", "gripsetpoint", "canlock", "canlockentity", "guntype",
     "automatic", "canobj", "bulletnameall", "bulletnamenormal",
+    "cartridge", "cartridgetype", "cartcount", "dropcartridgeendcocked", "bulletnamecart",
+    "dropmagazine", "magtype", "magcount", "bulletnamemag", "muzzleflash",
 }
+
+#: HMG CartridgeType / MagType -> Tudur's Guns built-in thrown-out model.
+EJECT_TYPES = {1: "rifle", 2: "pistol", 3: "shotgun", 4: "large", 5: "magazine"}
 
 
 # --------------------------------------------------------------------------- small helpers
@@ -869,6 +872,10 @@ class Converter:
             definition["icon"] = icon
             converted.append("Texture → インベントリのアイコン")
 
+        effects = self.effects(gun, cocking_time, notes, converted)
+        if effects:
+            definition["effects"] = effects
+
         # ---- parts / motions
         if frame is not None:
             animation = self.animation(gun, frame, rounds, cocking_time, reload_ticks=int(gun.f("reloadtime", 40)),
@@ -903,11 +910,52 @@ class Converter:
                 dropped.append(f"パーツ `{part.name}` の `{flag}`: 未対応(常に表示)")
         self.report.append(("銃", gun.file, f"{self.ns}:{gun_id}", converted, approximated, dropped, notes))
 
+    def effects(self, gun, cocking_time, notes, converted):
+        """MuzzleFlash, Cartridge (CartridgeType, CartCount, DropCartridgeEndCocked, BulletNameCart) and
+        DropMagazine (MagType, MagCount, BulletNameMAG) -> "effects". Keys the gun doesn't have are left
+        to Tudur's Guns' defaults for the weapon type."""
+        effects = {}
+        if gun.has("muzzleflash"):
+            if not gun.b("muzzleflash", True):
+                effects["muzzle_flash"] = False
+            converted.append("MuzzleFlash → マズルフラッシュ")
+        for flag, type_key, count_key, model_key, name, default_type in (
+                ("cartridge", "cartridgetype", "cartcount", "bulletnamecart", "cartridge", 1),
+                ("dropmagazine", "magtype", "magcount", "bulletnamemag", "magazine", 5)):
+            if not gun.has(flag):
+                continue
+            label = {"cartridge": "Cartridge", "dropmagazine": "DropMagazine"}[flag]
+            if not gun.b(flag):
+                effects[name] = False
+                converted.append(f"{label} → {name}: false")
+                continue
+            ejection = {"type": EJECT_TYPES.get(int(gun.f(type_key, default_type)), EJECT_TYPES[default_type])}
+            if name == "magazine" or ejection["type"] == "magazine":
+                ejection["on"] = "reload" if name == "magazine" else "fire"
+            if gun.has(count_key) and int(gun.f(count_key, 1)) > 1:
+                ejection["count"] = int(gun.f(count_key, 1))
+            if name == "cartridge" and gun.b("dropcartridgeendcocked") and cocking_time > 0:
+                ejection["delay"] = int(round(self.args.cock_delay + cocking_time))
+            model_name = gun.get(model_key)
+            if model_name:
+                bullet = self.bullet_asset(model_name, notes)
+                if bullet:
+                    ejection["model"] = f"{self.ns}:models/obj/bullet_{bullet}.obj"
+                    ejection["texture"] = f"{self.ns}:textures/vehicle/bullet_{bullet}.png"
+            effects[name] = ejection
+            converted.append(f"{label} → {name}(薬莢・マガジンの排出)")
+        return effects
+
     def bullet_model(self, gun, notes):
         for key in ("bulletnamenormal", "bulletnameall"):
             name = gun.get(key)
-            if not name:
-                continue
+            if name:
+                return self.bullet_asset(name, notes)
+        return None
+
+    def bullet_asset(self, name, notes):
+        """A bullets/ type's model, converted to models/obj/bullet_<slug>.obj (texture alongside)."""
+        if name:
             props = self.bullet_types.get(name.lower())
             if not props:
                 notes.append(f"弾頭種類 `{name}` が bullets/ にありません")
@@ -1132,6 +1180,7 @@ class Converter:
         elif att.kind == "suppressor":
             definition["sound_override"] = "tg_suppressed_shot"
             definition["sound_volume_multiplier"] = 0.3
+            definition["muzzle_flash_multiplier"] = 0
             converted.append("サプレッサー → 発砲音の変更(銃ごとの GunSound の2つ目があればそれを使用)と音量 0.3倍")
         elif att.kind == "grip":
             anti_spread = att.f("antibure", att.f("antispread", 0.0))

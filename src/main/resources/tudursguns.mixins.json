@@ -5,7 +5,9 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "AbstractVehicleEntityAccessor",
-    "LivingEntityArmorMixin"
+    "LivingEntityArmorMixin",
+    "EntityCosmeticSaveMixin",
+    "VehicleProjectileMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -3,6 +3,7 @@ package com.example.tudursguns.weapon;
 import com.example.tudursguns.handheld.AttachmentDefinition;
 import com.example.tudursguns.handheld.HandheldDefinition;
 import com.example.tudursguns.handheld.HandheldDefinitions;
+import com.example.tudursguns.handheld.HandheldEffects;
 import com.example.tudursguns.registry.ModComponents;
 import com.example.tudursvehiclemod.asset.WeaponStats;
 import com.example.tudursvehiclemod.asset.WeaponStatsLoader;
@@ -18,6 +19,10 @@ import java.util.Map;
  * loaded rounds live in their own component (ALT_AMMO). */
 public record Firing(HandheldDefinition definition, WeaponStats stats, boolean underbarrel) {
 
+	/** An underbarrel launcher flashes, but throws nothing out (its case comes out by hand on reload). */
+	private static final HandheldEffects LAUNCHER_EFFECTS = new HandheldEffects(java.util.Optional.empty(),
+			java.util.Optional.of(HandheldEffects.Ejection.OFF), java.util.Optional.of(HandheldEffects.Ejection.OFF));
+
 	public static Firing of(ItemStack stack, HandheldDefinition base) {
 		if (stack.getOrDefault(ModComponents.ALT_SELECTED, false)) {
 			AttachmentDefinition.Underbarrel launcher = underbarrel(stack, base);
@@ -25,7 +30,7 @@ public record Firing(HandheldDefinition definition, WeaponStats stats, boolean u
 				HandheldDefinition def = new HandheldDefinition(launcher.weapon(), base.displayName(), base.model(), base.texture(),
 						launcher.projectileItem(), launcher.ammoItem(), launcher.roundsPerAmmoItem(), HandheldDefinition.FireMode.SEMI,
 						launcher.muzzleOffset().orElse(base.muzzleOffset()), base.inheritShooterVelocity(),
-						new HandheldDefinition.Presentation(base.hud(), launcher.reloadSound()),
+						new HandheldDefinition.Presentation(base.hud(), launcher.reloadSound(), LAUNCHER_EFFECTS),
 						base.display(), base.aim(), Map.of(), base.handling().withoutAmmo(), base.animation());
 				return new Firing(def, WeaponStatsLoader.get(launcher.weapon()), true);
 			}

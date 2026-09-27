@@ -26,10 +26,11 @@ public record WeaponModifiers(
 		Identifier zoomAttachment,
 		AttachmentDefinition.Zoom zoom,
 		Vector3f sightOverride,
-		float recoilMultiplier
+		float recoilMultiplier,
+		float muzzleFlashMultiplier
 ) {
 
-	public static final WeaponModifiers NONE = new WeaponModifiers(1f, 0, 1f, Optional.empty(), 1f, 1f, 1f, 0f, null, null, null, 1f);
+	public static final WeaponModifiers NONE = new WeaponModifiers(1f, 0, 1f, Optional.empty(), 1f, 1f, 1f, 0f, null, null, null, 1f, 1f);
 
 	public static Map<String, Identifier> fitted(ItemStack stack) {
 		return stack.getOrDefault(ModComponents.ATTACHMENTS, Map.of());
@@ -52,6 +53,7 @@ public record WeaponModifiers(
 		AttachmentDefinition.Zoom zoom = null;
 		Vector3f sightOverride = null;
 		float recoilMultiplier = 1f;
+		float muzzleFlashMultiplier = 1f;
 		for (String slot : def.attachmentSlotNames()) {
 			Identifier attachmentId = fitted.get(slot);
 			HandheldDefinition.AttachmentMount mount = attachmentId == null ? null : def.mountFor(slot, attachmentId);
@@ -72,6 +74,7 @@ public record WeaponModifiers(
 			accuracyMultiplier *= attachment.accuracyMultiplier();
 			meleeDamageBonus += attachment.meleeDamageBonus();
 			recoilMultiplier *= attachment.recoilMultiplier();
+			muzzleFlashMultiplier *= attachment.muzzleFlashMultiplier();
 			if (zoom == null && attachment.zoom().isPresent()) {
 				zoom = attachment.zoom().get();
 				zoomAttachment = attachmentId;
@@ -81,7 +84,8 @@ public record WeaponModifiers(
 			}
 		}
 		return new WeaponModifiers(magazineMultiplier, magazineBonus, reloadMultiplier, soundOverride, volumeMultiplier,
-				pitchMultiplier, accuracyMultiplier, meleeDamageBonus, zoomAttachment, zoom, sightOverride, recoilMultiplier);
+				pitchMultiplier, accuracyMultiplier, meleeDamageBonus, zoomAttachment, zoom, sightOverride, recoilMultiplier,
+				muzzleFlashMultiplier);
 	}
 
 	/** The weapon file's Round adjusted by attachments. 0 (no magazine) stays 0. */

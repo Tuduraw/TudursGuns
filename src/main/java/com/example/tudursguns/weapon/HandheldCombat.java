@@ -127,6 +127,7 @@ public final class HandheldCombat {
 		for (int pellet = 0; pellet < def.handling().pellets(); pellet++) {
 			spawnProjectile(world, player, def, stats, mode, spawnPos, spreadDegrees, lockTarget);
 		}
+		FiringEffects.onFire(player, hand, def, stats, modifiers, spawnPos);
 
 		NEXT_FIRE_TIME.put(player.getUuid(), now + Math.max(1, stats.cooldownTicks()));
 		stack.set(ModComponents.COOLDOWN_UNTIL, now + Math.max(1, stats.cooldownTicks()));
@@ -269,6 +270,7 @@ public final class HandheldCombat {
 		}
 		long now = player.getEntityWorld().getTime();
 		int reloadTicks = modifiers.reloadTicks(stats.reloadTicks());
+		FiringEffects.onReload(player, stack, def, stats, magazineSize - stack.getOrDefault(Firing.ammoComponent(stack), 0));
 		stack.set(ModComponents.RELOAD_UNTIL, now + reloadTicks);
 		WeaponAnimationEvents.trigger(player, stack, player.getEntityWorld(),
 				WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.RELOAD), reloadTicks);

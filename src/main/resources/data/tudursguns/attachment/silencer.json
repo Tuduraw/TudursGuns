@@ -4,6 +4,7 @@
   "texture": "tudursguns:textures/handheld/weapons.png",
   "sound_override": "tg_suppressed_shot",
   "sound_volume_multiplier": 0.25,
+  "muzzle_flash_multiplier": 0,
   "display": {
     "gui": {
       "translation": [
