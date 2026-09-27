@@ -167,5 +167,202 @@
         1.6
       ]
     }
+  },
+  "animation": {
+    "parts": {
+      "root": {
+        "pivot": [
+          0,
+          -0.07,
+          0.05
+        ]
+      },
+      "hammer": {
+        "groups": [
+          "hammer"
+        ],
+        "pivot": [
+          0,
+          0.07,
+          0.065
+        ]
+      },
+      "cylinder": {
+        "groups": [
+          "cylinder"
+        ],
+        "pivot": [
+          0,
+          0.035,
+          0
+        ]
+      }
+    },
+    "sequences": {
+      "fire": {
+        "tracks": [
+          {
+            "part": "hammer",
+            "keyframes": [
+              {
+                "tick": 0,
+                "rotation": [
+                  35,
+                  0,
+                  0
+                ],
+                "easing": "step"
+              },
+              {
+                "tick": 1,
+                "rotation": [
+                  0,
+                  0,
+                  0
+                ],
+                "easing": "linear"
+              }
+            ]
+          },
+          {
+            "part": "root",
+            "keyframes": [
+              {
+                "tick": 1,
+                "rotation": [
+                  10,
+                  0,
+                  0
+                ],
+                "easing": "ease_out"
+              },
+              {
+                "tick": 6,
+                "rotation": [
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "empty": {
+        "tracks": [
+          {
+            "part": "hammer",
+            "keyframes": [
+              {
+                "tick": 2,
+                "rotation": [
+                  35,
+                  0,
+                  0
+                ]
+              },
+              {
+                "tick": 3,
+                "rotation": [
+                  0,
+                  0,
+                  0
+                ],
+                "easing": "linear"
+              }
+            ]
+          }
+        ]
+      },
+      "reload": {
+        "fit_to_event": true,
+        "tracks": [
+          {
+            "part": "root",
+            "keyframes": [
+              {
+                "tick": 6,
+                "translation": [
+                  -0.03,
+                  0.02,
+                  0
+                ],
+                "rotation": [
+                  0,
+                  0,
+                  -40
+                ]
+              },
+              {
+                "tick": 34,
+                "translation": [
+                  -0.03,
+                  0.02,
+                  0
+                ],
+                "rotation": [
+                  0,
+                  0,
+                  -40
+                ]
+              },
+              {
+                "tick": 40
+              }
+            ]
+          },
+          {
+            "part": "cylinder",
+            "keyframes": [
+              {
+                "tick": 6
+              },
+              {
+                "tick": 10,
+                "translation": [
+                  -0.07,
+                  0,
+                  0
+                ]
+              },
+              {
+                "tick": 30,
+                "translation": [
+                  -0.07,
+                  0,
+                  0
+                ]
+              },
+              {
+                "tick": 34,
+                "translation": [
+                  0,
+                  0,
+                  0
+                ],
+                "easing": "ease_in"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "counters": {
+      "chamber": {
+        "on": "fire",
+        "add": 1,
+        "modulo": 6,
+        "reset_on": [
+          "reload"
+        ],
+        "ticks": 3,
+        "part": "cylinder",
+        "rotation_per_step": [
+          0,
+          0,
+          60
+        ]
+      }
+    }
   }
 }

@@ -273,6 +273,68 @@
 
 すべて省略すると(`{}`)、見た目の変化はなく効果だけが付きます(サンプルのリボルバーのラピッドローダー)。
 
+#### モーション(`animation`)
+
+撃鉄・ボルト・弾倉などの部品や、武器全体を動かせます。見た目だけで、射撃の性能には影響しません。
+
+```json
+"animation": {
+  "parts": {
+    "root":     {"pivot": [0, -0.07, 0.05]},
+    "hammer":   {"groups": ["hammer"],   "parent": "root", "pivot": [0, 0.07, 0.065]},
+    "cylinder": {"groups": ["cylinder"], "pivot": [0, 0.035, 0]}
+  },
+  "sequences": {
+    "fire": {"tracks": [
+      {"part": "hammer", "keyframes": [
+        {"tick": 0, "rotation": [35, 0, 0], "easing": "step"},
+        {"tick": 1, "rotation": [0, 0, 0], "easing": "linear"}]},
+      {"part": "root", "keyframes": [
+        {"tick": 1, "rotation": [10, 0, 0], "easing": "ease_out"},
+        {"tick": 6}]}
+    ]},
+    "reload": {"fit_to_event": true, "tracks": [ ... ]}
+  },
+  "counters": {
+    "chamber": {"on": "fire", "add": 1, "modulo": 6, "reset_on": ["reload"], "ticks": 3,
+                "part": "cylinder", "rotation_per_step": [0, 0, 60]}
+  }
+}
+```
+
+- **部品(`parts`)**
+  - `groups`: その部品になる OBJ のグループ名。
+  - `parent`: 親の部品(既定は `root`)。子の部品は親と一緒に動き、その上で自分の動きをします。撃鉄を本体の子にする、といった親子関係を何段でも作れます。
+  - `pivot`: 回転の中心(モデルの座標)。
+  - `root` は武器全体です(どの部品にも入っていないグループ)。`root` を動かすと全体が動き、一人称では腕も一緒に動きます。`root` の回転の中心も `parts` の `root` で指定できます。
+  - 一人称の腕は、`right_arm` / `left_arm` という部品として動かせます(`root` の子)。
+  - アタッチメントの別モデルは、取り付け位置(`accepts` の中)の `part` で、どの部品と一緒に動くかを指定できます(既定は `root`)。
+- **動作(`sequences`)**
+  - 名前が、動作を始めるきっかけ(下の表)です。
+  - `tracks` は部品ごとの動きで、`keyframes` に「きっかけから何 tick 後に、元の位置からどれだけ動いているか」(`translation` はブロック単位、`rotation` は度。X→Y→Z の順)を並べます。
+  - キーフレームの間は補間します(`easing`: `smooth`(既定)・`linear`・`ease_in`・`ease_out`・`step`。そのキーフレームに向かう動きに使います)。
+  - 最初のキーフレームより前は元の位置から始まり、最後のキーフレームを過ぎると、そのトラックは効果がなくなります。「引いてから戻す」は、元の位置→引いた位置→元の位置 と並べます。途中で止めておくなら同じ値のキーフレームを2つ置きます。
+  - `fit_to_event: true` にすると、動作全体を実際の長さ(リロード時間。ラピッドローダーなどで変わる)に合わせて伸び縮みさせます。
+  - 複数の動作が重なった場合は足し合わせます。
+- **蓄積する状態(`counters`)**
+  - リボルバーのシリンダーのように、動作のたびに進んでそのまま残る状態です。
+  - `on` のきっかけで `add` ずつ増え(`modulo` で0に戻る)、部品は「値 × `rotation_per_step` / `translation_per_step`」の位置になります。新しい位置へは `ticks` かけて動きます。
+  - `reset_on` のきっかけで0に戻ります。
+  - 値は武器のアイテム自体に保存されるので、保存しても残り、ほかのプレイヤーにも同じに見えます。
+- 動作は手に持っているとき(一人称・三人称)だけ再生します。蓄積した状態は、インベントリなどでも表示されます。
+
+| きっかけ | 内容 |
+|---|---|
+| `fire` | 1発撃った |
+| `empty` | 弾切れで引き金を引いた |
+| `reload` | リロード開始(長さはリロード時間) |
+| `reload_end` | リロード完了 |
+| `mode` | モード切替 |
+| `underbarrel_switch` | アンダーバレルの切替 |
+| `underbarrel_fire` / `underbarrel_empty` / `underbarrel_reload` / `underbarrel_reload_end` | アンダーバレルを選んでいるときの上記 |
+
+サンプルでは、リボルバー(撃鉄、1発ごとに60°回って残るシリンダー、リロードで銃を傾けてシリンダーを振り出す)と、狙撃銃・歩兵銃(射撃後のボルト操作、リロード)に動作を付けています。
+
 ### アタッチメント定義(`data/<namespace>/attachment/<name>.json`)
 
 ```json

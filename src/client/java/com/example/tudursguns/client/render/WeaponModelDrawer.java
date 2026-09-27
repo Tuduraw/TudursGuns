@@ -2,6 +2,7 @@ package com.example.tudursguns.client.render;
 
 import com.example.tudursguns.TudursGuns;
 import com.example.tudursguns.handheld.AttachmentDefinition;
+import com.example.tudursguns.handheld.AnimationDefinition;
 import com.example.tudursguns.handheld.HandheldDefinition;
 import com.example.tudursguns.handheld.HandheldDefinitions;
 import com.example.tudursvehiclemod.client.render.DitherCutoutLayers;
@@ -31,10 +32,38 @@ public final class WeaponModelDrawer {
 	 * that has a model of its own, at its mount transform. */
 	public static void drawWeapon(OrderedRenderCommandQueue queue, MatrixStack matrices, HandheldDefinition def,
 			Map<String, Identifier> fitted, int light, int overlay) {
+		drawWeapon(queue, matrices, def, fitted, light, overlay, null);
+	}
+
+	/** Same, with animated parts posed (pose may be null for none). The pose's root offset is NOT
+	 * applied here - the caller applies it first (in first person the arms follow it too). Every group
+	 * belonging to a part is drawn at that part's chain of offsets; the rest move with the root. */
+	public static void drawWeapon(OrderedRenderCommandQueue queue, MatrixStack matrices, HandheldDefinition def,
+			Map<String, Identifier> fitted, int light, int overlay, WeaponPose pose) {
 		if (def.model().isEmpty() || def.texture().isEmpty()) {
 			return;
 		}
-		drawObj(queue, matrices, def.model().get(), def.texture().get(), def.hiddenGroups(fitted), light, overlay);
+		Set<String> hidden = def.hiddenGroups(fitted);
+		if (pose == null) {
+			drawObj(queue, matrices, def.model().get(), def.texture().get(), hidden, light, overlay);
+		} else {
+			Set<String> rootExcluded = new HashSet<>(hidden);
+			for (Map.Entry<String, AnimationDefinition.Part> part : pose.animation().parts().entrySet()) {
+				if (!AnimationDefinition.ROOT.equals(part.getKey())) {
+					rootExcluded.addAll(part.getValue().groups());
+				}
+			}
+			drawObj(queue, matrices, def.model().get(), def.texture().get(), rootExcluded, light, overlay);
+			for (Map.Entry<String, AnimationDefinition.Part> part : pose.animation().parts().entrySet()) {
+				if (AnimationDefinition.ROOT.equals(part.getKey()) || part.getValue().groups().isEmpty()) {
+					continue;
+				}
+				matrices.push();
+				pose.applyChain(matrices, part.getKey());
+				drawGroups(queue, matrices, def.model().get(), def.texture().get(), part.getValue().groups(), hidden, light, overlay);
+				matrices.pop();
+			}
+		}
 		for (Map.Entry<String, Identifier> entry : fitted.entrySet()) {
 			HandheldDefinition.AttachmentMount mount = def.mountFor(entry.getKey(), entry.getValue());
 			if (mount == null || mount.model().isEmpty()) {
@@ -48,6 +77,9 @@ public final class WeaponModelDrawer {
 				texture = attachment.texture().get();
 			}
 			matrices.push();
+			if (pose != null && mount.part().isPresent()) {
+				pose.applyChain(matrices, mount.part().get());
+			}
 			applyTransform(matrices, mount.transform());
 			drawObj(queue, matrices, mount.model().get(), texture, Set.of(), light, overlay);
 			matrices.pop();
@@ -66,6 +98,25 @@ public final class WeaponModelDrawer {
 		ObjModel.Triangles triangles = hiddenGroups.isEmpty() ? model.getTriangles() : model.getTrianglesExcluding(hiddenGroups);
 		VehicleEntityRenderer.renderTriangles(queue, matrices, DitherCutoutLayers.entityDitherCutout(texture),
 				triangles, light, overlay, 0xFFFFFFFF);
+	}
+
+	/** Only the named groups of a model (skipping hidden ones), one after another. */
+	public static void drawGroups(OrderedRenderCommandQueue queue, MatrixStack matrices, Identifier modelId, Identifier texture,
+			java.util.List<String> groups, Set<String> hiddenGroups, int light, int overlay) {
+		ObjModel model = ObjModelLoader.get(modelId).orElse(null);
+		if (model == null) {
+			return;
+		}
+		for (String group : groups) {
+			if (hiddenGroups.contains(group)) {
+				continue;
+			}
+			ObjModel.Triangles triangles = model.getGroup(group);
+			if (!triangles.isEmpty()) {
+				VehicleEntityRenderer.renderTriangles(queue, matrices, DitherCutoutLayers.entityDitherCutout(texture),
+						triangles, light, overlay, 0xFFFFFFFF);
+			}
+		}
 	}
 
 	/** Translate, then rotate X, Y, Z (degrees), then scale. */

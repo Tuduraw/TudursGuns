@@ -1,5 +1,6 @@
 package com.example.tudursguns.weapon;
 
+import com.example.tudursguns.handheld.AnimationDefinition;
 import com.example.tudursguns.handheld.HandheldDefinition;
 import com.example.tudursguns.network.LockStatePayload;
 import com.example.tudursguns.registry.ModComponents;
@@ -108,6 +109,7 @@ public final class HandheldCombat {
 		WeaponModifiers modifiers = WeaponModifiers.of(stack, def);
 		int magazineSize = modifiers.magazineSize(stats.magazineSize());
 		if (magazineSize > 0 && stack.getOrDefault(Firing.ammoComponent(stack), 0) <= 0) {
+			WeaponAnimationEvents.trigger(stack, world, WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.EMPTY));
 			startReload(player, stack, def, stats, true);
 			return false;
 		}
@@ -162,6 +164,7 @@ public final class HandheldCombat {
 
 		NEXT_FIRE_TIME.put(player.getUuid(), now + Math.max(1, stats.cooldownTicks()));
 		LAST_FIRED.put(player.getUuid(), now);
+		WeaponAnimationEvents.trigger(stack, world, WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.FIRE));
 		if (magazineSize > 0) {
 			int remaining = stack.getOrDefault(Firing.ammoComponent(stack), 0) - 1;
 			stack.set(Firing.ammoComponent(stack), Math.max(0, remaining));
@@ -243,7 +246,10 @@ public final class HandheldCombat {
 			return;
 		}
 		long now = player.getEntityWorld().getTime();
-		stack.set(ModComponents.RELOAD_UNTIL, now + modifiers.reloadTicks(stats.reloadTicks()));
+		int reloadTicks = modifiers.reloadTicks(stats.reloadTicks());
+		stack.set(ModComponents.RELOAD_UNTIL, now + reloadTicks);
+		WeaponAnimationEvents.trigger(stack, player.getEntityWorld(),
+				WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.RELOAD), reloadTicks);
 		def.reloadSound().ifPresent(sound -> playSound(player, sound, player.getEyePos(), 1.0f, 1.0f, 0.05f));
 	}
 
@@ -257,6 +263,8 @@ public final class HandheldCombat {
 		int loaded = stack.getOrDefault(Firing.ammoComponent(stack), 0);
 		int wanted = Math.max(0, WeaponModifiers.of(stack, def).magazineSize(stats.magazineSize()) - loaded);
 		stack.set(Firing.ammoComponent(stack), loaded + takeRounds(player, def, wanted));
+		WeaponAnimationEvents.trigger(stack, player.getEntityWorld(),
+				WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.RELOAD_END));
 	}
 
 	/** Rounds the player could load right now. Unlimited without an ammo_item, or in creative mode. */
@@ -381,6 +389,7 @@ public final class HandheldCombat {
 		}
 		stack.remove(ModComponents.RELOAD_UNTIL);
 		clearLock(player);
+		WeaponAnimationEvents.trigger(stack, player.getEntityWorld(), AnimationDefinition.Event.UNDERBARREL_SWITCH);
 		player.sendMessage(Text.translatable(selected ? "message.tudursguns.underbarrel.on" : "message.tudursguns.underbarrel.off"), true);
 		return true;
 	}
@@ -394,6 +403,7 @@ public final class HandheldCombat {
 		}
 		int next = (stack.getOrDefault(ModComponents.MODE, 0) + 1) % modes;
 		stack.set(ModComponents.MODE, next);
+		WeaponAnimationEvents.trigger(stack, player.getEntityWorld(), AnimationDefinition.Event.MODE);
 		player.sendMessage(Text.translatable("message.tudursguns.mode", next + 1, modes), true);
 		return true;
 	}

@@ -2,6 +2,7 @@ package com.example.tudursguns.registry;
 
 import com.example.tudursguns.TudursGuns;
 import com.mojang.serialization.Codec;
+import com.example.tudursguns.weapon.WeaponAnimationEvents;
 import net.minecraft.component.ComponentType;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.registry.Registries;
@@ -43,6 +44,10 @@ public final class ModComponents {
 	/** Underbarrel launcher: rounds loaded in it, and whether it's the one selected to fire. */
 	public static ComponentType<Integer> ALT_AMMO;
 	public static ComponentType<Boolean> ALT_SELECTED;
+	/** Animation: when each event last happened to this weapon (see WeaponAnimationEvents). */
+	public static ComponentType<Map<String, WeaponAnimationEvents.Occurrence>> ANIM_EVENTS;
+	/** Animation: the definition's counters (a revolver's cylinder position, ...). */
+	public static ComponentType<Map<String, Integer>> ANIM_COUNTERS;
 
 	public static void register() {
 		WEAPON = ModComponents.<Identifier>register("weapon", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
@@ -59,6 +64,12 @@ public final class ModComponents {
 		EQUIPMENT = ModComponents.<Identifier>register("equipment", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
 		ALT_AMMO = ModComponents.<Integer>register("alt_ammo", builder -> builder.codec(Codec.INT).packetCodec(PacketCodecs.VAR_INT).skipsHandAnimation());
 		ALT_SELECTED = ModComponents.<Boolean>register("alt_selected", builder -> builder.codec(Codec.BOOL).packetCodec(PacketCodecs.BOOLEAN).skipsHandAnimation());
+		Codec<Map<String, WeaponAnimationEvents.Occurrence>> eventsCodec = Codec.unboundedMap(Codec.STRING, WeaponAnimationEvents.Occurrence.CODEC);
+		ANIM_EVENTS = ModComponents.<Map<String, WeaponAnimationEvents.Occurrence>>register("anim_events",
+				builder -> builder.codec(eventsCodec).packetCodec(PacketCodecs.codec(eventsCodec)).skipsHandAnimation());
+		Codec<Map<String, Integer>> countersCodec = Codec.unboundedMap(Codec.STRING, Codec.INT);
+		ANIM_COUNTERS = ModComponents.<Map<String, Integer>>register("anim_counters",
+				builder -> builder.codec(countersCodec).packetCodec(PacketCodecs.codec(countersCodec)).skipsHandAnimation());
 	}
 
 	private static <T> ComponentType<T> register(String path, UnaryOperator<ComponentType.Builder<T>> builder) {

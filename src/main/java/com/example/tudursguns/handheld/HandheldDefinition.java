@@ -28,12 +28,12 @@ public record HandheldDefinition(
 		FireMode fireMode,
 		Vector3f muzzleOffset,
 		boolean inheritShooterVelocity,
-		Optional<String> hud,
+		Presentation presentation,
 		Map<ItemDisplayContext, DisplayTransform> display,
 		Optional<AimSettings> aim,
 		Map<String, AttachmentSlot> attachments,
-		Optional<String> reloadSound,
-		HeldMovement movement
+		HeldMovement movement,
+		Optional<AnimationDefinition> animation
 ) {
 
 	/** [x, y, z] as a JSON array of three numbers. */
@@ -52,13 +52,33 @@ public record HandheldDefinition(
 			FireMode.CODEC.optionalFieldOf("fire_mode", FireMode.SEMI).forGetter(HandheldDefinition::fireMode),
 			VECTOR_3F.optionalFieldOf("muzzle_offset", new Vector3f(0.25f, -0.2f, 0.8f)).forGetter(HandheldDefinition::muzzleOffset),
 			Codec.BOOL.optionalFieldOf("inherit_shooter_velocity", false).forGetter(HandheldDefinition::inheritShooterVelocity),
-			Codec.STRING.optionalFieldOf("hud").forGetter(HandheldDefinition::hud),
+			Presentation.MAP_CODEC.forGetter(HandheldDefinition::presentation),
 			Codec.unboundedMap(ItemDisplayContext.CODEC, DisplayTransform.CODEC).optionalFieldOf("display", Map.of()).forGetter(HandheldDefinition::display),
 			AimSettings.CODEC.optionalFieldOf("aim").forGetter(HandheldDefinition::aim),
 			Codec.unboundedMap(Codec.STRING, AttachmentSlot.CODEC).optionalFieldOf("attachments", Map.of()).forGetter(HandheldDefinition::attachments),
-			Codec.STRING.optionalFieldOf("reload_sound").forGetter(HandheldDefinition::reloadSound),
-			HeldMovement.MAP_CODEC.forGetter(HandheldDefinition::movement)
+			HeldMovement.MAP_CODEC.forGetter(HandheldDefinition::movement),
+			AnimationDefinition.CODEC.optionalFieldOf("animation").forGetter(HandheldDefinition::animation)
 	).apply(instance, HandheldDefinition::new));
+
+	/** HUD script name (the "hud" key). */
+	public Optional<String> hud() {
+		return this.presentation.hud();
+	}
+
+	/** Sound played when a reload starts (the "reload_sound" key). */
+	public Optional<String> reloadSound() {
+		return this.presentation.reloadSound();
+	}
+
+	/** "hud" and "reload_sound" - read from the definition's own JSON object (grouped only to keep the
+	 * record within the codec builder's field limit). */
+	public record Presentation(Optional<String> hud, Optional<String> reloadSound) {
+
+		public static final com.mojang.serialization.MapCodec<Presentation> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+				Codec.STRING.optionalFieldOf("hud").forGetter(Presentation::hud),
+				Codec.STRING.optionalFieldOf("reload_sound").forGetter(Presentation::reloadSound)
+		).apply(instance, Presentation::new));
+	}
 
 	/** Attachment slot names in a stable order (the workbench lists them in this order). */
 	public List<String> attachmentSlotNames() {
@@ -150,14 +170,16 @@ public record HandheldDefinition(
 	 * to the weapon's own. show_groups: groups of the WEAPON's own OBJ that only appear with this
 	 * attachment fitted (an alternative to a separate model). hide_groups: weapon groups hidden while
 	 * it's fitted (e.g. the iron sights under a scope, or the standard magazine). sight_position: if
-	 * set, replaces the weapon's aim.sight_position while fitted. */
+	 * set, replaces the weapon's aim.sight_position while fitted. part: the animated part (see
+ * AnimationDefinition) a separate model moves with - "root" (the whole weapon) by default. */
 	public record AttachmentMount(
 			Optional<Identifier> model,
 			Optional<Identifier> texture,
 			DisplayTransform transform,
 			List<String> showGroups,
 			List<String> hideGroups,
-			Optional<Vector3f> sightPosition
+			Optional<Vector3f> sightPosition,
+		Optional<String> part
 	) {
 
 		public static final Codec<AttachmentMount> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -166,7 +188,8 @@ public record HandheldDefinition(
 				DisplayTransform.CODEC.optionalFieldOf("transform", DisplayTransform.IDENTITY).forGetter(AttachmentMount::transform),
 				Codec.STRING.listOf().optionalFieldOf("show_groups", List.of()).forGetter(AttachmentMount::showGroups),
 				Codec.STRING.listOf().optionalFieldOf("hide_groups", List.of()).forGetter(AttachmentMount::hideGroups),
-				VECTOR_3F.optionalFieldOf("sight_position").forGetter(AttachmentMount::sightPosition)
+				VECTOR_3F.optionalFieldOf("sight_position").forGetter(AttachmentMount::sightPosition),
+				Codec.STRING.optionalFieldOf("part").forGetter(AttachmentMount::part)
 		).apply(instance, AttachmentMount::new));
 	}
 

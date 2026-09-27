@@ -5,9 +5,11 @@ import com.example.tudursguns.client.AimController;
 import com.example.tudursguns.client.TudursGunsClientConfig;
 import com.example.tudursguns.client.mixin.GameRendererAccessor;
 import com.example.tudursguns.client.mixin.HeldItemRendererInvoker;
+import com.example.tudursguns.handheld.AnimationDefinition;
 import com.example.tudursguns.handheld.HandheldDefinition;
 import com.example.tudursguns.handheld.HandheldDefinitions;
 import com.example.tudursguns.registry.ModComponents;
+import com.example.tudursguns.weapon.WeaponAnimationEvents;
 import com.example.tudursguns.weapon.WeaponModifiers;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.client.MinecraftClient;
@@ -41,7 +43,8 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 
 	/** What the renderer needs from the stack. raised: the entity holding it is in the aiming pose
 	 * (only meaningful for third-person contexts - see AimRenderState.ENTITY_BEING_UPDATED_AIMS). */
-	public record Data(Identifier weaponId, Map<String, Identifier> fitted, boolean raised, boolean sprintCarry) {
+	public record Data(Identifier weaponId, Map<String, Identifier> fitted, boolean raised, boolean sprintCarry,
+			Map<String, WeaponAnimationEvents.Occurrence> events, Map<String, Integer> counters) {
 	}
 
 	@Override
@@ -49,7 +52,8 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 		Identifier weaponId = stack.get(ModComponents.WEAPON);
 		return weaponId == null ? null
 				: new Data(weaponId, WeaponModifiers.fitted(stack), AimRenderState.entityBeingUpdatedAims(),
-						AimRenderState.entityBeingUpdatedSprintCarries());
+						AimRenderState.entityBeingUpdatedSprintCarries(),
+						stack.getOrDefault(ModComponents.ANIM_EVENTS, Map.of()), stack.getOrDefault(ModComponents.ANIM_COUNTERS, Map.of()));
 	}
 
 	@Override
@@ -63,8 +67,9 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 			return;
 		}
 		HandheldDefinition def = entry.definition();
+		WeaponPose pose = pose(def, data, isHand(displayContext));
 		if (def.aim().isPresent() && isLocalMainHand(displayContext)) {
-			renderFirstPerson(def, data.fitted(), matrices, queue, light, overlay);
+			renderFirstPerson(def, data.fitted(), pose, matrices, queue, light, overlay);
 			return;
 		}
 		HandheldDefinition.DisplayTransform transform =
@@ -78,8 +83,28 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 		}
 		matrices.push();
 		WeaponModelDrawer.applyTransform(matrices, transform);
-		WeaponModelDrawer.drawWeapon(queue, matrices, def, data.fitted(), light, overlay);
+		if (pose != null) {
+			pose.applyRoot(matrices);
+		}
+		WeaponModelDrawer.drawWeapon(queue, matrices, def, data.fitted(), light, overlay, pose);
 		matrices.pop();
+	}
+
+	/** The definition's animated pose right now, or null if it has no animation. Motions (sequences)
+	 * only play in hand; elsewhere just the counters' resting positions show. */
+	private static WeaponPose pose(HandheldDefinition def, Data data, boolean inHand) {
+		if (def.animation().isEmpty()) {
+			return null;
+		}
+		MinecraftClient client = MinecraftClient.getInstance();
+		double now = client.world == null ? 0.0
+				: client.world.getTime() + client.getRenderTickCounter().getTickProgress(true);
+		return WeaponPose.compute(def.animation().get(), data.events(), data.counters(), now, inHand && client.world != null);
+	}
+
+	private static boolean isHand(ItemDisplayContext displayContext) {
+		return isThirdPersonHand(displayContext) || displayContext == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
+				|| displayContext == ItemDisplayContext.FIRST_PERSON_LEFT_HAND;
 	}
 
 	private static boolean isThirdPersonHand(ItemDisplayContext displayContext) {
@@ -97,7 +122,7 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 		return displayContext == (leftHanded ? ItemDisplayContext.FIRST_PERSON_LEFT_HAND : ItemDisplayContext.FIRST_PERSON_RIGHT_HAND);
 	}
 
-	private static void renderFirstPerson(HandheldDefinition def, Map<String, Identifier> fitted, MatrixStack matrices,
+	private static void renderFirstPerson(HandheldDefinition def, Map<String, Identifier> fitted, WeaponPose pose, MatrixStack matrices,
 			OrderedRenderCommandQueue queue, int light, int overlay) {
 		if (AimController.isScoped()) {
 			return;
@@ -157,21 +182,28 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 		matrices.translate(translation.x, translation.y, translation.z);
 		matrices.multiply(rotation);
 		matrices.scale(scale, scale, scale);
+		// The whole weapon's own motion (a tilt for reloading, recoil) - the arms move with it.
+		if (pose != null) {
+			pose.applyRoot(matrices);
+		}
 
-		WeaponModelDrawer.drawWeapon(queue, matrices, def, fitted, light, overlay);
+		WeaponModelDrawer.drawWeapon(queue, matrices, def, fitted, light, overlay, pose);
 		if (TudursGunsClientConfig.showArms()) {
 			HeldItemRendererInvoker arms = (HeldItemRendererInvoker) ((GameRendererAccessor) client.gameRenderer).tudursguns$getFirstPersonRenderer();
 			aim.rightArm().ifPresent(transform -> drawArm(arms, matrices, queue, light, transform,
-					TudursGunsClientConfig.rightArmOffset(), leftHanded ? Arm.LEFT : Arm.RIGHT));
+					TudursGunsClientConfig.rightArmOffset(), leftHanded ? Arm.LEFT : Arm.RIGHT, pose, AnimationDefinition.RIGHT_ARM));
 			aim.leftArm().ifPresent(transform -> drawArm(arms, matrices, queue, light, transform,
-					TudursGunsClientConfig.leftArmOffset(), leftHanded ? Arm.RIGHT : Arm.LEFT));
+					TudursGunsClientConfig.leftArmOffset(), leftHanded ? Arm.RIGHT : Arm.LEFT, pose, AnimationDefinition.LEFT_ARM));
 		}
 		matrices.pop();
 	}
 
 	private static void drawArm(HeldItemRendererInvoker arms, MatrixStack matrices, OrderedRenderCommandQueue queue, int light,
-			HandheldDefinition.DisplayTransform transform, Vector3f offset, Arm arm) {
+			HandheldDefinition.DisplayTransform transform, Vector3f offset, Arm arm, WeaponPose pose, String part) {
 		matrices.push();
+		if (pose != null) {
+			pose.applyChain(matrices, part);
+		}
 		matrices.translate(offset.x, offset.y, offset.z);
 		WeaponModelDrawer.applyTransform(matrices, transform);
 		arms.tudursguns$renderArm(matrices, queue, light, arm);
