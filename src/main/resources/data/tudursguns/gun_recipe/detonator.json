@@ -1,0 +1,18 @@
+{
+  "category": "equipment",
+  "result": {
+    "equipment": "tudursguns:detonator"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:redstone_torch"
+    },
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 5
+    },
+    {
+      "item": "minecraft:stone_button"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "category": "attachments",
+  "result": {
+    "attachment": "tudursguns:underbarrel_launcher"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 3
+    },
+    {
+      "item": "minecraft:redstone"
+    }
+  ]
+}

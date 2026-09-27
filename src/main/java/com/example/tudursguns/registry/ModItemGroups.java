@@ -73,6 +73,7 @@ public final class ModItemGroups {
 						entries.add(ammo);
 					}
 					entries.add(ModBlocks.WEAPON_WORKBENCH_ITEM);
+					entries.add(ModBlocks.GUN_CRAFTING_TABLE_ITEM);
 					entries.add(ModBlocks.AMMO_BOX_ITEM);
 				})
 				.build());

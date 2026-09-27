@@ -1,0 +1,19 @@
+{
+  "category": "mines",
+  "result": {
+    "mine": "tudursguns:ap_mine",
+    "count": 2
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:stone_pressure_plate"
+    },
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 2
+    },
+    {
+      "item": "minecraft:gunpowder"
+    }
+  ]
+}

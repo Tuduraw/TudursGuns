@@ -12,7 +12,8 @@
     "GameRendererFovMixin",
     "HeldItemRendererInvoker",
     "LivingEntityRendererAimMixin",
-    "MouseScrollMixin"
+    "MouseScrollMixin",
+    "SpecialItemModelAnimatedMixin"
   ],
   "injectors": {
     "defaultRequire": 1

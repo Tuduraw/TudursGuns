@@ -28,7 +28,11 @@ public final class ModDefinitions {
 	public static final DefinitionSet<AmmoDefinition> AMMO = new DefinitionSet<>("ammo", AmmoDefinition.CODEC,
 			(id, def) -> def.displayName().orElse(id.getPath()));
 
-	public static final List<DefinitionSet<?>> ALL = List.of(MINES, ARMOR, EQUIPMENT, AMMO);
+	/** data/<namespace>/gun_recipe/*.json - the gun crafting table's recipes. */
+	public static final DefinitionSet<GunRecipeDefinition> GUN_RECIPES = new DefinitionSet<>("gun_recipe", GunRecipeDefinition.CODEC,
+			(id, def) -> id.toString());
+
+	public static final List<DefinitionSet<?>> ALL = List.of(MINES, ARMOR, EQUIPMENT, AMMO, GUN_RECIPES);
 
 	public static DefinitionSet<?> byKind(String kind) {
 		for (DefinitionSet<?> set : ALL) {

@@ -1,0 +1,18 @@
+{
+  "category": "weapons",
+  "result": {
+    "weapon": "tudursguns:revolver"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 2
+    },
+    {
+      "item": "minecraft:gunpowder"
+    },
+    {
+      "tag": "minecraft:planks"
+    }
+  ]
+}

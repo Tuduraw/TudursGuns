@@ -1,0 +1,18 @@
+{
+  "category": "armor",
+  "result": {
+    "armor": "tudursguns:nvg_helmet"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:glass_pane",
+      "count": 2
+    },
+    {
+      "item": "minecraft:ender_eye"
+    },
+    {
+      "item": "minecraft:iron_helmet"
+    }
+  ]
+}

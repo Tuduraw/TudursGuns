@@ -1,0 +1,18 @@
+{
+  "category": "armor",
+  "result": {
+    "armor": "tudursguns:gas_mask"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:leather",
+      "count": 4
+    },
+    {
+      "item": "minecraft:glass_pane"
+    },
+    {
+      "item": "minecraft:charcoal"
+    }
+  ]
+}

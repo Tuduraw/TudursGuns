@@ -1,0 +1,19 @@
+{
+  "category": "mines",
+  "result": {
+    "mine": "tudursguns:c4",
+    "count": 2
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:clay_ball",
+      "count": 2
+    },
+    {
+      "item": "minecraft:tnt"
+    },
+    {
+      "item": "minecraft:redstone"
+    }
+  ]
+}

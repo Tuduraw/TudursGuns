@@ -1,0 +1,15 @@
+{
+  "category": "attachments",
+  "result": {
+    "attachment": "tudursguns:silencer"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 2
+    },
+    {
+      "tag": "minecraft:wool"
+    }
+  ]
+}

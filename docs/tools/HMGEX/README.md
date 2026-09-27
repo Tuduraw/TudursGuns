@@ -30,14 +30,16 @@ python hmgex_convert.py HMG_MyPack.zip -o converted
 │   ├─ assets/<名前空間>/models/obj/       模型(向きと大きさを変換済み)
 │   ├─ assets/<名前空間>/textures/vehicle/ 模型のテクスチャ、アイコン(icons/)、スコープ画像(scopes/)
 │   ├─ assets/<名前空間>/sounds/           パックに含まれていた音
-│   └─ data/<名前空間>/handheld/, attachment/, ammo/   銃・アタッチメント・マガジンの定義
-├─ datapacks/<パック名>/                  … レシピ。ワールドの datapacks/ に置く
+│   ├─ data/<名前空間>/handheld/, attachment/, ammo/   銃・アタッチメント・マガジンの定義
+│   └─ data/<名前空間>/gun_recipe/          銃器製作台のレシピ
+├─ datapacks/<パック名>/                  … (--datapack-recipes のときだけ)普通の作業台のレシピ。ワールドの datapacks/ に置く
 └─ conversion_report.md                  … ファイルごとの変換結果(変換・近似・未対応・注意)
 ```
 
 - 名前空間は、パック名を小文字にしたものです(`--namespace` で変更可)。
 - アイテムは Tudur's Guns の共通アイテム(銃・アタッチメント・弾薬)として追加されます。クリエイティブタブ「Tudur's Guns」に並びます。
-- レシピのデータパックの `pack_format` は既定で 94 です。ゲームのバージョンに合わない場合は `--pack-format` で指定してください。
+- レシピは銃器製作台(`tudursguns:gun_crafting_table`)で使えます。アドオンのフォルダに入っているため、ワールドごとのデータパックは不要です。
+- 普通の作業台でも作れるようにしたい場合は `--datapack-recipes` を付けます。データパックの `pack_format` は既定で 94 です。ゲームのバージョンに合わない場合は `--pack-format` で指定してください。
 
 ## オプション
 
@@ -55,7 +57,8 @@ python hmgex_convert.py HMG_MyPack.zip -o converted
 | `--default-launcher-ammo` | `minecraft:fire_charge` | 同じく、ロケット・グレネードランチャーの弾薬 |
 | `--no-ammo` | — | パック内にマガジンがない銃を、弾薬なし(無限)にする |
 | `--sound-map` | — | HMG の音の名前 → Tudur's Guns の音の名前 の対応表(JSON。下記) |
-| `--pack-format` | `94` | レシピのデータパックの `pack_format` |
+| `--datapack-recipes` | — | 銃器製作台のレシピに加えて、普通の作業台用のレシピをデータパックとしても出力する |
+| `--pack-format` | `94` | `--datapack-recipes` のデータパックの `pack_format` |
 
 ### 音
 
@@ -138,9 +141,10 @@ HMG のパーツレンダー(`AddParts`)を、Tudur's Guns のモーション(`a
 
 ### レシピ(`addpackrecipe/*.txt`)
 
-- `Slot1`〜`Slot9` の3×3の並びを、形の決まったレシピにします。空いた行・列は詰めます。
+- 銃器製作台のレシピ(`gun_recipe`)にします。`Slot1`〜`Slot9` の材料を種類ごとにまとめて数えます(並びは問いません)。
+- `--datapack-recipes` のときは、3×3の並びを、形の決まった作業台のレシピにもします。空いた行・列は詰めます。
 - 1.7.10 の名前が変わったもの(`planks`、`log`、`wool` など)は、1.21 の名前やタグに置き換えます。メタデータ(色違いなど)は無視します。
-- 材料が変換した銃・アタッチメント・マガジンのときは、そのアイテムだけに一致する材料にします(Fabric API の `fabric:components`)。
+- 材料が変換した銃・アタッチメント・マガジンのときは、そのアイテムだけに一致する材料にします(`gun_recipe` の `weapon`・`attachment`・`ammo`。作業台のレシピでは Fabric API の `fabric:components`)。
 - パックの外のアイテム(HMG 本体のマガジンなど)を使うレシピは省略します。
 
 ## 変換できないもの

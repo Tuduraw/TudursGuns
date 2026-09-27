@@ -1,0 +1,15 @@
+{
+  "category": "attachments",
+  "result": {
+    "attachment": "tudursguns:sniper_scope"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 2
+    },
+    {
+      "item": "minecraft:glass_pane"
+    }
+  ]
+}

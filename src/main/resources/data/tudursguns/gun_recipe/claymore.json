@@ -1,0 +1,22 @@
+{
+  "category": "mines",
+  "result": {
+    "mine": "tudursguns:claymore"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 3
+    },
+    {
+      "item": "minecraft:gunpowder",
+      "count": 2
+    },
+    {
+      "item": "minecraft:redstone"
+    },
+    {
+      "item": "minecraft:stick"
+    }
+  ]
+}

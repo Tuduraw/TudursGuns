@@ -21,6 +21,7 @@ import com.example.tudursguns.network.SyncThrowableDefinitionsPayload;
 import com.example.tudursguns.registry.ModEntityTypes;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import com.example.tudursguns.client.render.ObjAttachmentModelRenderer;
+import com.example.tudursguns.client.screen.GunCraftingScreen;
 import com.example.tudursguns.client.screen.WeaponWorkbenchScreen;
 import com.example.tudursguns.handheld.AttachmentDefinition;
 import com.example.tudursguns.client.render.ObjHandheldModelRenderer;
@@ -97,6 +98,7 @@ public class TudursGunsClient implements ClientModInitializer {
 			}
 		});
 		HandledScreens.register(ModScreenHandlers.WEAPON_WORKBENCH, WeaponWorkbenchScreen::new);
+		HandledScreens.register(ModScreenHandlers.GUN_CRAFTING, GunCraftingScreen::new);
 
 		ClientPlayNetworking.registerGlobalReceiver(SyncAttachmentDefinitionsPayload.ID, (payload, context) ->
 				context.client().execute(() -> HandheldDefinitions.setClientAttachments(decodeAttachments(payload))));

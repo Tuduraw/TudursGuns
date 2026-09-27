@@ -1,0 +1,15 @@
+{
+  "category": "armor",
+  "result": {
+    "armor": "tudursguns:heavy_armor"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_block",
+      "count": 7
+    },
+    {
+      "item": "minecraft:iron_chestplate"
+    }
+  ]
+}

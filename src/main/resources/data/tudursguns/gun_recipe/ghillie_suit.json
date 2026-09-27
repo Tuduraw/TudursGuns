@@ -1,0 +1,16 @@
+{
+  "category": "armor",
+  "result": {
+    "armor": "tudursguns:ghillie_suit"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:vine",
+      "count": 5
+    },
+    {
+      "tag": "minecraft:leaves",
+      "count": 3
+    }
+  ]
+}

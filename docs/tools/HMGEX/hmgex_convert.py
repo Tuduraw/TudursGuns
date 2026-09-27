@@ -11,8 +11,9 @@ Reads an HMG EX pack (a folder, or a .zip of one) and writes:
       data/<ns>/handheld/*.json             weapons
       data/<ns>/attachment/*.json           attachments (scopes, suppressors, grips, ...)
       data/<ns>/ammo/*.json                 magazines
-  <out>/datapacks/<pack>/                 - crafting recipes, as a data pack (put in the world's
-                                            datapacks/ folder)
+      data/<ns>/gun_recipe/*.json           recipes of the gun crafting table
+  <out>/datapacks/<pack>/                 - (--datapack-recipes only) the same recipes for the vanilla
+                                            crafting table, as a data pack for a world's datapacks/
   <out>/conversion_report.md              - what was converted, approximated or dropped, per file
 
 Only the Python 3.8+ standard library is used. See README.md next to this script.
@@ -1231,7 +1232,10 @@ class Converter:
                               "ingredients": [grid[s] for s in sorted(grid)], "result": result}
                 else:
                     recipe = shaped_recipe(grid, result)
-                write_json(os.path.join(self.datapack, "data", self.ns, "recipe", f"{recipe_id}_{index}.json"), recipe)
+                write_json(os.path.join(self.data, "gun_recipe", f"{recipe_id}_{index}.json"),
+                           gun_recipe([grid[s] for s in sorted(grid)], result))
+                if self.args.datapack_recipes:
+                    write_json(os.path.join(self.datapack, "data", self.ns, "recipe", f"{recipe_id}_{index}.json"), recipe)
                 self.recipe_count += 1
                 converted.append(f"{index}番目: `{block['result']}`")
             self.report.append(("レシピ", os.path.basename(path), "-", converted, [], dropped, notes))
@@ -1253,7 +1257,7 @@ class Converter:
         for gun in guns:
             self.convert_gun(gun)
         self.convert_recipes()
-        if self.recipe_count:
+        if self.recipe_count and self.args.datapack_recipes:
             write_json(os.path.join(self.datapack, "pack.mcmeta"), {"pack": {
                 "description": f"Recipes converted from the Hand Made Guns EX pack {self.pack.name}",
                 "pack_format": self.args.pack_format,
@@ -1271,6 +1275,8 @@ class Converter:
                  f"- 銃: {gun_count} 件 / アタッチメント・マガジン: {len(self.attachments)} 件 / レシピ: {self.recipe_count} 件",
                  f"- アドオン: `{os.path.relpath(self.addon, self.out)}`(ゲームフォルダの `tudursvehiclemod-addons/` に置く)"]
         if self.recipe_count:
+            lines.append(f"- レシピ: 銃器製作台で作れます(`data/{self.ns}/gun_recipe/`)")
+        if self.recipe_count and self.args.datapack_recipes:
             lines.append(f"- レシピのデータパック: `{os.path.relpath(self.datapack, self.out)}`(ワールドの `datapacks/` に置く)")
         lines += ["", "表示位置・照準位置・腕の位置・モーションの向きは推定です。ゲーム内で確認して、"
                   "`data/<名前空間>/handheld/*.json` の値を調整してください。", ""]
@@ -1360,6 +1366,41 @@ def shaped_recipe(grid, result):
             "key": {letter: ingredient for letter, ingredient in keys.values()}, "result": result}
 
 
+_REF_KINDS = {"tudursguns:weapon": ("weapon", "weapons"), "tudursguns:attachment": ("attachment", "attachments"),
+              "tudursguns:ammo_type": ("ammo", "ammo")}
+
+
+def item_ref(value):
+    """A vanilla ingredient/result (an id, a "#tag", fabric:components, or a result object) as a
+    gun_recipe ItemRef, and the recipe category it suggests."""
+    if isinstance(value, str):
+        return ({"tag": value[1:]} if value.startswith("#") else {"item": value}), None
+    components = value.get("components", {})
+    for component, (field, category) in _REF_KINDS.items():
+        if component in components:
+            return {field: components[component]}, category
+    return {"item": value.get("id") or value.get("base")}, None
+
+
+def gun_recipe(ingredients, result):
+    """A gun crafting table recipe: the same ingredients as the grid, counted together."""
+    counted = {}
+    for ingredient in ingredients:
+        ref, _ = item_ref(ingredient)
+        key = json.dumps(ref, sort_keys=True)
+        counted.setdefault(key, [ref, 0])[1] += 1
+    refs = []
+    for ref, count in counted.values():
+        refs.append(dict(ref, count=count) if count > 1 else ref)
+    result_ref, category = item_ref(result)
+    if result.get("count", 1) > 1:
+        result_ref["count"] = result["count"]
+    recipe = {"result": result_ref, "ingredients": refs}
+    if category:
+        recipe["category"] = category
+    return recipe
+
+
 # --------------------------------------------------------------------------- main
 
 def main(argv=None):
@@ -1381,7 +1422,10 @@ def main(argv=None):
                         help="同じく、ロケット・グレネードランチャーの弾薬(既定 minecraft:fire_charge)")
     parser.add_argument("--no-ammo", action="store_true", help="パック内にマガジンがない銃は弾薬なし(無限)にする")
     parser.add_argument("--sound-map", help="HMG の音の名前 → Tudur's Guns の音の名前 の対応表(JSON)")
-    parser.add_argument("--pack-format", type=int, default=94, help="レシピのデータパックの pack_format(既定 94)")
+    parser.add_argument("--datapack-recipes", action="store_true",
+                        help="銃器製作台のレシピに加えて、普通の作業台用のレシピをデータパックとしても出力する")
+    parser.add_argument("--pack-format", type=int, default=94,
+                        help="--datapack-recipes のデータパックの pack_format(既定 94)")
     args = parser.parse_args(argv)
 
     with tempfile.TemporaryDirectory() as workdir:

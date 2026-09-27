@@ -1,0 +1,21 @@
+{
+  "category": "weapons",
+  "result": {
+    "weapon": "tudursguns:sniper_rifle"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 3
+    },
+    {
+      "item": "minecraft:gunpowder"
+    },
+    {
+      "tag": "minecraft:logs"
+    },
+    {
+      "item": "minecraft:stick"
+    }
+  ]
+}
