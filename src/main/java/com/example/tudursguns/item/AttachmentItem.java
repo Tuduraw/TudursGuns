@@ -1,40 +1,24 @@
 package com.example.tudursguns.item;
 
 import com.example.tudursguns.handheld.AttachmentDefinition;
-import com.example.tudursguns.handheld.HandheldDefinitions;
+import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.registry.ModComponents;
-import net.minecraft.component.type.TooltipDisplayComponent;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
 
 import java.util.function.Consumer;
 
 /** The one item every weapon attachment is; which one comes from its tudursguns:attachment
  * component (an AttachmentDefinition id). Fitted and removed at the weapon workbench. */
-public class AttachmentItem extends Item {
+public class AttachmentItem extends DefinedItem<AttachmentDefinition> {
 
 	public AttachmentItem(Settings settings) {
-		super(settings);
+		super(settings, ModDefinitions.ATTACHMENTS, ModComponents.ATTACHMENT);
 	}
 
 	@Override
-	public Text getName(ItemStack stack) {
-		AttachmentDefinition def = HandheldDefinitions.getAnyAttachment(stack.get(ModComponents.ATTACHMENT));
-		return def != null ? Text.literal(def.displayName()) : super.getName(stack);
-	}
-
-	@Override
-	public void appendTooltip(ItemStack stack, TooltipContext context, TooltipDisplayComponent displayComponent,
-			Consumer<Text> textConsumer, TooltipType type) {
-		Identifier id = stack.get(ModComponents.ATTACHMENT);
-		AttachmentDefinition def = HandheldDefinitions.getAnyAttachment(id);
-		if (def == null) {
-			return;
-		}
+	protected void appendDetails(ItemStack stack, AttachmentDefinition def, Consumer<Text> textConsumer) {
 		def.movement().appendTooltip(textConsumer);
 		def.zoom().ifPresent(zoom -> textConsumer.accept(Text.translatable("tooltip.tudursguns.attachment.zoom",
 				format(zoom.min()), format(zoom.max())).formatted(Formatting.BLUE)));
@@ -60,9 +44,6 @@ public class AttachmentItem extends Item {
 		if (def.meleeDamageBonus() != 0f) {
 			textConsumer.accept(Text.translatable("tooltip.tudursguns.attachment.melee",
 					format(def.meleeDamageBonus())).formatted(Formatting.BLUE));
-		}
-		if (type.isAdvanced()) {
-			textConsumer.accept(Text.literal(id.toString()).formatted(Formatting.DARK_GRAY));
 		}
 	}
 

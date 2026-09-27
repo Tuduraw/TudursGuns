@@ -2,8 +2,8 @@ package com.example.tudursguns.weapon;
 
 import com.example.tudursguns.handheld.AttachmentDefinition;
 import com.example.tudursguns.handheld.HandheldDefinition;
-import com.example.tudursguns.handheld.HandheldDefinitions;
 import com.example.tudursguns.handheld.HandheldEffects;
+import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.registry.ModComponents;
 import com.example.tudursvehiclemod.asset.WeaponStats;
 import com.example.tudursvehiclemod.asset.WeaponStatsLoader;
@@ -47,7 +47,7 @@ public record Firing(HandheldDefinition definition, WeaponStats stats, boolean u
 			if (base.mountFor(entry.getKey(), entry.getValue()) == null) {
 				continue;
 			}
-			AttachmentDefinition attachment = HandheldDefinitions.getAnyAttachment(entry.getValue());
+			AttachmentDefinition attachment = ModDefinitions.ATTACHMENTS.getAny(entry.getValue());
 			if (attachment != null && attachment.underbarrel().isPresent()) {
 				return attachment.underbarrel().get();
 			}

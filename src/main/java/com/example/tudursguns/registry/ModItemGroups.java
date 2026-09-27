@@ -1,13 +1,8 @@
 package com.example.tudursguns.registry;
 
 import com.example.tudursguns.TudursGuns;
-import com.example.tudursguns.armor.ArmorEffects;
-import com.example.tudursguns.handheld.ArmorDefinition;
-import com.example.tudursguns.handheld.EquipmentDefinition;
-import com.example.tudursguns.handheld.HandheldDefinitions;
+import com.example.tudursguns.handheld.DefinitionSet;
 import com.example.tudursguns.handheld.ModDefinitions;
-import com.example.tudursguns.item.EquipmentItem;
-import com.example.tudursguns.screen.WeaponWorkbenchScreenHandler;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
@@ -21,7 +16,7 @@ import net.minecraft.util.Identifier;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
+import java.util.function.Function;
 
 public final class ModItemGroups {
 
@@ -35,43 +30,16 @@ public final class ModItemGroups {
 		Registry.register(Registries.ITEM_GROUP, HANDHELD, FabricItemGroup.builder()
 				.icon(() -> new ItemStack(ModItems.HANDHELD_WEAPON))
 				.displayName(Text.translatable("itemGroup.tudursguns.handheld"))
-				// One entry per definition the client has received from the server, loaded and ready
-				// to fire. Collected when the creative inventory is built, which is client-side only.
+				// One entry per definition the client has received from the server (weapons loaded).
+				// Collected when the creative inventory is built, which is client-side only.
 				.entries((displayContext, entries) -> {
-					List<Map.Entry<Identifier, HandheldDefinitions.ClientEntry>> sorted =
-							new ArrayList<>(HandheldDefinitions.client().entrySet());
-					sorted.sort(Comparator.comparing(entry -> entry.getKey().toString()));
-					for (Map.Entry<Identifier, HandheldDefinitions.ClientEntry> entry : sorted) {
-						entries.add(createStack(entry.getKey(), entry.getValue().weapon().magazineSize()));
-					}
-					List<Identifier> attachmentIds = new ArrayList<>(HandheldDefinitions.clientAttachments().keySet());
-					attachmentIds.sort(Comparator.comparing(Identifier::toString));
-					for (Identifier attachmentId : attachmentIds) {
-						entries.add(WeaponWorkbenchScreenHandler.createAttachmentStack(attachmentId));
-					}
-					List<Identifier> throwableIds = new ArrayList<>(HandheldDefinitions.clientThrowables().keySet());
-					throwableIds.sort(Comparator.comparing(Identifier::toString));
-					for (Identifier throwableId : throwableIds) {
-						ItemStack throwable = new ItemStack(ModItems.THROWABLE);
-						throwable.set(ModComponents.THROWABLE, throwableId);
-						entries.add(throwable);
-					}
-					for (Identifier mineId : sortedIds(ModDefinitions.MINES.client().keySet())) {
-						ItemStack mine = new ItemStack(ModItems.MINE);
-						mine.set(ModComponents.MINE, mineId);
-						entries.add(mine);
-					}
-					for (Identifier armorId : sortedIds(ModDefinitions.ARMOR.client().keySet())) {
-						entries.add(createArmorStack(armorId));
-					}
-					for (Identifier equipmentId : sortedIds(ModDefinitions.EQUIPMENT.client().keySet())) {
-						entries.add(createEquipmentStack(equipmentId));
-					}
-					for (Identifier ammoId : sortedIds(ModDefinitions.AMMO.client().keySet())) {
-						ItemStack ammo = new ItemStack(ModItems.AMMO);
-						ammo.set(ModComponents.AMMO_TYPE, ammoId);
-						entries.add(ammo);
-					}
+					addAll(entries, ModDefinitions.HANDHELD, ModItems::weaponStack);
+					addAll(entries, ModDefinitions.ATTACHMENTS, ModItems::attachmentStack);
+					addAll(entries, ModDefinitions.THROWABLES, ModItems::throwableStack);
+					addAll(entries, ModDefinitions.MINES, ModItems::mineStack);
+					addAll(entries, ModDefinitions.ARMOR, ModItems::armorStack);
+					addAll(entries, ModDefinitions.EQUIPMENT, ModItems::equipmentStack);
+					addAll(entries, ModDefinitions.AMMO, ModItems::ammoStack);
 					entries.add(ModBlocks.WEAPON_WORKBENCH_ITEM);
 					entries.add(ModBlocks.GUN_CRAFTING_TABLE_ITEM);
 					entries.add(ModBlocks.AMMO_BOX_ITEM);
@@ -79,40 +47,11 @@ public final class ModItemGroups {
 				.build());
 	}
 
-	private static List<Identifier> sortedIds(java.util.Collection<Identifier> ids) {
-		List<Identifier> sorted = new ArrayList<>(ids);
-		sorted.sort(Comparator.comparing(Identifier::toString));
-		return sorted;
-	}
-
-	/** An armor stack with its components already filled in, so it can be worn straight away. */
-	public static ItemStack createArmorStack(Identifier armorId) {
-		ItemStack stack = new ItemStack(ModItems.ARMOR);
-		stack.set(ModComponents.ARMOR, armorId);
-		ArmorDefinition def = ModDefinitions.ARMOR.getAny(armorId);
-		if (def != null) {
-			ArmorEffects.applyComponents(stack, def);
+	private static void addAll(ItemGroup.Entries entries, DefinitionSet<?> set, Function<Identifier, ItemStack> stack) {
+		List<Identifier> ids = new ArrayList<>(set.client().keySet());
+		ids.sort(Comparator.comparing(Identifier::toString));
+		for (Identifier id : ids) {
+			entries.add(stack.apply(id));
 		}
-		return stack;
-	}
-
-	public static ItemStack createEquipmentStack(Identifier equipmentId) {
-		ItemStack stack = new ItemStack(ModItems.EQUIPMENT);
-		stack.set(ModComponents.EQUIPMENT, equipmentId);
-		EquipmentDefinition def = ModDefinitions.EQUIPMENT.getAny(equipmentId);
-		if (def != null) {
-			EquipmentItem.applyComponents(stack, def);
-		}
-		return stack;
-	}
-
-	/** A weapon stack for the given definition with a full magazine. */
-	public static ItemStack createStack(Identifier weaponId, int magazineSize) {
-		ItemStack stack = new ItemStack(ModItems.HANDHELD_WEAPON);
-		stack.set(ModComponents.WEAPON, weaponId);
-		if (magazineSize > 0) {
-			stack.set(ModComponents.AMMO, magazineSize);
-		}
-		return stack;
 	}
 }

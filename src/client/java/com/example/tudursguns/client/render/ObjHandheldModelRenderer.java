@@ -7,7 +7,7 @@ import com.example.tudursguns.client.mixin.GameRendererAccessor;
 import com.example.tudursguns.client.mixin.HeldItemRendererInvoker;
 import com.example.tudursguns.handheld.AnimationDefinition;
 import com.example.tudursguns.handheld.HandheldDefinition;
-import com.example.tudursguns.handheld.HandheldDefinitions;
+import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.registry.ModComponents;
 import com.example.tudursguns.weapon.WeaponAnimationEvents;
 import com.example.tudursguns.weapon.WeaponModifiers;
@@ -65,11 +65,10 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 		if (data == null) {
 			return;
 		}
-		HandheldDefinitions.ClientEntry entry = HandheldDefinitions.getClient(data.weaponId());
-		if (entry == null) {
+		HandheldDefinition def = ModDefinitions.HANDHELD.getAny(data.weaponId());
+		if (def == null) {
 			return;
 		}
-		HandheldDefinition def = entry.definition();
 		if (displayContext == ItemDisplayContext.GUI && def.handling().icon().isPresent()) {
 			WeaponModelDrawer.drawIcon(queue, matrices, def.handling().icon().get(), light, overlay);
 			return;
@@ -224,16 +223,9 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 		matrices.pop();
 	}
 
-	/** Extents used for item bounds - the unit cube the item model space is built around. */
 	@Override
 	public void collectVertices(Consumer<Vector3fc> consumer) {
-		for (int x = 0; x <= 1; x++) {
-			for (int y = 0; y <= 1; y++) {
-				for (int z = 0; z <= 1; z++) {
-					consumer.accept(new Vector3f(x, y, z));
-				}
-			}
-		}
+		WeaponModelDrawer.unitCube(consumer);
 	}
 
 	public record Unbaked() implements SpecialModelRenderer.Unbaked {

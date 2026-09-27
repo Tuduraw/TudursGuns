@@ -2,7 +2,7 @@ package com.example.tudursguns.block;
 
 import com.example.tudursguns.handheld.AttachmentDefinition;
 import com.example.tudursguns.handheld.HandheldDefinition;
-import com.example.tudursguns.handheld.HandheldDefinitions;
+import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.item.HandheldWeaponItem;
 import com.example.tudursguns.mixin.AbstractVehicleEntityAccessor;
 import com.example.tudursguns.registry.ModBlockEntities;
@@ -71,7 +71,7 @@ public class AmmoBoxBlockEntity extends BlockEntity {
 		if (!(stack.getItem() instanceof HandheldWeaponItem) || HandheldCombat.isReloading(stack)) {
 			return;
 		}
-		HandheldDefinition def = HandheldDefinitions.getServer(stack.get(ModComponents.WEAPON));
+		HandheldDefinition def = ModDefinitions.HANDHELD.getServer(stack.get(ModComponents.WEAPON));
 		if (def == null) {
 			return;
 		}

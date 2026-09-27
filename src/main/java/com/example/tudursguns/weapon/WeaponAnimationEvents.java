@@ -2,7 +2,7 @@ package com.example.tudursguns.weapon;
 
 import com.example.tudursguns.handheld.AnimationDefinition;
 import com.example.tudursguns.handheld.HandheldDefinition;
-import com.example.tudursguns.handheld.HandheldDefinitions;
+import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.registry.ModComponents;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -16,8 +16,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.UUID;
 import java.util.Map;
+import java.util.UUID;
 
 /** Records what just happened to a weapon (see AnimationDefinition.Event) on the stack itself, so
  * every client drawing it - the holder in first person, everyone else in third person - plays the
@@ -80,7 +80,7 @@ public final class WeaponAnimationEvents {
 
 	/** With a player, the event's sequence sounds are played (from that player) at their ticks. */
 	public static void trigger(PlayerEntity player, ItemStack stack, World world, String event, int duration) {
-		HandheldDefinition def = HandheldDefinitions.getServer(stack.get(ModComponents.WEAPON));
+		HandheldDefinition def = ModDefinitions.HANDHELD.getServer(stack.get(ModComponents.WEAPON));
 		if (def == null || def.animation().isEmpty()) {
 			return;
 		}

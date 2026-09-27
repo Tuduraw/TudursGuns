@@ -4,10 +4,13 @@ import com.example.tudursguns.TudursGuns;
 import com.example.tudursguns.client.AimController;
 import com.example.tudursguns.client.ClientLockState;
 import com.example.tudursguns.handheld.HandheldDefinition;
-import com.example.tudursguns.handheld.HandheldDefinitions;
+import com.example.tudursguns.handheld.ModDefinitions;
+import com.example.tudursguns.handheld.WeaponSummary;
 import com.example.tudursguns.item.HandheldWeaponItem;
 import com.example.tudursguns.network.LockStatePayload;
 import com.example.tudursguns.registry.ModComponents;
+import com.example.tudursguns.weapon.Firing;
+import com.example.tudursguns.weapon.HandheldCombat;
 import com.example.tudursguns.weapon.WeaponModifiers;
 import com.example.tudursvehiclemod.client.hud.HudExecutionContext;
 import com.example.tudursvehiclemod.client.hud.HudScript;
@@ -18,7 +21,6 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
@@ -50,16 +52,18 @@ public final class HandheldHud {
 		if (stack == null) {
 			return;
 		}
-		HandheldDefinitions.ClientEntry entry = HandheldDefinitions.getClient(stack.get(ModComponents.WEAPON));
-		if (entry == null) {
+		Identifier id = stack.get(ModComponents.WEAPON);
+		HandheldDefinition def = ModDefinitions.HANDHELD.getAny(id);
+		WeaponSummary weapon = ModDefinitions.HANDHELD.weapon(id);
+		if (def == null || weapon == null) {
 			return;
 		}
 
-		Map<String, Double> variables = buildVariables(client, player, stack, entry);
+		Map<String, Double> variables = buildVariables(client, player, stack, def, weapon);
 		int centerX = context.getScaledWindowWidth() / 2;
 		int centerY = context.getScaledWindowHeight() / 2;
 
-		String scriptName = entry.definition().hud().orElse(null);
+		String scriptName = def.hud().orElse(null);
 		Map<String, HudScript> scripts = HudScriptLoader.getScripts();
 		if (scriptName != null && scripts.containsKey(scriptName)) {
 			Map<String, String> stringVariables = new HashMap<>();
@@ -67,7 +71,7 @@ public final class HandheldHud {
 			new HudExecutionContext(context, client, variables, stringVariables, centerX, centerY, scripts).run(scriptName);
 			return;
 		}
-		drawDefault(context, client, stack, entry, variables, centerX, centerY);
+		drawDefault(context, client, weapon, variables, centerX, centerY);
 	}
 
 	private static ItemStack heldWeapon(PlayerEntity player) {
@@ -87,15 +91,15 @@ public final class HandheldHud {
 	 * underbarrel_fitted (0/1), underbarrel (0/1: the launcher is selected), underbarrel_ammo.
 	 * ammo/max_ammo/reload are the weapon's own magazine even while the launcher is selected. */
 	private static Map<String, Double> buildVariables(MinecraftClient client, PlayerEntity player, ItemStack stack,
-			HandheldDefinitions.ClientEntry entry) {
+			HandheldDefinition def, WeaponSummary weapon) {
 		Map<String, Double> variables = new HashMap<>();
-		HandheldDefinition def = entry.definition();
 		WeaponModifiers modifiers = WeaponModifiers.of(stack, def);
-		int magazineSize = modifiers.magazineSize(entry.weapon().magazineSize());
-		int reloadTicks = modifiers.reloadTicks(entry.weapon().reloadTicks());
+		int magazineSize = modifiers.magazineSize(weapon.magazineSize());
+		int reloadTicks = modifiers.reloadTicks(weapon.reloadTicks());
 		variables.put("ammo", (double) stack.getOrDefault(ModComponents.AMMO, 0));
 		variables.put("max_ammo", (double) magazineSize);
-		variables.put("reserve_ammo", (double) reserveRounds(player, def));
+		int reserve = HandheldCombat.availableRounds(player, def);
+		variables.put("reserve_ammo", reserve == Integer.MAX_VALUE ? -1.0 : reserve);
 
 		Long reloadUntil = stack.get(ModComponents.RELOAD_UNTIL);
 		boolean reloading = reloadUntil != null;
@@ -111,8 +115,8 @@ public final class HandheldHud {
 		variables.put("scoped", AimController.isScoped() ? 1.0 : 0.0);
 		variables.put("zoom", AimController.isScoped() ? (double) AimController.magnification() : 1.0);
 		variables.put("mode", (double) (stack.getOrDefault(ModComponents.MODE, 0) + 1));
-		variables.put("mode_count", (double) entry.weapon().modeCount());
-		boolean hasLauncher = com.example.tudursguns.weapon.Firing.underbarrel(stack, def) != null;
+		variables.put("mode_count", (double) weapon.modeCount());
+		boolean hasLauncher = Firing.underbarrel(stack, def) != null;
 		variables.put("underbarrel_fitted", hasLauncher ? 1.0 : 0.0);
 		variables.put("underbarrel", hasLauncher && stack.getOrDefault(ModComponents.ALT_SELECTED, false) ? 1.0 : 0.0);
 		variables.put("underbarrel_ammo", (double) stack.getOrDefault(ModComponents.ALT_AMMO, 0));
@@ -126,17 +130,8 @@ public final class HandheldHud {
 		return variables;
 	}
 
-	/** Rounds the player could still load, or -1 when unlimited (no ammo_item, or creative mode). */
-	private static int reserveRounds(PlayerEntity player, HandheldDefinition def) {
-		com.example.tudursguns.weapon.AmmoSupply supply = com.example.tudursguns.weapon.AmmoSupply.of(def);
-		if (supply == null || player.isCreative()) {
-			return -1;
-		}
-		return supply.countItems(player) * supply.roundsPerItem();
-	}
-
-	private static void drawDefault(DrawContext context, MinecraftClient client, ItemStack stack,
-			HandheldDefinitions.ClientEntry entry, Map<String, Double> variables, int centerX, int centerY) {
+	private static void drawDefault(DrawContext context, MinecraftClient client, WeaponSummary weapon,
+			Map<String, Double> variables, int centerX, int centerY) {
 		int x = centerX + 12;
 		int y = centerY + 8;
 		int lineHeight = client.textRenderer.fontHeight + 2;
@@ -160,9 +155,9 @@ public final class HandheldHud {
 					(int) Math.round(variables.get("reload_progress") * 100)), x, y, 0xFFFFD040);
 			y += lineHeight;
 		}
-		if (entry.weapon().modeCount() > 1) {
+		if (weapon.modeCount() > 1) {
 			context.drawTextWithShadow(client.textRenderer, Text.translatable("hud.tudursguns.mode",
-					variables.get("mode").intValue(), entry.weapon().modeCount()), x, y, 0xFFC0C0C0);
+					variables.get("mode").intValue(), weapon.modeCount()), x, y, 0xFFC0C0C0);
 			y += lineHeight;
 		}
 		if (variables.get("locked") > 0) {

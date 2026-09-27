@@ -2,7 +2,7 @@ package com.example.tudursguns.weapon;
 
 import com.example.tudursguns.handheld.AttachmentDefinition;
 import com.example.tudursguns.handheld.HandheldDefinition;
-import com.example.tudursguns.handheld.HandheldDefinitions;
+import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.registry.ModComponents;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
@@ -13,7 +13,7 @@ import java.util.Optional;
 
 /** The combined effect of the attachments fitted to one weapon stack. Multipliers multiply together
  * and bonuses add up; only attachments the weapon's own definition accepts in that slot count.
- * Works on both sides (definitions are looked up with HandheldDefinitions.getAnyAttachment). */
+ * Works on both sides (attachments are looked up with getAny). */
 public record WeaponModifiers(
 		float magazineMultiplier,
 		int magazineBonus,
@@ -57,7 +57,7 @@ public record WeaponModifiers(
 		for (String slot : def.attachmentSlotNames()) {
 			Identifier attachmentId = fitted.get(slot);
 			HandheldDefinition.AttachmentMount mount = attachmentId == null ? null : def.mountFor(slot, attachmentId);
-			AttachmentDefinition attachment = mount == null ? null : HandheldDefinitions.getAnyAttachment(attachmentId);
+			AttachmentDefinition attachment = mount == null ? null : ModDefinitions.ATTACHMENTS.getAny(attachmentId);
 			if (attachment == null) {
 				continue;
 			}

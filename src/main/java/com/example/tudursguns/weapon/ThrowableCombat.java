@@ -18,7 +18,6 @@ import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Hand;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
@@ -72,7 +71,7 @@ public final class ThrowableCombat {
 
 	/** Called every tick while held with the pin out: a cookable throwable held past its fuse goes off
 	 * in the thrower's hand. Returns true if it did. */
-	public static boolean checkCookedOff(ServerPlayerEntity player, ItemStack stack, Hand hand, ThrowableDefinition def) {
+	public static boolean checkCookedOff(ServerPlayerEntity player, ItemStack stack, ThrowableDefinition def) {
 		if (!def.cooks() || cookedTicks(player, def) < def.fuseTicks()) {
 			return false;
 		}

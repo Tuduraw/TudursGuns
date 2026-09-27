@@ -3,7 +3,7 @@ package com.example.tudursguns.client;
 import com.example.tudursguns.handheld.AttachmentDefinition;
 import com.example.tudursguns.handheld.EquipmentDefinition;
 import com.example.tudursguns.handheld.HandheldDefinition;
-import com.example.tudursguns.handheld.HandheldDefinitions;
+import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.item.EquipmentItem;
 import com.example.tudursguns.item.HandheldWeaponItem;
 import com.example.tudursguns.network.AimKeyPayload;
@@ -183,7 +183,7 @@ public final class AimController {
 				&& com.example.tudursvehiclemod.client.TvMissileControlState.controlledEntityId == null;
 		boolean aimKeyDown = available && client.currentScreen == null && isAimKeyDown(client);
 		boolean usingWeapon = available && player.isUsingItem() && player.getActiveHand() == Hand.MAIN_HAND;
-		HandheldDefinition heldDef = weapon ? HandheldDefinitions.getAny(main.get(ModComponents.WEAPON)) : null;
+		HandheldDefinition heldDef = weapon ? ModDefinitions.HANDHELD.getAny(main.get(ModComponents.WEAPON)) : null;
 		int raiseTicks = heldDef != null && heldDef.aim().isPresent() ? heldDef.raiseTicks() : TudursGunsClientConfig.aimTransitionTicks();
 		if (usingWeapon && !wasUsingWeapon && progress < 1f) {
 			holdRaisedTicks = (int) Math.ceil((1f - progress) * raiseTicks) + 2;
@@ -203,14 +203,14 @@ public final class AimController {
 		}
 
 		WeaponModifiers modifiers = weapon
-				? WeaponModifiers.of(main, HandheldDefinitions.getAny(main.get(ModComponents.WEAPON)))
+				? WeaponModifiers.of(main, ModDefinitions.HANDHELD.getAny(main.get(ModComponents.WEAPON)))
 				: WeaponModifiers.NONE;
 		EquipmentDefinition gear = EquipmentItem.definition(main);
 		boolean holdingBinoculars = gear != null && gear.type() == EquipmentDefinition.Type.BINOCULARS && gear.zoom().isPresent()
 				&& player.getVehicle() == null;
 		Identifier zoomId = null;
 		AttachmentDefinition.Zoom zoom = null;
-		HandheldDefinition zoomDef = weapon ? HandheldDefinitions.getAny(main.get(ModComponents.WEAPON)) : null;
+		HandheldDefinition zoomDef = weapon ? ModDefinitions.HANDHELD.getAny(main.get(ModComponents.WEAPON)) : null;
 		if (modifiers.hasZoom()) {
 			zoomId = modifiers.zoomAttachment();
 			zoom = modifiers.zoom();

@@ -1,8 +1,9 @@
 package com.example.tudursguns.client;
 
 import com.example.tudursguns.TudursGuns;
-import com.example.tudursguns.handheld.HandheldDefinitions;
+import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.handheld.ThrowableDefinition;
+import com.example.tudursguns.handheld.WeaponSummary;
 import com.example.tudursguns.item.ThrowableItem;
 import com.example.tudursguns.registry.ModComponents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
@@ -23,6 +24,7 @@ import net.minecraft.world.debug.gizmo.GizmoDrawing;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /** While a throwable is held ready to throw: the throw's arc and a ring where it will first land
  * (drawn in the world the same way Tudur's Vehicle Mod marks a bomb's impact point), plus the time
@@ -62,15 +64,16 @@ public final class ThrowGuide {
 		tickCounter++;
 		PlayerEntity player = client.player;
 		ItemStack stack = player == null || client.world == null || player.getVehicle() != null ? null : heldThrowable(player);
-		HandheldDefinitions.ClientThrowable entry = stack == null ? null
-				: HandheldDefinitions.clientThrowables().get(stack.get(ModComponents.THROWABLE));
-		if (entry == null) {
+		Identifier id = stack == null ? null : stack.get(ModComponents.THROWABLE);
+		ThrowableDefinition def = ModDefinitions.THROWABLES.getAny(id);
+		WeaponSummary weapon = ModDefinitions.THROWABLES.weapon(id);
+		if (def == null || weapon == null) {
 			arc = List.of();
 			impact = null;
 			return;
 		}
 		if (tickCounter % SIMULATION_INTERVAL_TICKS == 0) {
-			simulate(client, player, entry);
+			simulate(client, player, def, weapon.gravity());
 		}
 		if (arc.size() < 2) {
 			return;
@@ -87,8 +90,7 @@ public final class ThrowGuide {
 		}
 	}
 
-	private static void simulate(MinecraftClient client, PlayerEntity player, HandheldDefinitions.ClientThrowable entry) {
-		ThrowableDefinition def = entry.definition();
+	private static void simulate(MinecraftClient client, PlayerEntity player, ThrowableDefinition def, double gravity) {
 		boolean underhand = AimController.isAimKeyHeldRaw(client);
 		Vec3d look = player.getRotationVec(1.0f);
 		Vec3d direction = underhand
@@ -96,7 +98,6 @@ public final class ThrowGuide {
 				: look;
 		Vec3d velocity = direction.multiply(underhand ? def.underhandVelocity() : def.throwVelocity()).add(player.getVelocity());
 		Vec3d position = player.getEyePos().add(look.multiply(0.4)).add(0, -0.1, 0);
-		double gravity = entry.gravity();
 		List<Vec3d> points = new ArrayList<>();
 		points.add(position);
 		Vec3d hitPos = null;
@@ -119,12 +120,12 @@ public final class ThrowGuide {
 		ringRadius = def.effect().radius() > 0f ? def.effect().radius() : 2.0f;
 	}
 
-	/** Seconds left before a cooking throwable goes off in hand. */
+	/** Seconds left before a cooking throwable goes off in hand, and whether it'll be lobbed underhand. */
 	private static void renderFuse(DrawContext context, RenderTickCounter tickCounter) {
 		MinecraftClient client = MinecraftClient.getInstance();
 		PlayerEntity player = client.player;
-		ItemStack stack = player == null ? null : heldThrowable(player);
-		ThrowableDefinition def = stack == null ? null : HandheldDefinitions.getAnyThrowable(stack.get(ModComponents.THROWABLE));
+		ItemStack stack = player == null || player.getVehicle() != null ? null : heldThrowable(player);
+		ThrowableDefinition def = stack == null ? null : ModDefinitions.THROWABLES.getAny(stack.get(ModComponents.THROWABLE));
 		if (def == null) {
 			return;
 		}
@@ -134,7 +135,7 @@ public final class ThrowGuide {
 			int left = Math.max(0, def.fuseTicks() - player.getItemUseTime());
 			float seconds = left / 20f;
 			int color = seconds < 1.5f ? 0xFFFF4040 : 0xFFFFFFFF;
-			Text text = Text.translatable("hud.tudursguns.fuse", String.format(java.util.Locale.ROOT, "%.1f", seconds));
+			Text text = Text.translatable("hud.tudursguns.fuse", String.format(Locale.ROOT, "%.1f", seconds));
 			context.drawTextWithShadow(client.textRenderer, text, x, y, color);
 			y += client.textRenderer.fontHeight + 2;
 		}

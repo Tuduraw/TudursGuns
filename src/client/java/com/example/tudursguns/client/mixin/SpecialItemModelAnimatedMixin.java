@@ -1,9 +1,7 @@
 package com.example.tudursguns.client.mixin;
 
-import com.example.tudursguns.client.render.ObjAttachmentModelRenderer;
 import com.example.tudursguns.client.render.ObjDefinedItemRenderer;
 import com.example.tudursguns.client.render.ObjHandheldModelRenderer;
-import com.example.tudursguns.client.render.ObjThrowableModelRenderer;
 import net.minecraft.client.item.ItemModelManager;
 import net.minecraft.client.render.item.ItemRenderState;
 import net.minecraft.client.render.item.model.SpecialItemModel;
@@ -34,8 +32,7 @@ public abstract class SpecialItemModelAnimatedMixin<T> {
 	@Inject(method = "update", at = @At("TAIL"))
 	private void tudursguns$drawEveryFrame(ItemRenderState state, ItemStack stack, ItemModelManager resolver,
 			ItemDisplayContext displayContext, ClientWorld world, HeldItemContext heldItemContext, int seed, CallbackInfo ci) {
-		if (this.specialModelType instanceof ObjHandheldModelRenderer || this.specialModelType instanceof ObjDefinedItemRenderer
-				|| this.specialModelType instanceof ObjAttachmentModelRenderer || this.specialModelType instanceof ObjThrowableModelRenderer) {
+		if (this.specialModelType instanceof ObjHandheldModelRenderer || this.specialModelType instanceof ObjDefinedItemRenderer) {
 			state.markAnimated();
 		}
 	}

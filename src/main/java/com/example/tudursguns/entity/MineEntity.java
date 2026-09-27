@@ -2,7 +2,6 @@ package com.example.tudursguns.entity;
 
 import com.example.tudursguns.handheld.MineDefinition;
 import com.example.tudursguns.handheld.ModDefinitions;
-import com.example.tudursguns.registry.ModComponents;
 import com.example.tudursguns.registry.ModEntityTypes;
 import com.example.tudursguns.registry.ModItems;
 import com.example.tudursguns.weapon.HandheldCombat;
@@ -137,12 +136,8 @@ public class MineEntity extends Entity {
 	}
 
 	public ItemStack toItem() {
-		ItemStack stack = new ItemStack(ModItems.MINE);
 		Identifier id = mineId();
-		if (id != null) {
-			stack.set(ModComponents.MINE, id);
-		}
-		return stack;
+		return id != null ? ModItems.mineStack(id) : new ItemStack(ModItems.MINE);
 	}
 
 	// ---------------------------------------------------------------- ticking

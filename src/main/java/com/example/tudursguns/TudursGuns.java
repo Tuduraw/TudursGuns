@@ -2,7 +2,6 @@ package com.example.tudursguns;
 
 import com.example.tudursguns.armor.ArmorEffects;
 import com.example.tudursguns.handheld.DefinitionSet;
-import com.example.tudursguns.handheld.HandheldDefinitionLoader;
 import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.network.ModNetworking;
 import com.example.tudursguns.registry.ModBlockEntities;
@@ -43,9 +42,6 @@ public class TudursGuns implements ModInitializer {
 		ModItemGroups.register();
 		ModNetworking.register();
 
-		ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(HandheldDefinitionLoader.handheld());
-		ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(HandheldDefinitionLoader.attachments());
-		ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(HandheldDefinitionLoader.throwables());
 		for (DefinitionSet<?> set : ModDefinitions.ALL) {
 			ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(set.loader());
 		}

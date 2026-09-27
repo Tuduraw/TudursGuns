@@ -1,9 +1,7 @@
 package com.example.tudursguns.handheld;
 
 import com.example.tudursguns.registry.ModComponents;
-import com.example.tudursguns.registry.ModItemGroups;
 import com.example.tudursguns.registry.ModItems;
-import com.example.tudursguns.screen.WeaponWorkbenchScreenHandler;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.item.Item;
@@ -105,31 +103,15 @@ public record GunRecipeDefinition(ItemRef result, List<ItemRef> ingredients, Opt
 		/** The stack this makes (a result) - empty for a tag. A weapon comes with a full magazine when
 		 * its weapon file is known on this side. */
 		public ItemStack createStack() {
-			ItemStack stack = ItemStack.EMPTY;
-			if (this.item.isPresent()) {
-				stack = new ItemStack(Registries.ITEM.get(this.item.get()));
-			} else if (this.weapon.isPresent()) {
-				HandheldDefinitions.ClientEntry client = HandheldDefinitions.getClient(this.weapon.get());
-				HandheldDefinition server = HandheldDefinitions.getServer(this.weapon.get());
-				int rounds = server != null ? com.example.tudursvehiclemod.asset.WeaponStatsLoader.get(server.weapon()).magazineSize()
-						: client != null ? client.weapon().magazineSize() : 0;
-				stack = ModItemGroups.createStack(this.weapon.get(), rounds);
-			} else if (this.attachment.isPresent()) {
-				stack = WeaponWorkbenchScreenHandler.createAttachmentStack(this.attachment.get());
-			} else if (this.ammo.isPresent()) {
-				stack = new ItemStack(ModItems.AMMO);
-				stack.set(ModComponents.AMMO_TYPE, this.ammo.get());
-			} else if (this.throwable.isPresent()) {
-				stack = new ItemStack(ModItems.THROWABLE);
-				stack.set(ModComponents.THROWABLE, this.throwable.get());
-			} else if (this.mine.isPresent()) {
-				stack = new ItemStack(ModItems.MINE);
-				stack.set(ModComponents.MINE, this.mine.get());
-			} else if (this.armor.isPresent()) {
-				stack = ModItemGroups.createArmorStack(this.armor.get());
-			} else if (this.equipment.isPresent()) {
-				stack = ModItemGroups.createEquipmentStack(this.equipment.get());
-			}
+			ItemStack stack = this.item.map(id -> new ItemStack(Registries.ITEM.get(id)))
+					.or(() -> this.weapon.map(ModItems::weaponStack))
+					.or(() -> this.attachment.map(ModItems::attachmentStack))
+					.or(() -> this.ammo.map(ModItems::ammoStack))
+					.or(() -> this.throwable.map(ModItems::throwableStack))
+					.or(() -> this.mine.map(ModItems::mineStack))
+					.or(() -> this.armor.map(ModItems::armorStack))
+					.or(() -> this.equipment.map(ModItems::equipmentStack))
+					.orElse(ItemStack.EMPTY);
 			if (!stack.isEmpty()) {
 				stack.setCount(Math.min(this.count, stack.getMaxCount()));
 			}

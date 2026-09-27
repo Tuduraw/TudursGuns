@@ -5,12 +5,9 @@ import com.example.tudursguns.handheld.MineDefinition;
 import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.registry.ModComponents;
 import com.example.tudursvehiclemod.entity.AbstractVehicleEntity;
-import net.minecraft.component.type.TooltipDisplayComponent;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
-import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
@@ -32,12 +29,12 @@ import java.util.function.Consumer;
 /** The one item every placeable charge is; which one comes from its tudursguns:mine component.
  * Use it on a block to place it (on top only, for placement "ground"). A charge with placement
  * "anywhere" can also be stuck to a vehicle: sneak and use it while looking at the vehicle. */
-public class MineItem extends Item {
+public class MineItem extends DefinedItem<MineDefinition> {
 
 	private static final double VEHICLE_REACH = 4.5;
 
 	public MineItem(Settings settings) {
-		super(settings);
+		super(settings, ModDefinitions.MINES, ModComponents.MINE);
 	}
 
 	@Override
@@ -134,19 +131,7 @@ public class MineItem extends Item {
 	}
 
 	@Override
-	public Text getName(ItemStack stack) {
-		String name = ModDefinitions.MINES.name(stack.get(ModComponents.MINE));
-		return name != null ? Text.literal(name) : super.getName(stack);
-	}
-
-	@Override
-	public void appendTooltip(ItemStack stack, TooltipContext context, TooltipDisplayComponent displayComponent,
-			Consumer<Text> textConsumer, TooltipType type) {
-		Identifier id = stack.get(ModComponents.MINE);
-		MineDefinition def = ModDefinitions.MINES.getAny(id);
-		if (def == null) {
-			return;
-		}
+	protected void appendDetails(ItemStack stack, MineDefinition def, Consumer<Text> textConsumer) {
 		textConsumer.accept(Text.translatable("tooltip.tudursguns.mine.trigger." + def.trigger().name().toLowerCase(Locale.ROOT))
 				.formatted(Formatting.GRAY));
 		if (def.trigger() == MineDefinition.Trigger.PROXIMITY) {
@@ -156,8 +141,5 @@ public class MineItem extends Item {
 		def.movement().appendTooltip(textConsumer);
 		textConsumer.accept(Text.translatable("tooltip.tudursguns.mine.placement." + def.placement().name().toLowerCase(Locale.ROOT))
 				.formatted(Formatting.DARK_GRAY));
-		if (type.isAdvanced()) {
-			textConsumer.accept(Text.literal(id.toString()).formatted(Formatting.DARK_GRAY));
-		}
 	}
 }

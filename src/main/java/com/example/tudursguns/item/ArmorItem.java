@@ -4,26 +4,22 @@ import com.example.tudursguns.armor.ArmorEffects;
 import com.example.tudursguns.handheld.ArmorDefinition;
 import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.registry.ModComponents;
-import net.minecraft.component.type.TooltipDisplayComponent;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
 
 import java.util.function.Consumer;
 
 /** The one item every piece of armor is; which one comes from its tudursguns:armor component. It is
  * worn through vanilla's own equippable component, which (with its attributes, durability and item
  * model) is filled in from the definition - see ArmorEffects.applyComponents. */
-public class ArmorItem extends Item {
+public class ArmorItem extends DefinedItem<ArmorDefinition> {
 
 	public ArmorItem(Settings settings) {
-		super(settings);
+		super(settings, ModDefinitions.ARMOR, ModComponents.ARMOR);
 	}
 
 	@Override
@@ -35,19 +31,7 @@ public class ArmorItem extends Item {
 	}
 
 	@Override
-	public Text getName(ItemStack stack) {
-		String name = ModDefinitions.ARMOR.name(stack.get(ModComponents.ARMOR));
-		return name != null ? Text.literal(name) : super.getName(stack);
-	}
-
-	@Override
-	public void appendTooltip(ItemStack stack, TooltipContext context, TooltipDisplayComponent displayComponent,
-			Consumer<Text> textConsumer, TooltipType type) {
-		Identifier id = stack.get(ModComponents.ARMOR);
-		ArmorDefinition def = ModDefinitions.ARMOR.getAny(id);
-		if (def == null) {
-			return;
-		}
+	protected void appendDetails(ItemStack stack, ArmorDefinition def, Consumer<Text> textConsumer) {
 		ArmorDefinition.Protection protection = def.protection();
 		percent(textConsumer, "ballistic", protection.ballistic());
 		percent(textConsumer, "blast", protection.blast());
@@ -61,9 +45,6 @@ public class ArmorItem extends Item {
 		if (def.effects().detectionMultiplier() < 1f) {
 			textConsumer.accept(Text.translatable("tooltip.tudursguns.armor.camouflage",
 					Math.round(100f * (1f - def.effects().detectionMultiplier()))).formatted(Formatting.BLUE));
-		}
-		if (type.isAdvanced()) {
-			textConsumer.accept(Text.literal(id.toString()).formatted(Formatting.DARK_GRAY));
 		}
 	}
 

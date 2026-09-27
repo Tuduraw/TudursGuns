@@ -1,7 +1,7 @@
 package com.example.tudursguns.screen;
 
 import com.example.tudursguns.handheld.HandheldDefinition;
-import com.example.tudursguns.handheld.HandheldDefinitions;
+import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.item.AttachmentItem;
 import com.example.tudursguns.item.HandheldWeaponItem;
 import com.example.tudursguns.registry.ModBlocks;
@@ -109,7 +109,7 @@ public class WeaponWorkbenchScreenHandler extends ScreenHandler {
 
 	/** Attachment slot names of the weapon in the workbench, in slot order. */
 	public List<String> slotNames() {
-		HandheldDefinition def = HandheldDefinitions.getAny(weapon().get(ModComponents.WEAPON));
+		HandheldDefinition def = ModDefinitions.HANDHELD.getAny(weapon().get(ModComponents.WEAPON));
 		return def == null ? List.of() : def.attachmentSlotNames();
 	}
 
@@ -117,7 +117,7 @@ public class WeaponWorkbenchScreenHandler extends ScreenHandler {
 		if (!(stack.getItem() instanceof AttachmentItem)) {
 			return false;
 		}
-		HandheldDefinition def = HandheldDefinitions.getAny(weapon().get(ModComponents.WEAPON));
+		HandheldDefinition def = ModDefinitions.HANDHELD.getAny(weapon().get(ModComponents.WEAPON));
 		if (def == null) {
 			return false;
 		}
@@ -147,7 +147,7 @@ public class WeaponWorkbenchScreenHandler extends ScreenHandler {
 			Map<String, Identifier> fitted = WeaponModifiers.fitted(weapon);
 			for (int i = 0; i < MAX_ATTACHMENT_SLOTS; i++) {
 				Identifier attachmentId = i < names.size() ? fitted.get(names.get(i)) : null;
-				this.inventory.setStack(1 + i, attachmentId == null ? ItemStack.EMPTY : createAttachmentStack(attachmentId));
+				this.inventory.setStack(1 + i, attachmentId == null ? ItemStack.EMPTY : ModItems.attachmentStack(attachmentId));
 			}
 		} finally {
 			this.syncing = false;
@@ -156,7 +156,7 @@ public class WeaponWorkbenchScreenHandler extends ScreenHandler {
 
 	/** Rewrites the weapon's component from the attachment slots, then its derived state. */
 	private void writeFittedAttachments(ItemStack weapon) {
-		HandheldDefinition def = HandheldDefinitions.getServer(weapon.get(ModComponents.WEAPON));
+		HandheldDefinition def = ModDefinitions.HANDHELD.getServer(weapon.get(ModComponents.WEAPON));
 		if (def == null) {
 			return;
 		}
@@ -175,12 +175,6 @@ public class WeaponWorkbenchScreenHandler extends ScreenHandler {
 			weapon.set(ModComponents.ATTACHMENTS, fitted);
 		}
 		HandheldCombat.applyAttachmentEffects(weapon, def, WeaponStatsLoader.get(def.weapon()));
-	}
-
-	public static ItemStack createAttachmentStack(Identifier attachmentId) {
-		ItemStack stack = new ItemStack(ModItems.ATTACHMENT);
-		stack.set(ModComponents.ATTACHMENT, attachmentId);
-		return stack;
 	}
 
 	@Override

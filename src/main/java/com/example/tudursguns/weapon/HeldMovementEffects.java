@@ -4,7 +4,6 @@ import com.example.tudursguns.TudursGuns;
 import com.example.tudursguns.handheld.AttachmentDefinition;
 import com.example.tudursguns.handheld.EquipmentDefinition;
 import com.example.tudursguns.handheld.HandheldDefinition;
-import com.example.tudursguns.handheld.HandheldDefinitions;
 import com.example.tudursguns.handheld.HeldMovement;
 import com.example.tudursguns.handheld.MineDefinition;
 import com.example.tudursguns.handheld.ModDefinitions;
@@ -58,14 +57,14 @@ public final class HeldMovementEffects {
 	public static float contribution(ItemStack stack, boolean aiming) {
 		Item item = stack.getItem();
 		if (item instanceof HandheldWeaponItem) {
-			HandheldDefinition def = HandheldDefinitions.getServer(stack.get(ModComponents.WEAPON));
+			HandheldDefinition def = ModDefinitions.HANDHELD.getServer(stack.get(ModComponents.WEAPON));
 			if (def == null) {
 				return 0f;
 			}
 			float value = def.movement().total(aiming);
 			for (Map.Entry<String, Identifier> fitted : WeaponModifiers.fitted(stack).entrySet()) {
 				AttachmentDefinition attachment = def.mountFor(fitted.getKey(), fitted.getValue()) == null ? null
-						: HandheldDefinitions.getAnyAttachment(fitted.getValue());
+						: ModDefinitions.ATTACHMENTS.getAny(fitted.getValue());
 				if (attachment != null) {
 					value += attachment.movement().total(aiming);
 				}
@@ -74,7 +73,7 @@ public final class HeldMovementEffects {
 		}
 		HeldMovement movement = null;
 		if (item instanceof ThrowableItem) {
-			ThrowableDefinition def = HandheldDefinitions.serverThrowables().get(stack.get(ModComponents.THROWABLE));
+			ThrowableDefinition def = ModDefinitions.THROWABLES.getServer(stack.get(ModComponents.THROWABLE));
 			movement = def == null ? null : def.movement();
 		} else if (item instanceof MineItem) {
 			MineDefinition def = ModDefinitions.MINES.getServer(stack.get(ModComponents.MINE));

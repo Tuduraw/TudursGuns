@@ -1,10 +1,10 @@
 package com.example.tudursguns.client.render;
 
 import com.example.tudursguns.TudursGuns;
-import com.example.tudursguns.handheld.AttachmentDefinition;
 import com.example.tudursguns.handheld.AnimationDefinition;
+import com.example.tudursguns.handheld.AttachmentDefinition;
 import com.example.tudursguns.handheld.HandheldDefinition;
-import com.example.tudursguns.handheld.HandheldDefinitions;
+import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursvehiclemod.client.render.DitherCutoutLayers;
 import com.example.tudursvehiclemod.client.render.ObjModel;
 import com.example.tudursvehiclemod.client.render.ObjModelLoader;
@@ -69,7 +69,7 @@ public final class WeaponModelDrawer {
 			if (mount == null || mount.model().isEmpty()) {
 				continue;
 			}
-			AttachmentDefinition attachment = HandheldDefinitions.getAnyAttachment(entry.getValue());
+			AttachmentDefinition attachment = ModDefinitions.ATTACHMENTS.getAny(entry.getValue());
 			Identifier texture = def.texture().get();
 			if (mount.texture().isPresent()) {
 				texture = mount.texture().get();
@@ -98,6 +98,17 @@ public final class WeaponModelDrawer {
 		ObjModel.Triangles triangles = hiddenGroups.isEmpty() ? model.getTriangles() : model.getTrianglesExcluding(hiddenGroups);
 		VehicleEntityRenderer.renderTriangles(queue, matrices, DitherCutoutLayers.entityDitherCutout(texture),
 				triangles, light, overlay, 0xFFFFFFFF);
+	}
+
+	/** Item bounds: the unit cube item model space is built around. */
+	public static void unitCube(java.util.function.Consumer<org.joml.Vector3fc> consumer) {
+		for (int x = 0; x <= 1; x++) {
+			for (int y = 0; y <= 1; y++) {
+				for (int z = 0; z <= 1; z++) {
+					consumer.accept(new org.joml.Vector3f(x, y, z));
+				}
+			}
+		}
 	}
 
 	/** A unit square in the z = 0.5 plane facing +Z (towards the viewer in inventories), for icons. */

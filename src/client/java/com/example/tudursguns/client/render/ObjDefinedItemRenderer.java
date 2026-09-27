@@ -3,10 +3,12 @@ package com.example.tudursguns.client.render;
 import com.example.tudursguns.TudursGuns;
 import com.example.tudursguns.handheld.AmmoDefinition;
 import com.example.tudursguns.handheld.ArmorDefinition;
+import com.example.tudursguns.handheld.AttachmentDefinition;
 import com.example.tudursguns.handheld.EquipmentDefinition;
 import com.example.tudursguns.handheld.HandheldDefinition;
 import com.example.tudursguns.handheld.MineDefinition;
 import com.example.tudursguns.handheld.ModDefinitions;
+import com.example.tudursguns.handheld.ThrowableDefinition;
 import com.example.tudursguns.registry.ModComponents;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.client.render.command.OrderedRenderCommandQueue;
@@ -16,7 +18,6 @@ import net.minecraft.item.ItemDisplayContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.RotationAxis;
-import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 import java.util.Map;
@@ -24,8 +25,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
-/** Draws a mine, armor or equipment item from its definition's own OBJ model/texture/display (one
- * item model type per kind: tudursguns:obj_mine, obj_armor, obj_equipment).
+/** Draws a data-defined item (one item model type per Kind: tudursguns:obj_attachment, obj_mine, ...)
+ * from its definition's OBJ model, texture and display transforms, or its flat icon.
  *
  * OBJ armor is modelled facing +Z everywhere. In the "head" context (an OBJ-only helmet, drawn by
  * vanilla on the head like a carved pumpkin) vanilla's front is -Z, so the model is turned 180
@@ -42,6 +43,8 @@ public class ObjDefinedItemRenderer implements SpecialModelRenderer<Identifier> 
 	}
 
 	public enum Kind {
+		ATTACHMENT("obj_attachment"),
+		THROWABLE("obj_throwable"),
 		MINE("obj_mine"),
 		ARMOR("obj_armor"),
 		EQUIPMENT("obj_equipment"),
@@ -57,6 +60,8 @@ public class ObjDefinedItemRenderer implements SpecialModelRenderer<Identifier> 
 
 		Identifier idOf(ItemStack stack) {
 			return switch (this) {
+				case ATTACHMENT -> stack.get(ModComponents.ATTACHMENT);
+				case THROWABLE -> stack.get(ModComponents.THROWABLE);
 				case MINE -> stack.get(ModComponents.MINE);
 				case ARMOR -> stack.get(ModComponents.ARMOR);
 				case EQUIPMENT -> stack.get(ModComponents.EQUIPMENT);
@@ -66,6 +71,14 @@ public class ObjDefinedItemRenderer implements SpecialModelRenderer<Identifier> 
 
 		Look look(Identifier id) {
 			return switch (this) {
+				case ATTACHMENT -> {
+					AttachmentDefinition def = ModDefinitions.ATTACHMENTS.getAny(id);
+					yield def == null ? null : new Look(def.model(), def.texture(), def.display());
+				}
+				case THROWABLE -> {
+					ThrowableDefinition def = ModDefinitions.THROWABLES.getAny(id);
+					yield def == null ? null : new Look(def.model(), def.texture(), def.display());
+				}
 				case MINE -> {
 					MineDefinition def = ModDefinitions.MINES.getAny(id);
 					yield def == null ? null : new Look(def.model(), def.texture(), def.display());
@@ -133,13 +146,7 @@ public class ObjDefinedItemRenderer implements SpecialModelRenderer<Identifier> 
 
 	@Override
 	public void collectVertices(Consumer<Vector3fc> consumer) {
-		for (int x = 0; x <= 1; x++) {
-			for (int y = 0; y <= 1; y++) {
-				for (int z = 0; z <= 1; z++) {
-					consumer.accept(new Vector3f(x, y, z));
-				}
-			}
-		}
+		WeaponModelDrawer.unitCube(consumer);
 	}
 
 	public record Unbaked(Kind kind) implements SpecialModelRenderer.Unbaked {

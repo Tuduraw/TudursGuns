@@ -1,38 +1,48 @@
 package com.example.tudursguns.handheld;
 
 import com.example.tudursvehiclemod.asset.WeaponStatsLoader;
-import net.minecraft.util.Identifier;
 
 import java.util.List;
+import java.util.Optional;
 
-/** The definition kinds added after handheld weapons/attachments/throwables, which all share one
- * loader and one sync payload (DefinitionSet). */
+/** Every data-driven definition kind (data/<namespace>/<kind>/*.json), each loaded and synced the
+ * same way (DefinitionSet). */
 public final class ModDefinitions {
 
 	private ModDefinitions() {
 	}
 
-	/** data/<namespace>/mine/*.json - named after display_name, else its weapon file's DisplayName. */
-	public static final DefinitionSet<MineDefinition> MINES = new DefinitionSet<>("mine", MineDefinition.CODEC,
-			(id, def) -> def.displayName().orElseGet(() -> WeaponStatsLoader.get(def.weapon()).displayName()));
+	/** display_name, else the weapon file's DisplayName. */
+	private static String nameOrWeapon(Optional<String> displayName, String weapon) {
+		return displayName.orElseGet(() -> WeaponStatsLoader.get(weapon).displayName());
+	}
 
-	/** data/<namespace>/armor/*.json */
+	public static final DefinitionSet<HandheldDefinition> HANDHELD = new DefinitionSet<>("handheld", HandheldDefinition.CODEC,
+			(id, def) -> nameOrWeapon(def.displayName(), def.weapon()), HandheldDefinition::weapon);
+
+	public static final DefinitionSet<AttachmentDefinition> ATTACHMENTS = new DefinitionSet<>("attachment", AttachmentDefinition.CODEC,
+			(id, def) -> def.displayName());
+
+	public static final DefinitionSet<ThrowableDefinition> THROWABLES = new DefinitionSet<>("throwable", ThrowableDefinition.CODEC,
+			(id, def) -> nameOrWeapon(def.displayName(), def.weapon()), ThrowableDefinition::weapon);
+
+	public static final DefinitionSet<MineDefinition> MINES = new DefinitionSet<>("mine", MineDefinition.CODEC,
+			(id, def) -> nameOrWeapon(def.displayName(), def.weapon()));
+
 	public static final DefinitionSet<ArmorDefinition> ARMOR = new DefinitionSet<>("armor", ArmorDefinition.CODEC,
 			(id, def) -> def.displayName().orElse(id.getPath()));
 
-	/** data/<namespace>/equipment/*.json */
 	public static final DefinitionSet<EquipmentDefinition> EQUIPMENT = new DefinitionSet<>("equipment", EquipmentDefinition.CODEC,
 			(id, def) -> def.displayName().orElse(id.getPath()));
 
-	/** data/<namespace>/ammo/*.json */
 	public static final DefinitionSet<AmmoDefinition> AMMO = new DefinitionSet<>("ammo", AmmoDefinition.CODEC,
 			(id, def) -> def.displayName().orElse(id.getPath()));
 
-	/** data/<namespace>/gun_recipe/*.json - the gun crafting table's recipes. */
+	/** The gun crafting table's recipes. */
 	public static final DefinitionSet<GunRecipeDefinition> GUN_RECIPES = new DefinitionSet<>("gun_recipe", GunRecipeDefinition.CODEC,
 			(id, def) -> id.toString());
 
-	public static final List<DefinitionSet<?>> ALL = List.of(MINES, ARMOR, EQUIPMENT, AMMO, GUN_RECIPES);
+	public static final List<DefinitionSet<?>> ALL = List.of(HANDHELD, ATTACHMENTS, THROWABLES, MINES, ARMOR, EQUIPMENT, AMMO, GUN_RECIPES);
 
 	public static DefinitionSet<?> byKind(String kind) {
 		for (DefinitionSet<?> set : ALL) {

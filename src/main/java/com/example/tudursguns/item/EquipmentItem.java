@@ -5,21 +5,17 @@ import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.registry.ModComponents;
 import com.example.tudursguns.weapon.EquipmentActions;
 import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.TooltipDisplayComponent;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 
 import java.util.Locale;
@@ -29,12 +25,12 @@ import java.util.function.Consumer;
 /** The one item every piece of support equipment is; which one comes from its tudursguns:equipment
  * component. What it does is in EquipmentDefinition / EquipmentActions; the binoculars' view, the
  * rangefinder, the mine detector's outlines and the laser beam are drawn client-side. */
-public class EquipmentItem extends Item {
+public class EquipmentItem extends DefinedItem<EquipmentDefinition> {
 
 	private static final int HOLD_TICKS = 72000;
 
 	public EquipmentItem(Settings settings) {
-		super(settings);
+		super(settings, ModDefinitions.EQUIPMENT, ModComponents.EQUIPMENT);
 	}
 
 	public static EquipmentDefinition definition(ItemStack stack) {
@@ -142,24 +138,9 @@ public class EquipmentItem extends Item {
 	}
 
 	@Override
-	public Text getName(ItemStack stack) {
-		String name = ModDefinitions.EQUIPMENT.name(stack.get(ModComponents.EQUIPMENT));
-		return name != null ? Text.literal(name) : super.getName(stack);
-	}
-
-	@Override
-	public void appendTooltip(ItemStack stack, TooltipContext context, TooltipDisplayComponent displayComponent,
-			Consumer<Text> textConsumer, TooltipType type) {
-		Identifier id = stack.get(ModComponents.EQUIPMENT);
-		EquipmentDefinition def = ModDefinitions.EQUIPMENT.getAny(id);
-		if (def == null) {
-			return;
-		}
+	protected void appendDetails(ItemStack stack, EquipmentDefinition def, Consumer<Text> textConsumer) {
 		textConsumer.accept(Text.translatable("tooltip.tudursguns.equipment." + def.type().name().toLowerCase(Locale.ROOT))
 				.formatted(Formatting.GRAY));
 		def.movement().appendTooltip(textConsumer);
-		if (type.isAdvanced()) {
-			textConsumer.accept(Text.literal(id.toString()).formatted(Formatting.DARK_GRAY));
-		}
 	}
 }

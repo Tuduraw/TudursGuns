@@ -19,11 +19,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-/** Scans data/<namespace>/<directory>/*.json on every data reload (including /reload), plus the same
- * folder inside each pack under tudursvehiclemod-addons/ - the folder Tudur's Vehicle Mod already
- * reads vehicles and weapons from, so one addon pack can ship both. Used for handheld weapons
- * (handheld/) and attachments (attachment/). */
-public class HandheldDefinitionLoader<T> implements SimpleSynchronousResourceReloadListener {
+/** Reads one kind of definition (see DefinitionSet) from data/<namespace>/<directory>/*.json on every
+ * data reload (including /reload), plus the same folder inside each pack under
+ * tudursvehiclemod-addons/ - where Tudur's Vehicle Mod reads vehicles and weapons from, so one addon
+ * pack can ship both. */
+public class DefinitionLoader<T> implements SimpleSynchronousResourceReloadListener {
 
 	private static final String SUFFIX = ".json";
 
@@ -31,22 +31,10 @@ public class HandheldDefinitionLoader<T> implements SimpleSynchronousResourceRel
 	private final Codec<T> codec;
 	private final Consumer<Map<Identifier, T>> sink;
 
-	public HandheldDefinitionLoader(String directory, Codec<T> codec, Consumer<Map<Identifier, T>> sink) {
+	DefinitionLoader(String directory, Codec<T> codec, Consumer<Map<Identifier, T>> sink) {
 		this.directory = directory;
 		this.codec = codec;
 		this.sink = sink;
-	}
-
-	public static HandheldDefinitionLoader<HandheldDefinition> handheld() {
-		return new HandheldDefinitionLoader<>("handheld", HandheldDefinition.CODEC, HandheldDefinitions::setServer);
-	}
-
-	public static HandheldDefinitionLoader<AttachmentDefinition> attachments() {
-		return new HandheldDefinitionLoader<>("attachment", AttachmentDefinition.CODEC, HandheldDefinitions::setServerAttachments);
-	}
-
-	public static HandheldDefinitionLoader<ThrowableDefinition> throwables() {
-		return new HandheldDefinitionLoader<>("throwable", ThrowableDefinition.CODEC, HandheldDefinitions::setServerThrowables);
 	}
 
 	@Override
@@ -85,18 +73,18 @@ public class HandheldDefinitionLoader<T> implements SimpleSynchronousResourceRel
 				.ifPresent(def -> loaded.put(id, def));
 	}
 
-	/** tudursvehiclemod-addons/<pack>/data/<namespace>/handheld/**.json - never throws. */
+	/** tudursvehiclemod-addons/<pack>/data/<namespace>/<directory>/**.json - never throws. */
 	private void loadFromAddonsFolder(Map<Identifier, T> loaded) {
 		for (Path addonDir : AddonPaths.listSubdirectories(AddonPaths.getAddonsRoot())) {
 			for (Path namespaceDir : AddonPaths.listSubdirectories(addonDir.resolve("data"))) {
 				String namespace = namespaceDir.getFileName().toString();
-				Path handheldDir = namespaceDir.resolve(this.directory);
-				if (!Files.isDirectory(handheldDir)) {
+				Path kindDir = namespaceDir.resolve(this.directory);
+				if (!Files.isDirectory(kindDir)) {
 					continue;
 				}
-				try (var files = Files.walk(handheldDir)) {
+				try (var files = Files.walk(kindDir)) {
 					for (Path jsonFile : (Iterable<Path>) files.filter(p -> p.toString().endsWith(SUFFIX))::iterator) {
-						String relative = handheldDir.relativize(jsonFile).toString().replace('\\', '/');
+						String relative = kindDir.relativize(jsonFile).toString().replace('\\', '/');
 						Identifier id = Identifier.of(namespace, relative.substring(0, relative.length() - SUFFIX.length()));
 						try (BufferedReader reader = Files.newBufferedReader(jsonFile, StandardCharsets.UTF_8)) {
 							parseInto(loaded, id, reader, jsonFile.toString());
@@ -105,7 +93,7 @@ public class HandheldDefinitionLoader<T> implements SimpleSynchronousResourceRel
 						}
 					}
 				} catch (Exception e) {
-					TudursGuns.LOGGER.error("Failed to scan {}", handheldDir, e);
+					TudursGuns.LOGGER.error("Failed to scan {}", kindDir, e);
 				}
 			}
 		}
