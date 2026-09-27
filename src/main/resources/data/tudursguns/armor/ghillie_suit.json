@@ -1,0 +1,11 @@
+{
+  "slot": "chest",
+  "display_name": "Ghillie Suit",
+  "armor": 1,
+  "durability": 150,
+  "equipment_asset": "tudursguns:ghillie_suit",
+  "item_model": "tudursguns:ghillie_suit",
+  "effects": {
+    "detection_multiplier": 0.35
+  }
+}

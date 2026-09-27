@@ -5,6 +5,15 @@ import com.example.tudursguns.client.hud.HandheldHud;
 import com.example.tudursguns.client.hud.ScopeOverlay;
 import com.example.tudursguns.client.hud.VisionOverlay;
 import com.example.tudursguns.client.render.InvisibleEntityRenderer;
+import com.example.tudursguns.client.render.MineEntityRenderer;
+import com.example.tudursguns.client.render.ObjArmorFeatureRenderer;
+import com.example.tudursguns.client.render.ObjDefinedItemRenderer;
+import com.example.tudursguns.handheld.DefinitionSet;
+import com.example.tudursguns.handheld.ModDefinitions;
+import com.example.tudursguns.network.SwitchUnderbarrelRequestPayload;
+import com.example.tudursguns.network.SyncDefinitionsPayload;
+import net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRendererRegistrationCallback;
+import net.minecraft.client.render.entity.model.BipedEntityModel;
 import com.example.tudursguns.client.render.ObjThrowableModelRenderer;
 import com.example.tudursguns.handheld.ThrowableDefinition;
 import com.example.tudursguns.network.FlashPayload;
@@ -53,6 +62,7 @@ public class TudursGunsClient implements ClientModInitializer {
 
 	private static KeyBinding reloadKey;
 	private static KeyBinding switchModeKey;
+	private static KeyBinding underbarrelKey;
 
 	@Override
 	public void onInitializeClient() {
@@ -75,12 +85,30 @@ public class TudursGunsClient implements ClientModInitializer {
 		SpecialModelTypes.ID_MAPPER.put(ObjThrowableModelRenderer.TYPE_ID, ObjThrowableModelRenderer.Unbaked.CODEC);
 		EntityRendererRegistry.register(ModEntityTypes.SMOKE_CLOUD, InvisibleEntityRenderer::new);
 		EntityRendererRegistry.register(ModEntityTypes.SMOKE_DECOY, InvisibleEntityRenderer::new);
+		EntityRendererRegistry.register(ModEntityTypes.LASER_SPOT, InvisibleEntityRenderer::new);
+		EntityRendererRegistry.register(ModEntityTypes.MINE, MineEntityRenderer::new);
+		for (ObjDefinedItemRenderer.Kind kind : ObjDefinedItemRenderer.Kind.values()) {
+			SpecialModelTypes.ID_MAPPER.put(kind.typeId, kind.codec);
+		}
+		// OBJ armor on anything drawn with a humanoid model (players, armor stands, zombies, ...).
+		LivingEntityFeatureRendererRegistrationCallback.EVENT.register((entityType, entityRenderer, helper, context) -> {
+			if (entityRenderer.getModel() instanceof BipedEntityModel<?>) {
+				registerArmorFeature(helper, entityRenderer);
+			}
+		});
 		HandledScreens.register(ModScreenHandlers.WEAPON_WORKBENCH, WeaponWorkbenchScreen::new);
 
 		ClientPlayNetworking.registerGlobalReceiver(SyncAttachmentDefinitionsPayload.ID, (payload, context) ->
 				context.client().execute(() -> HandheldDefinitions.setClientAttachments(decodeAttachments(payload))));
 		ClientPlayNetworking.registerGlobalReceiver(SyncThrowableDefinitionsPayload.ID, (payload, context) ->
 				context.client().execute(() -> HandheldDefinitions.setClientThrowables(decodeThrowables(payload))));
+		ClientPlayNetworking.registerGlobalReceiver(SyncDefinitionsPayload.ID, (payload, context) ->
+				context.client().execute(() -> {
+					DefinitionSet<?> set = ModDefinitions.byKind(payload.kind());
+					if (set != null) {
+						set.receive(payload);
+					}
+				}));
 		ClientPlayNetworking.registerGlobalReceiver(FlashPayload.ID, (payload, context) ->
 				context.client().execute(() -> VisionOverlay.flash(payload.intensity(), payload.durationTicks())));
 		ClientPlayNetworking.registerGlobalReceiver(PlayerAimPayload.ID, (payload, context) ->
@@ -94,6 +122,9 @@ public class TudursGunsClient implements ClientModInitializer {
 			HandheldDefinitions.setClient(Map.of());
 			HandheldDefinitions.setClientAttachments(Map.of());
 			HandheldDefinitions.setClientThrowables(Map.of());
+			for (DefinitionSet<?> set : ModDefinitions.ALL) {
+				set.clearClient();
+			}
 			ClientLockState.set(LockStatePayload.NONE);
 			AimController.reset();
 		});
@@ -105,6 +136,9 @@ public class TudursGunsClient implements ClientModInitializer {
 				"key.tudursguns.reload", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_Z, category));
 		switchModeKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
 				"key.tudursguns.switch_mode", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_I, category));
+		// X is vanilla's "load hotbar" (creative only, unbound in survival use) - rebindable as usual.
+		underbarrelKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+				"key.tudursguns.switch_underbarrel", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_X, category));
 		// Left Alt is also Tudur's Vehicle Mod's free-look key, but that only matters while riding,
 		// and weapons can't be aimed while riding - AimController reads the key directly for this reason.
 		AimController.setAimKey(KeyBindingHelper.registerKeyBinding(new KeyBinding(
@@ -116,12 +150,20 @@ public class TudursGunsClient implements ClientModInitializer {
 		ScopeOverlay.register();
 		VisionOverlay.register();
 		ThrowGuide.register();
+		GearClient.register();
+	}
+
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	private static void registerArmorFeature(LivingEntityFeatureRendererRegistrationCallback.RegistrationHelper helper,
+			net.minecraft.client.render.entity.LivingEntityRenderer<?, ?, ?> renderer) {
+		helper.register((net.minecraft.client.render.entity.feature.FeatureRenderer) ObjArmorFeatureRenderer.create(renderer));
 	}
 
 	private static void onEndTick(MinecraftClient client) {
 		AimController.tick(client);
 		ThrowGuide.tick(client);
 		VisionOverlay.tick();
+		GearClient.tick(client);
 		boolean reload = false;
 		while (reloadKey.wasPressed()) {
 			reload = true;
@@ -129,6 +171,10 @@ public class TudursGunsClient implements ClientModInitializer {
 		boolean switchMode = false;
 		while (switchModeKey.wasPressed()) {
 			switchMode = true;
+		}
+		boolean switchUnderbarrel = false;
+		while (underbarrelKey.wasPressed()) {
+			switchUnderbarrel = true;
 		}
 		PlayerEntity player = client.player;
 		if (player == null || player.getVehicle() != null || !isHoldingWeapon(player)) {
@@ -139,6 +185,9 @@ public class TudursGunsClient implements ClientModInitializer {
 		}
 		if (switchMode) {
 			ClientPlayNetworking.send(SwitchModeRequestPayload.INSTANCE);
+		}
+		if (switchUnderbarrel) {
+			ClientPlayNetworking.send(SwitchUnderbarrelRequestPayload.INSTANCE);
 		}
 	}
 

@@ -8,7 +8,9 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
+import net.minecraft.entity.Entity;
 import net.minecraft.text.Text;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.Identifier;
 
 /** What the player sees through a scope: the scope texture as a centred square (the spyglass's by
@@ -27,6 +29,24 @@ public final class ScopeOverlay {
 				crosshair.render(context, tickCounter);
 			}
 		});
+	}
+
+	private static final double RANGEFINDER_MAX = 1024.0;
+
+	/** Distance from the eye to the block under the centre of the view (as far as the client has the
+	 * world loaded - its render distance). */
+	private static Text rangeText(MinecraftClient client, RenderTickCounter tickCounter) {
+		Entity camera = client.getCameraEntity();
+		if (camera == null) {
+			return Text.literal("---");
+		}
+		float tickProgress = tickCounter.getTickProgress(true);
+		HitResult hit = camera.raycast(RANGEFINDER_MAX, tickProgress, false);
+		if (hit.getType() == HitResult.Type.MISS) {
+			return Text.translatable("hud.tudursguns.range", "---");
+		}
+		double distance = hit.getPos().distanceTo(camera.getCameraPosVec(tickProgress));
+		return Text.translatable("hud.tudursguns.range", String.format(java.util.Locale.ROOT, "%.0f", distance));
 	}
 
 	private static void render(DrawContext context, RenderTickCounter tickCounter) {
@@ -49,5 +69,12 @@ public final class ScopeOverlay {
 		String magnification = String.format(java.util.Locale.ROOT, "x%.1f", AimController.magnification());
 		context.drawTextWithShadow(client.textRenderer, Text.literal(magnification),
 				x + size - client.textRenderer.getWidth(magnification) - 8, y + size - 16, 0xFFFFFFFF);
+		if (AimController.hasRangefinder()) {
+			Text range = rangeText(client, tickCounter);
+			int textX = (width - client.textRenderer.getWidth(range)) / 2;
+			context.drawTextWithShadow(client.textRenderer, range, textX, height / 2 + 12, 0xFFFF6040);
+			context.fill(width / 2 - 4, height / 2, width / 2 + 5, height / 2 + 1, 0xFFFF6040);
+			context.fill(width / 2, height / 2 - 4, width / 2 + 1, height / 2 + 5, 0xFFFF6040);
+		}
 	}
 }

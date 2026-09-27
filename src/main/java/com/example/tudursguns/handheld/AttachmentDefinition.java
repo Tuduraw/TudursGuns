@@ -27,7 +27,8 @@ public record AttachmentDefinition(
 		float soundPitchMultiplier,
 		float accuracyMultiplier,
 		float meleeDamageBonus,
-		Optional<Zoom> zoom
+		Optional<Zoom> zoom,
+		Optional<Underbarrel> underbarrel
 ) {
 
 	public static final Codec<AttachmentDefinition> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -43,8 +44,26 @@ public record AttachmentDefinition(
 			Codec.floatRange(0.0f, 100.0f).optionalFieldOf("sound_pitch_multiplier", 1.0f).forGetter(AttachmentDefinition::soundPitchMultiplier),
 			Codec.floatRange(0.0f, 100.0f).optionalFieldOf("accuracy_multiplier", 1.0f).forGetter(AttachmentDefinition::accuracyMultiplier),
 			Codec.FLOAT.optionalFieldOf("melee_damage_bonus", 0.0f).forGetter(AttachmentDefinition::meleeDamageBonus),
-			Zoom.CODEC.optionalFieldOf("zoom").forGetter(AttachmentDefinition::zoom)
+			Zoom.CODEC.optionalFieldOf("zoom").forGetter(AttachmentDefinition::zoom),
+			Underbarrel.CODEC.optionalFieldOf("underbarrel").forGetter(AttachmentDefinition::underbarrel)
 	).apply(instance, AttachmentDefinition::new));
+
+	/** A second weapon under the barrel (a grenade launcher): the weapon it's fitted to can switch
+	 * between its own fire and this one (the underbarrel switch key). It has its own weapon file,
+	 * rounds (loaded separately - the weapon file's Round), ammo item and projectile item, and fires
+	 * one shot per press. muzzle_offset defaults to the weapon's own. */
+	public record Underbarrel(String weapon, Identifier projectileItem, Optional<Identifier> ammoItem, int roundsPerAmmoItem,
+			Optional<String> reloadSound, Optional<org.joml.Vector3f> muzzleOffset) {
+
+		public static final Codec<Underbarrel> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+				Codec.STRING.fieldOf("weapon").forGetter(Underbarrel::weapon),
+				Identifier.CODEC.optionalFieldOf("projectile_item", Identifier.ofVanilla("iron_nugget")).forGetter(Underbarrel::projectileItem),
+				Identifier.CODEC.optionalFieldOf("ammo_item").forGetter(Underbarrel::ammoItem),
+				Codec.intRange(1, 1_000_000).optionalFieldOf("rounds_per_ammo_item", 1).forGetter(Underbarrel::roundsPerAmmoItem),
+				Codec.STRING.optionalFieldOf("reload_sound").forGetter(Underbarrel::reloadSound),
+				HandheldDefinition.VECTOR_3F.optionalFieldOf("muzzle_offset").forGetter(Underbarrel::muzzleOffset)
+		).apply(instance, Underbarrel::new));
+	}
 
 	/** Scope magnification. The player looks through the scope while holding the aim key; the mouse
 	 * wheel changes magnification between min and max in steps of step. overlay is the texture drawn

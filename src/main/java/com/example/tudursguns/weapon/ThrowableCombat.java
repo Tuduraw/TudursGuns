@@ -64,7 +64,7 @@ public final class ThrowableCombat {
 	/** Ticks the held throwable has been cooking (0 if not cookable or no pin pulled). */
 	public static int cookedTicks(ServerPlayerEntity player, ThrowableDefinition def) {
 		Long pulled = PIN_PULLED_AT.get(player.getUuid());
-		if (!def.cookable() || pulled == null) {
+		if (!def.cooks() || pulled == null) {
 			return 0;
 		}
 		return (int) Math.max(0, player.getEntityWorld().getTime() - pulled);
@@ -73,7 +73,7 @@ public final class ThrowableCombat {
 	/** Called every tick while held with the pin out: a cookable throwable held past its fuse goes off
 	 * in the thrower's hand. Returns true if it did. */
 	public static boolean checkCookedOff(ServerPlayerEntity player, ItemStack stack, Hand hand, ThrowableDefinition def) {
-		if (!def.cookable() || def.fuseTicks() <= 0 || cookedTicks(player, def) < def.fuseTicks()) {
+		if (!def.cooks() || cookedTicks(player, def) < def.fuseTicks()) {
 			return false;
 		}
 		launch(player, stack, def, Vec3d.ZERO, player.getEyePos().add(0, -0.3, 0), 1);
@@ -115,7 +115,15 @@ public final class ThrowableCombat {
 		WeaponStats stats = WeaponStatsLoader.get(def.weapon());
 		ItemStack shown = stack.copyWithCount(1);
 		VehicleProjectileEntity projectile = WeaponProjectileFactory.create(world, player, shown, stats, 0);
-		int delayFuse = stats.delayFuseTicks() >= 0 ? stats.delayFuseTicks() : NO_IMPACT_FUSE_TICKS;
+		int delayFuse;
+		if (def.impact()) {
+			// Goes off at the first thing it hits (-1: no DelayFuse, the vehicle mod's own default), and
+			// doesn't bounce off it first.
+			delayFuse = stats.delayFuseTicks();
+			projectile.tudursvehiclemod$setBounceStrength(0f);
+		} else {
+			delayFuse = stats.delayFuseTicks() >= 0 ? stats.delayFuseTicks() : NO_IMPACT_FUSE_TICKS;
+		}
 		int timeFuse = timeFuseTicks > 0 ? timeFuseTicks : stats.timeFuseTicks();
 		projectile.tudursvehiclemod$setFuseTicks(delayFuse, timeFuse);
 		projectile.setPosition(origin.x, origin.y, origin.z);
@@ -149,9 +157,11 @@ public final class ThrowableCombat {
 			return;
 		}
 		Vec3d pos = entity.getEntityPos();
+		effect.sound().ifPresent(sound -> HandheldCombat.playSoundAt(world, sound, pos, 1.5f, 1.0f, 0.1f));
 		switch (effect.type()) {
-			case SMOKE -> SmokeCloudEntity.create(world, pos, effect.radius(), effect.durationTicks(), effect.rgb(), false);
-			case SIGNAL -> SmokeCloudEntity.create(world, pos, effect.radius(), effect.durationTicks(), effect.rgb(), true);
+			case SMOKE -> SmokeCloudEntity.create(world, pos, effect.radius(), effect.durationTicks(), effect.rgb(), SmokeCloudEntity.Kind.SMOKE);
+			case SIGNAL -> SmokeCloudEntity.create(world, pos, effect.radius(), effect.durationTicks(), effect.rgb(), SmokeCloudEntity.Kind.SIGNAL);
+			case GAS -> SmokeCloudEntity.create(world, pos, effect.radius(), effect.durationTicks(), effect.rgb(), SmokeCloudEntity.Kind.GAS);
 			case FLASH -> flash(world, pos, effect);
 			case INCENDIARY -> ignite(world, pos, effect);
 			default -> {

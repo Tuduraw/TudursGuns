@@ -1,7 +1,9 @@
 package com.example.tudursguns.client;
 
 import com.example.tudursguns.handheld.AttachmentDefinition;
+import com.example.tudursguns.handheld.EquipmentDefinition;
 import com.example.tudursguns.handheld.HandheldDefinitions;
+import com.example.tudursguns.item.EquipmentItem;
 import com.example.tudursguns.item.HandheldWeaponItem;
 import com.example.tudursguns.network.AimKeyPayload;
 import com.example.tudursguns.registry.ModComponents;
@@ -41,6 +43,8 @@ public final class AimController {
 	private static Identifier scopeId;
 	private static AttachmentDefinition.Zoom scopeZoom;
 	private static float magnification = 1f;
+	private static boolean binoculars;
+	private static boolean rangefinder;
 
 	/** Entity ids of OTHER players currently holding their aim key (from PlayerAimPayload). */
 	private static final Set<Integer> REMOTE_AIM_KEY = ConcurrentHashMap.newKeySet();
@@ -76,6 +80,16 @@ public final class AimController {
 
 	public static float magnification() {
 		return magnification;
+	}
+
+	/** Looking through binoculars (rather than a weapon's scope). */
+	public static boolean isBinoculars() {
+		return scoped && binoculars;
+	}
+
+	/** The current view has a rangefinder readout. */
+	public static boolean hasRangefinder() {
+		return scoped && rangefinder;
 	}
 
 	/** 0 = lowered at the hip, 1 = fully raised; interpolated for the frame. */
@@ -140,10 +154,22 @@ public final class AimController {
 		WeaponModifiers modifiers = weapon
 				? WeaponModifiers.of(main, HandheldDefinitions.getAny(main.get(ModComponents.WEAPON)))
 				: WeaponModifiers.NONE;
+		EquipmentDefinition gear = EquipmentItem.definition(main);
+		boolean holdingBinoculars = gear != null && gear.type() == EquipmentDefinition.Type.BINOCULARS && gear.zoom().isPresent()
+				&& player.getVehicle() == null;
+		Identifier zoomId = null;
+		AttachmentDefinition.Zoom zoom = null;
 		if (modifiers.hasZoom()) {
-			if (!modifiers.zoomAttachment().equals(scopeId)) {
-				scopeId = modifiers.zoomAttachment();
-				scopeZoom = modifiers.zoom();
+			zoomId = modifiers.zoomAttachment();
+			zoom = modifiers.zoom();
+		} else if (holdingBinoculars) {
+			zoomId = main.get(ModComponents.EQUIPMENT);
+			zoom = gear.zoom().get();
+		}
+		if (zoom != null) {
+			if (!zoomId.equals(scopeId)) {
+				scopeId = zoomId;
+				scopeZoom = zoom;
 				Float remembered = TudursGunsClientConfig.scopeMagnification(scopeId.toString());
 				magnification = scopeZoom.clamp(remembered != null ? remembered : scopeZoom.defaultMagnification());
 			}
@@ -151,7 +177,16 @@ public final class AimController {
 			scopeId = null;
 			scopeZoom = null;
 		}
-		scoped = aiming && aimKeyDown && scopeZoom != null && client.options.getPerspective().isFirstPerson();
+		binoculars = holdingBinoculars && !weapon;
+		rangefinder = binoculars && gear.rangefinder();
+		boolean firstPerson = client.options.getPerspective().isFirstPerson();
+		if (binoculars) {
+			// Held up with use, or the aim key.
+			boolean lookingThrough = (player.isUsingItem() && player.getActiveHand() == Hand.MAIN_HAND) || isAimKeyHeldRaw(client);
+			scoped = lookingThrough && scopeZoom != null && firstPerson;
+		} else {
+			scoped = aiming && aimKeyDown && scopeZoom != null && firstPerson;
+		}
 
 		float step = 1f / TudursGunsClientConfig.aimTransitionTicks();
 		progress = Math.max(0f, Math.min(1f, progress + (aiming ? step : -step)));

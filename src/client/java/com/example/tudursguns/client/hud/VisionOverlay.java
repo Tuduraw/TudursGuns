@@ -14,7 +14,9 @@ import net.minecraft.util.math.Vec3d;
 /** Screen effects that block the view:
  * - smoke: while the camera is inside a smoke cloud the view is filled with its grey, thicker towards
  *   the middle of the cloud, so nothing can be seen through it from inside;
- * - flash: a white-out from a flash grenade (FlashPayload), fading out. */
+ * - flash: a white-out from a flash grenade (FlashPayload), fading out;
+ * - night vision goggles: a faint green tint while worn (the brightening itself is vanilla's Night
+ *   Vision effect, given by the server). */
 public final class VisionOverlay {
 
 	private VisionOverlay() {
@@ -51,6 +53,10 @@ public final class VisionOverlay {
 		MinecraftClient client = MinecraftClient.getInstance();
 		int width = context.getScaledWindowWidth();
 		int height = context.getScaledWindowHeight();
+		if (client.player != null && client.options.getPerspective().isFirstPerson()
+				&& com.example.tudursguns.armor.ArmorEffects.hasNightVision(client.player)) {
+			context.fill(0, 0, width, height, 0x2A20FF50);
+		}
 		float smoke = smokeAtCamera(client);
 		if (smoke > 0f) {
 			int alpha = Math.round(Math.min(0.97f, smoke) * 255f);

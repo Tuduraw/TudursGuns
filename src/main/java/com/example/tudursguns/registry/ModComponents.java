@@ -34,6 +34,15 @@ public final class ModComponents {
 	public static ComponentType<Identifier> ATTACHMENT;
 	/** Which ThrowableDefinition a throwable item is (data/<namespace>/throwable/<path>.json). */
 	public static ComponentType<Identifier> THROWABLE;
+	/** Which MineDefinition a mine item is (data/<namespace>/mine/<path>.json). */
+	public static ComponentType<Identifier> MINE;
+	/** Which ArmorDefinition an armor item is (data/<namespace>/armor/<path>.json). */
+	public static ComponentType<Identifier> ARMOR;
+	/** Which EquipmentDefinition an equipment item is (data/<namespace>/equipment/<path>.json). */
+	public static ComponentType<Identifier> EQUIPMENT;
+	/** Underbarrel launcher: rounds loaded in it, and whether it's the one selected to fire. */
+	public static ComponentType<Integer> ALT_AMMO;
+	public static ComponentType<Boolean> ALT_SELECTED;
 
 	public static void register() {
 		WEAPON = ModComponents.<Identifier>register("weapon", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
@@ -45,6 +54,11 @@ public final class ModComponents {
 				builder -> builder.codec(attachmentsCodec).packetCodec(PacketCodecs.codec(attachmentsCodec)));
 		ATTACHMENT = ModComponents.<Identifier>register("attachment", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
 		THROWABLE = ModComponents.<Identifier>register("throwable", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
+		MINE = ModComponents.<Identifier>register("mine", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
+		ARMOR = ModComponents.<Identifier>register("armor", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
+		EQUIPMENT = ModComponents.<Identifier>register("equipment", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
+		ALT_AMMO = ModComponents.<Integer>register("alt_ammo", builder -> builder.codec(Codec.INT).packetCodec(PacketCodecs.VAR_INT).skipsHandAnimation());
+		ALT_SELECTED = ModComponents.<Boolean>register("alt_selected", builder -> builder.codec(Codec.BOOL).packetCodec(PacketCodecs.BOOLEAN).skipsHandAnimation());
 	}
 
 	private static <T> ComponentType<T> register(String path, UnaryOperator<ComponentType.Builder<T>> builder) {

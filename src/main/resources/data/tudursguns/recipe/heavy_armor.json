@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "I I",
+    "IDI",
+    "III"
+  ],
+  "key": {
+    "I": "minecraft:iron_block",
+    "D": "minecraft:iron_chestplate"
+  },
+  "result": {
+    "id": "tudursguns:armor",
+    "count": 1,
+    "components": {
+      "tudursguns:armor": "tudursguns:heavy_armor"
+    }
+  }
+}

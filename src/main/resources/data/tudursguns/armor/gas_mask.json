@@ -1,0 +1,64 @@
+{
+  "slot": "head",
+  "display_name": "Gas Mask",
+  "armor": 1,
+  "durability": 200,
+  "model": "tudursguns:models/obj/gas_mask.obj",
+  "texture": "tudursguns:textures/handheld/weapons.png",
+  "display": {
+    "head": {
+      "translation": [
+        0.5,
+        0.1,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.6,
+        1.6,
+        1.6
+      ]
+    },
+    "gui": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "rotation": [
+        10,
+        160,
+        0
+      ],
+      "scale": [
+        2.4,
+        2.4,
+        2.4
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.2,
+        1.2,
+        1.2
+      ]
+    }
+  },
+  "effects": {
+    "gas_protection": true
+  }
+}

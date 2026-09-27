@@ -1,7 +1,10 @@
 package com.example.tudursguns.registry;
 
 import com.example.tudursguns.TudursGuns;
+import com.example.tudursguns.item.ArmorItem;
 import com.example.tudursguns.item.AttachmentItem;
+import com.example.tudursguns.item.EquipmentItem;
+import com.example.tudursguns.item.MineItem;
 import com.example.tudursguns.item.HandheldWeaponItem;
 import com.example.tudursguns.item.ThrowableItem;
 import com.google.gson.JsonParser;
@@ -22,6 +25,9 @@ public final class ModItems {
 	public static Item HANDHELD_WEAPON;
 	public static Item ATTACHMENT;
 	public static Item THROWABLE;
+	public static Item MINE;
+	public static Item ARMOR;
+	public static Item EQUIPMENT;
 
 	/** Holding use (right click) fires, so the item is "in use" while the trigger is held. By default
 	 * that slows the player to 20% speed and stops sprinting, like drawing a bow - this keeps full
@@ -41,6 +47,17 @@ public final class ModItems {
 		RegistryKey<Item> throwableKey = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(TudursGuns.MOD_ID, "throwable"));
 		THROWABLE = Registry.register(Registries.ITEM, throwableKey,
 				new ThrowableItem(withUseEffects(new Item.Settings().registryKey(throwableKey).maxCount(16))));
+
+		RegistryKey<Item> mineKey = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(TudursGuns.MOD_ID, "mine"));
+		MINE = Registry.register(Registries.ITEM, mineKey, new MineItem(new Item.Settings().registryKey(mineKey).maxCount(8)));
+
+		// Stack size, durability and the equippable component come from each definition (set on the stack).
+		RegistryKey<Item> armorKey = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(TudursGuns.MOD_ID, "armor"));
+		ARMOR = Registry.register(Registries.ITEM, armorKey, new ArmorItem(new Item.Settings().registryKey(armorKey).maxCount(1)));
+
+		RegistryKey<Item> equipmentKey = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(TudursGuns.MOD_ID, "equipment"));
+		EQUIPMENT = Registry.register(Registries.ITEM, equipmentKey,
+				new EquipmentItem(new Item.Settings().registryKey(equipmentKey).maxCount(1)));
 	}
 
 	/** Looked up by id and built through its own codec rather than by class: the component is new in

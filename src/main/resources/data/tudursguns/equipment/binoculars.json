@@ -1,0 +1,134 @@
+{
+  "type": "binoculars",
+  "model": "tudursguns:models/obj/binoculars.obj",
+  "texture": "tudursguns:textures/handheld/weapons.png",
+  "display": {
+    "gui": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        20,
+        -30,
+        0
+      ],
+      "scale": [
+        2.8,
+        2.8,
+        2.8
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.8,
+        1.8,
+        1.8
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        2.8,
+        2.8,
+        2.8
+      ]
+    },
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.35,
+        0.55
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.4,
+        1.4,
+        1.4
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.35,
+        0.55
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.4,
+        1.4,
+        1.4
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.6,
+        0.45,
+        0.45
+      ],
+      "rotation": [
+        0,
+        -20,
+        0
+      ],
+      "scale": [
+        2.0,
+        2.0,
+        2.0
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.4,
+        0.45,
+        0.45
+      ],
+      "rotation": [
+        0,
+        20,
+        0
+      ],
+      "scale": [
+        2.0,
+        2.0,
+        2.0
+      ]
+    }
+  },
+  "display_name": "Binoculars",
+  "zoom": {
+    "min": 2,
+    "max": 8,
+    "default": 6,
+    "step": 1,
+    "overlay": "tudursguns:textures/misc/binoculars.png"
+  }
+}

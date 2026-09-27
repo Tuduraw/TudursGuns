@@ -1,0 +1,9 @@
+; Molotov Cocktail - Tudur's Guns. Bursts into flames where it lands (the fire is the throwable definition incendiary effect).
+
+DisplayName = Molotov Cocktail
+Power = 1
+Explosion = 0
+Gravity = 0.05
+Sound = tg_grenade_throw
+SoundVolume = 0.8
+SoundPitchRandom = 0.1

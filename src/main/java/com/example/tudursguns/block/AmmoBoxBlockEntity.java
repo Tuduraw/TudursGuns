@@ -1,11 +1,13 @@
 package com.example.tudursguns.block;
 
+import com.example.tudursguns.handheld.AttachmentDefinition;
 import com.example.tudursguns.handheld.HandheldDefinition;
 import com.example.tudursguns.handheld.HandheldDefinitions;
 import com.example.tudursguns.item.HandheldWeaponItem;
 import com.example.tudursguns.mixin.AbstractVehicleEntityAccessor;
 import com.example.tudursguns.registry.ModBlockEntities;
 import com.example.tudursguns.registry.ModComponents;
+import com.example.tudursguns.weapon.Firing;
 import com.example.tudursguns.weapon.HandheldCombat;
 import com.example.tudursguns.weapon.WeaponModifiers;
 import com.example.tudursvehiclemod.asset.WeaponStatsLoader;
@@ -22,7 +24,9 @@ import net.minecraft.world.World;
 
 /** Once a second:
  * - Players within PLAYER_RADIUS get the magazine of every handheld weapon they carry filled (no
- *   ammo items needed; a reload in progress is left to finish).
+ *   ammo items needed; a reload in progress is left to finish) - but only while their weapon is
+ *   lowered: not while aiming, firing or locking, nor for a few seconds after the last shot
+ *   (HandheldCombat.isInAction). Like a vehicle only being resupplied while it stands still.
  * - Stationary vehicles within VEHICLE_RADIUS get one step of Tudur's Vehicle Mod's own ammo supply
  *   (the same step its supply vehicles apply - magazine, then reserve, 10% at a time). Fuel and
  *   repairs are not an ammo box's job. */
@@ -47,6 +51,7 @@ public class AmmoBoxBlockEntity extends BlockEntity {
 	private void supply(ServerWorld world) {
 		Vec3d center = Vec3d.ofCenter(this.getPos());
 		for (ServerPlayerEntity player : world.getPlayers(candidate -> !candidate.isSpectator()
+				&& !HandheldCombat.isInAction(candidate)
 				&& candidate.squaredDistanceTo(center) <= PLAYER_RADIUS * PLAYER_RADIUS)) {
 			var inventory = player.getInventory();
 			for (int slot = 0; slot < inventory.size(); slot++) {
@@ -73,6 +78,13 @@ public class AmmoBoxBlockEntity extends BlockEntity {
 		int magazineSize = WeaponModifiers.of(stack, def).magazineSize(WeaponStatsLoader.get(def.weapon()).magazineSize());
 		if (magazineSize > 0 && stack.getOrDefault(ModComponents.AMMO, 0) < magazineSize) {
 			stack.set(ModComponents.AMMO, magazineSize);
+		}
+		AttachmentDefinition.Underbarrel launcher = Firing.underbarrel(stack, def);
+		if (launcher != null) {
+			int launcherSize = WeaponStatsLoader.get(launcher.weapon()).magazineSize();
+			if (launcherSize > 0 && stack.getOrDefault(ModComponents.ALT_AMMO, 0) < launcherSize) {
+				stack.set(ModComponents.ALT_AMMO, launcherSize);
+			}
 		}
 	}
 }

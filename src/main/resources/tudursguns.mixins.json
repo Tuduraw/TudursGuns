@@ -4,7 +4,8 @@
   "package": "com.example.tudursguns.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "AbstractVehicleEntityAccessor"
+    "AbstractVehicleEntityAccessor",
+    "LivingEntityArmorMixin"
   ],
   "injectors": {
     "defaultRequire": 1

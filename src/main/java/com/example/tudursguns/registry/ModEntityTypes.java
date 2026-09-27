@@ -1,6 +1,8 @@
 package com.example.tudursguns.registry;
 
 import com.example.tudursguns.TudursGuns;
+import com.example.tudursguns.entity.LaserSpotEntity;
+import com.example.tudursguns.entity.MineEntity;
 import com.example.tudursguns.entity.SmokeCloudEntity;
 import com.example.tudursguns.entity.SmokeDecoyEntity;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
@@ -19,6 +21,8 @@ public final class ModEntityTypes {
 
 	public static EntityType<SmokeCloudEntity> SMOKE_CLOUD;
 	public static EntityType<SmokeDecoyEntity> SMOKE_DECOY;
+	public static EntityType<LaserSpotEntity> LASER_SPOT;
+	public static EntityType<MineEntity> MINE;
 
 	public static void register() {
 		SMOKE_CLOUD = register("smoke_cloud", EntityType.Builder.<SmokeCloudEntity>create(SmokeCloudEntity::new, SpawnGroup.MISC)
@@ -26,6 +30,13 @@ public final class ModEntityTypes {
 		SMOKE_DECOY = register("smoke_decoy", EntityType.Builder.<SmokeDecoyEntity>create(SmokeDecoyEntity::new, SpawnGroup.MISC)
 				.dimensions(0.1f, 0.1f).maxTrackingRange(16).disableSaving().disableSummon());
 		FabricDefaultAttributeRegistry.register(SMOKE_DECOY, SmokeDecoyEntity.createAttributes());
+		LASER_SPOT = register("laser_spot", EntityType.Builder.<LaserSpotEntity>create(LaserSpotEntity::new, SpawnGroup.MISC)
+				.dimensions(0.1f, 0.1f).maxTrackingRange(16).disableSaving().disableSummon());
+		FabricDefaultAttributeRegistry.register(LASER_SPOT, SmokeDecoyEntity.createAttributes());
+		// Saved with the world (a minefield stays laid); tracked every tick so one stuck to a moving
+		// vehicle keeps up with it.
+		MINE = register("mine", EntityType.Builder.<MineEntity>create(MineEntity::new, SpawnGroup.MISC)
+				.dimensions(0.5f, 0.2f).maxTrackingRange(8).trackingTickInterval(1).disableSummon());
 	}
 
 	private static <T extends net.minecraft.entity.Entity> EntityType<T> register(String path, EntityType.Builder<T> builder) {

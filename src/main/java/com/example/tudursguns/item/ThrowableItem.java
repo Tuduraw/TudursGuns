@@ -111,11 +111,13 @@ public class ThrowableItem extends Item {
 		if (def == null) {
 			return;
 		}
-		if (def.fuseTicks() > 0) {
+		if (def.impact()) {
+			textConsumer.accept(Text.translatable("tooltip.tudursguns.throwable.impact").formatted(Formatting.GRAY));
+		} else if (def.fuseTicks() > 0) {
 			textConsumer.accept(Text.translatable("tooltip.tudursguns.throwable.fuse",
 					String.format(java.util.Locale.ROOT, "%.1f", def.fuseTicks() / 20f)).formatted(Formatting.GRAY));
 		}
-		if (def.cookable()) {
+		if (def.cooks()) {
 			textConsumer.accept(Text.translatable("tooltip.tudursguns.throwable.cookable").formatted(Formatting.GRAY));
 		}
 		if (type.isAdvanced()) {

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " S ",
+    " G ",
+    " P "
+  ],
+  "key": {
+    "S": "minecraft:string",
+    "G": "minecraft:glass_bottle",
+    "P": "minecraft:paper"
+  },
+  "result": {
+    "id": "tudursguns:throwable",
+    "count": 1,
+    "components": {
+      "tudursguns:throwable": "tudursguns:molotov"
+    }
+  }
+}

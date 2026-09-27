@@ -148,6 +148,7 @@
   "effect": {
     "type": "incendiary",
     "radius": 3,
-    "duration_ticks": 0
+    "duration_ticks": 0,
+    "sound": "tg_fire_whoosh"
   }
 }

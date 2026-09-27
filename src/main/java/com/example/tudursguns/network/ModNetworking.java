@@ -1,11 +1,14 @@
 package com.example.tudursguns.network;
 
 import com.example.tudursguns.handheld.AttachmentDefinition;
+import com.example.tudursguns.handheld.DefinitionSet;
+import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.handheld.HandheldDefinition;
 import com.example.tudursguns.handheld.HandheldDefinitions;
 import com.example.tudursguns.handheld.ThrowableDefinition;
 import com.example.tudursguns.handheld.WeaponSummary;
 import com.example.tudursguns.item.HandheldWeaponItem;
+import com.example.tudursguns.weapon.Firing;
 import com.example.tudursguns.weapon.HandheldCombat;
 import com.example.tudursvehiclemod.asset.WeaponStats;
 import com.example.tudursvehiclemod.asset.WeaponStatsLoader;
@@ -39,6 +42,8 @@ public final class ModNetworking {
 		PayloadTypeRegistry.playS2C().register(PlayerAimPayload.ID, PlayerAimPayload.CODEC);
 		PayloadTypeRegistry.playS2C().register(SyncThrowableDefinitionsPayload.ID, SyncThrowableDefinitionsPayload.CODEC);
 		PayloadTypeRegistry.playS2C().register(FlashPayload.ID, FlashPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(SyncDefinitionsPayload.ID, SyncDefinitionsPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(SwitchUnderbarrelRequestPayload.ID, SwitchUnderbarrelRequestPayload.CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(AimKeyPayload.ID, (payload, context) ->
 				context.server().execute(() -> {
@@ -66,6 +71,15 @@ public final class ModNetworking {
 					}
 				}));
 
+		ServerPlayNetworking.registerGlobalReceiver(SwitchUnderbarrelRequestPayload.ID, (payload, context) ->
+				context.server().execute(() -> {
+					ServerPlayerEntity player = context.player();
+					HeldWeapon held = heldWeapon(player);
+					if (held != null && !HandheldCombat.toggleUnderbarrel(player, held.stack(), held.base())) {
+						player.sendMessage(net.minecraft.text.Text.translatable("message.tudursguns.underbarrel.none"), true);
+					}
+				}));
+
 		ServerPlayNetworking.registerGlobalReceiver(SwitchModeRequestPayload.ID, (payload, context) ->
 				context.server().execute(() -> {
 					ServerPlayerEntity player = context.player();
@@ -76,7 +90,8 @@ public final class ModNetworking {
 				}));
 	}
 
-	private record HeldWeapon(ItemStack stack, HandheldDefinition definition, WeaponStats stats) {
+	/** base: the weapon's own definition; definition/stats: what it fires right now (see Firing). */
+	private record HeldWeapon(ItemStack stack, HandheldDefinition base, HandheldDefinition definition, WeaponStats stats) {
 	}
 
 	/** The weapon in the main hand, else the off hand. */
@@ -86,7 +101,8 @@ public final class ModNetworking {
 			if (stack.getItem() instanceof HandheldWeaponItem) {
 				HandheldDefinition def = HandheldWeaponItem.serverDefinition(stack);
 				if (def != null) {
-					return new HeldWeapon(stack, def, WeaponStatsLoader.get(def.weapon()));
+					Firing firing = Firing.of(stack, def);
+					return new HeldWeapon(stack, def, firing.definition(), firing.stats());
 				}
 			}
 		}
@@ -126,6 +142,9 @@ public final class ModNetworking {
 
 	/** Attachments first: the weapon sync is what refreshes the client's weapon-dependent state. */
 	public static void syncDefinitions(ServerPlayerEntity player) {
+		for (DefinitionSet<?> set : ModDefinitions.ALL) {
+			ServerPlayNetworking.send(player, set.buildPayload());
+		}
 		ServerPlayNetworking.send(player, buildAttachmentSyncPayload());
 		ServerPlayNetworking.send(player, buildThrowableSyncPayload());
 		ServerPlayNetworking.send(player, buildSyncPayload());
@@ -135,7 +154,14 @@ public final class ModNetworking {
 		SyncAttachmentDefinitionsPayload attachments = buildAttachmentSyncPayload();
 		SyncThrowableDefinitionsPayload throwables = buildThrowableSyncPayload();
 		SyncHandheldDefinitionsPayload weapons = buildSyncPayload();
+		List<SyncDefinitionsPayload> others = new ArrayList<>();
+		for (DefinitionSet<?> set : ModDefinitions.ALL) {
+			others.add(set.buildPayload());
+		}
 		for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+			for (SyncDefinitionsPayload payload : others) {
+				ServerPlayNetworking.send(player, payload);
+			}
 			ServerPlayNetworking.send(player, attachments);
 			ServerPlayNetworking.send(player, throwables);
 			ServerPlayNetworking.send(player, weapons);

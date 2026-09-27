@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "IRI",
+    "GSG"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "R": "minecraft:redstone",
+    "G": "minecraft:glass_pane",
+    "S": "minecraft:spyglass"
+  },
+  "result": {
+    "id": "tudursguns:equipment",
+    "count": 1,
+    "components": {
+      "tudursguns:equipment": "tudursguns:rangefinder"
+    }
+  }
+}

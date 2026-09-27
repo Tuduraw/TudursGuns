@@ -1,0 +1,13 @@
+{
+  "slot": "chest",
+  "display_name": "Plate Carrier",
+  "armor": 5,
+  "toughness": 2,
+  "durability": 400,
+  "protection": {
+    "ballistic": 0.35,
+    "blast": 0.2
+  },
+  "equipment_asset": "tudursguns:plate_carrier",
+  "item_model": "tudursguns:plate_carrier"
+}

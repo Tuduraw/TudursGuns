@@ -1,8 +1,13 @@
 package com.example.tudursguns.entity;
 
+import com.example.tudursguns.armor.ArmorEffects;
 import com.example.tudursguns.registry.ModEntityTypes;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.decoration.ArmorStandEntity;
+import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
@@ -14,6 +19,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.storage.ReadView;
 import net.minecraft.storage.WriteView;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
@@ -32,13 +38,22 @@ import java.util.UUID;
  * the smoke. A lock (vehicle or handheld alike) therefore settles on the smoke, and a missile fired
  * at it flies into the smoke. No change to Tudur's Vehicle Mod is needed.
  *
+ * A gas cloud is a smoke cloud (it hides and draws locks the same way) whose smoke also sickens
+ * anything breathing it - nausea, slowness and weakness, renewed while it stays inside - unless it
+ * wears a gas mask (ArmorEffects.hasGasProtection).
+ *
  * Not saved (the entity type has saving disabled) - a cloud is gone after a reload. */
 public class SmokeCloudEntity extends Entity {
 
 	private static final TrackedData<Float> RADIUS = DataTracker.registerData(SmokeCloudEntity.class, TrackedDataHandlerRegistry.FLOAT);
 	private static final TrackedData<Integer> COLOR = DataTracker.registerData(SmokeCloudEntity.class, TrackedDataHandlerRegistry.INTEGER);
 	private static final TrackedData<Integer> DURATION = DataTracker.registerData(SmokeCloudEntity.class, TrackedDataHandlerRegistry.INTEGER);
-	private static final TrackedData<Boolean> SIGNAL = DataTracker.registerData(SmokeCloudEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+	private static final TrackedData<Integer> KIND = DataTracker.registerData(SmokeCloudEntity.class, TrackedDataHandlerRegistry.INTEGER);
+
+	/** SMOKE: hides and draws locks. SIGNAL: a coloured marker column only. GAS: smoke that also sickens. */
+	public enum Kind {
+		SMOKE, SIGNAL, GAS
+	}
 
 	/** Ticks for the cloud to billow out to its full radius. */
 	private static final int GROW_TICKS = 40;
@@ -52,13 +67,13 @@ public class SmokeCloudEntity extends Entity {
 		this.setNoGravity(true);
 	}
 
-	public static SmokeCloudEntity create(ServerWorld world, Vec3d pos, float radius, int durationTicks, int rgb, boolean signal) {
+	public static SmokeCloudEntity create(ServerWorld world, Vec3d pos, float radius, int durationTicks, int rgb, Kind kind) {
 		SmokeCloudEntity cloud = new SmokeCloudEntity(ModEntityTypes.SMOKE_CLOUD, world);
 		cloud.setPosition(pos.x, pos.y, pos.z);
 		cloud.dataTracker.set(RADIUS, radius);
 		cloud.dataTracker.set(DURATION, durationTicks);
 		cloud.dataTracker.set(COLOR, rgb);
-		cloud.dataTracker.set(SIGNAL, signal);
+		cloud.dataTracker.set(KIND, kind.ordinal());
 		world.spawnEntity(cloud);
 		return cloud;
 	}
@@ -68,11 +83,17 @@ public class SmokeCloudEntity extends Entity {
 		builder.add(RADIUS, 4f);
 		builder.add(COLOR, 0x999999);
 		builder.add(DURATION, 0);
-		builder.add(SIGNAL, false);
+		builder.add(KIND, Kind.SMOKE.ordinal());
+	}
+
+	public Kind kind() {
+		Kind[] kinds = Kind.values();
+		int index = this.dataTracker.get(KIND);
+		return index >= 0 && index < kinds.length ? kinds[index] : Kind.SMOKE;
 	}
 
 	public boolean isSignal() {
-		return this.dataTracker.get(SIGNAL);
+		return kind() == Kind.SIGNAL;
 	}
 
 	/** Current radius: grows over the first GROW_TICKS, thins out over the last quarter of the duration. */
@@ -107,6 +128,23 @@ public class SmokeCloudEntity extends Entity {
 		}
 		if (!isSignal()) {
 			updateDecoys(world);
+		}
+		if (kind() == Kind.GAS && this.age % 20 == 0) {
+			gas(world);
+		}
+	}
+
+	private void gas(ServerWorld world) {
+		float radius = currentRadius();
+		Vec3d center = this.getEntityPos().add(0, radius * 0.4, 0);
+		for (LivingEntity living : world.getEntitiesByClass(LivingEntity.class, new Box(center, center).expand(radius),
+				living -> living.isAlive() && !(living instanceof MarkerEntity) && !(living instanceof ArmorStandEntity)
+						&& !(living instanceof PlayerEntity player && (player.isCreative() || player.isSpectator()))
+						&& living.getEyePos().squaredDistanceTo(center) <= (double) radius * radius
+						&& !ArmorEffects.hasGasProtection(living))) {
+			living.addStatusEffect(new StatusEffectInstance(StatusEffects.NAUSEA, 200, 0));
+			living.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, 60, 1));
+			living.addStatusEffect(new StatusEffectInstance(StatusEffects.WEAKNESS, 60, 0));
 		}
 	}
 

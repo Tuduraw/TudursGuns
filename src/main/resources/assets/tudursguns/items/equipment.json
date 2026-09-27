@@ -1,0 +1,18 @@
+{
+  "model": {
+    "type": "minecraft:condition",
+    "property": "minecraft:has_component",
+    "component": "tudursguns:equipment",
+    "on_true": {
+      "type": "minecraft:special",
+      "base": "tudursguns:item/equipment_obj",
+      "model": {
+        "type": "tudursguns:obj_equipment"
+      }
+    },
+    "on_false": {
+      "type": "minecraft:model",
+      "model": "tudursguns:item/equipment"
+    }
+  }
+}

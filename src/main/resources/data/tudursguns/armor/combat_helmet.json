@@ -1,0 +1,14 @@
+{
+  "slot": "head",
+  "display_name": "Combat Helmet",
+  "armor": 2,
+  "toughness": 1,
+  "durability": 300,
+  "protection": {
+    "ballistic": 0.15,
+    "blast": 0.1,
+    "headshot": 0.6
+  },
+  "equipment_asset": "tudursguns:combat_helmet",
+  "item_model": "tudursguns:combat_helmet"
+}

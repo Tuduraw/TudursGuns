@@ -68,12 +68,18 @@ public final class HandheldCombat {
 	 * weapon in hand, and switching weapons shouldn't reset the rate of fire). Not saved. */
 	private static final Map<UUID, Long> NEXT_FIRE_TIME = new ConcurrentHashMap<>();
 	private static final Map<UUID, LockState> LOCKS = new ConcurrentHashMap<>();
+	/** World time of each player's last shot. Not saved. */
+	private static final Map<UUID, Long> LAST_FIRED = new ConcurrentHashMap<>();
+
+	/** How long after a shot a weapon still counts as in use (see isInAction). */
+	public static final int ACTION_COOLDOWN_TICKS = 60;
 
 	private record LockState(int targetId, int progressTicks, int requiredTicks) {
 	}
 
 	public static void forget(UUID playerId) {
 		NEXT_FIRE_TIME.remove(playerId);
+		LAST_FIRED.remove(playerId);
 		LOCKS.remove(playerId);
 		AIM_KEY_HELD.remove(playerId);
 	}
@@ -101,7 +107,7 @@ public final class HandheldCombat {
 		}
 		WeaponModifiers modifiers = WeaponModifiers.of(stack, def);
 		int magazineSize = modifiers.magazineSize(stats.magazineSize());
-		if (magazineSize > 0 && stack.getOrDefault(ModComponents.AMMO, 0) <= 0) {
+		if (magazineSize > 0 && stack.getOrDefault(Firing.ammoComponent(stack), 0) <= 0) {
 			startReload(player, stack, def, stats, true);
 			return false;
 		}
@@ -155,9 +161,10 @@ public final class HandheldCombat {
 		projectile.tudursvehiclemod$forceLoadSpawnChunk();
 
 		NEXT_FIRE_TIME.put(player.getUuid(), now + Math.max(1, stats.cooldownTicks()));
+		LAST_FIRED.put(player.getUuid(), now);
 		if (magazineSize > 0) {
-			int remaining = stack.getOrDefault(ModComponents.AMMO, 0) - 1;
-			stack.set(ModComponents.AMMO, Math.max(0, remaining));
+			int remaining = stack.getOrDefault(Firing.ammoComponent(stack), 0) - 1;
+			stack.set(Firing.ammoComponent(stack), Math.max(0, remaining));
 			if (remaining <= 0) {
 				startReload(player, stack, def, stats, false);
 			}
@@ -205,6 +212,15 @@ public final class HandheldCombat {
 		ServerPlayNetworking.send(player, payload);
 	}
 
+	/** Plays a named sound at pos for every player within earshot (scaled by volume, like the vehicle
+	 * mod's own weapon sounds) - for sounds with no player behind them (a mine, a grenade's effect). */
+	public static void playSoundAt(ServerWorld world, String sound, Vec3d pos, float volume, float pitch, float pitchRandom) {
+		WeaponFireSoundPayload payload = new WeaponFireSoundPayload(sound, pos.x, pos.y, pos.z, volume, pitch, pitchRandom);
+		for (ServerPlayerEntity listener : PlayerLookup.around(world, pos, Math.max(16.0, 16.0 * volume))) {
+			ServerPlayNetworking.send(listener, payload);
+		}
+	}
+
 	// ---------------------------------------------------------------- reloading
 
 	public static boolean isReloading(ItemStack stack) {
@@ -217,7 +233,7 @@ public final class HandheldCombat {
 			boolean notifyIfEmpty) {
 		WeaponModifiers modifiers = WeaponModifiers.of(stack, def);
 		int magazineSize = modifiers.magazineSize(stats.magazineSize());
-		if (magazineSize <= 0 || isReloading(stack) || stack.getOrDefault(ModComponents.AMMO, 0) >= magazineSize) {
+		if (magazineSize <= 0 || isReloading(stack) || stack.getOrDefault(Firing.ammoComponent(stack), 0) >= magazineSize) {
 			return;
 		}
 		if (availableRounds(player, def) <= 0) {
@@ -238,9 +254,9 @@ public final class HandheldCombat {
 			return;
 		}
 		stack.remove(ModComponents.RELOAD_UNTIL);
-		int loaded = stack.getOrDefault(ModComponents.AMMO, 0);
+		int loaded = stack.getOrDefault(Firing.ammoComponent(stack), 0);
 		int wanted = Math.max(0, WeaponModifiers.of(stack, def).magazineSize(stats.magazineSize()) - loaded);
-		stack.set(ModComponents.AMMO, loaded + takeRounds(player, def, wanted));
+		stack.set(Firing.ammoComponent(stack), loaded + takeRounds(player, def, wanted));
 	}
 
 	/** Rounds the player could load right now. Unlimited without an ammo_item, or in creative mode. */
@@ -300,6 +316,11 @@ public final class HandheldCombat {
 	 * rounds beyond the new magazine size are removed (taking off an extended magazine takes its
 	 * rounds with it), and melee damage is set from the bayonet-style bonuses. */
 	public static void applyAttachmentEffects(ItemStack stack, HandheldDefinition def, WeaponStats stats) {
+		if (Firing.underbarrel(stack, def) == null) {
+			// Launcher taken off: its loaded rounds go with it.
+			stack.remove(ModComponents.ALT_SELECTED);
+			stack.remove(ModComponents.ALT_AMMO);
+		}
 		WeaponModifiers modifiers = WeaponModifiers.of(stack, def);
 		int magazineSize = modifiers.magazineSize(stats.magazineSize());
 		if (magazineSize > 0 && stack.getOrDefault(ModComponents.AMMO, 0) > magazineSize) {
@@ -332,7 +353,37 @@ public final class HandheldCombat {
 		return AIM_KEY_HELD.contains(player.getUuid());
 	}
 
+	/** True while the player is fighting with a weapon: holding use (firing, locking, aiming) or the
+	 * aim key, or within ACTION_COOLDOWN_TICKS of their last shot. Resupply (the ammo box) waits until
+	 * the weapon has been lowered, so it can't turn into an endless magazine in the middle of a fight. */
+	public static boolean isInAction(ServerPlayerEntity player) {
+		if (player.isUsingItem() || isAimKeyHeld(player)) {
+			return true;
+		}
+		Long last = LAST_FIRED.get(player.getUuid());
+		return last != null && player.getEntityWorld().getTime() - last < ACTION_COOLDOWN_TICKS;
+	}
+
 	// ---------------------------------------------------------------- modes
+
+	/** Switches between the weapon's own fire and its underbarrel launcher. Returns false if no
+	 * launcher is fitted. A reload in progress is cancelled (it was loading the other one). */
+	public static boolean toggleUnderbarrel(ServerPlayerEntity player, ItemStack stack, HandheldDefinition def) {
+		if (Firing.underbarrel(stack, def) == null) {
+			stack.remove(ModComponents.ALT_SELECTED);
+			return false;
+		}
+		boolean selected = !stack.getOrDefault(ModComponents.ALT_SELECTED, false);
+		if (selected) {
+			stack.set(ModComponents.ALT_SELECTED, true);
+		} else {
+			stack.remove(ModComponents.ALT_SELECTED);
+		}
+		stack.remove(ModComponents.RELOAD_UNTIL);
+		clearLock(player);
+		player.sendMessage(Text.translatable(selected ? "message.tudursguns.underbarrel.on" : "message.tudursguns.underbarrel.off"), true);
+		return true;
+	}
 
 	/** Cycles the ModeNum mode (MachineGun HE rounds, Rocket bomblets, ATMissile top attack, TVMissile
 	 * guided mode). Returns false if the weapon has only one mode. */

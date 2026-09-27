@@ -1,0 +1,15 @@
+{
+  "slot": "chest",
+  "display_name": "Heavy Armor",
+  "armor": 8,
+  "toughness": 3,
+  "knockback_resistance": 0.2,
+  "movement_speed": -0.15,
+  "durability": 800,
+  "protection": {
+    "ballistic": 0.55,
+    "blast": 0.35
+  },
+  "equipment_asset": "tudursguns:heavy_armor",
+  "item_model": "tudursguns:heavy_armor"
+}

@@ -125,19 +125,21 @@ public final class ThrowGuide {
 		PlayerEntity player = client.player;
 		ItemStack stack = player == null ? null : heldThrowable(player);
 		ThrowableDefinition def = stack == null ? null : HandheldDefinitions.getAnyThrowable(stack.get(ModComponents.THROWABLE));
-		if (def == null || !def.cookable() || def.fuseTicks() <= 0) {
+		if (def == null) {
 			return;
 		}
-		int left = Math.max(0, def.fuseTicks() - player.getItemUseTime());
-		float seconds = left / 20f;
-		int color = seconds < 1.5f ? 0xFFFF4040 : 0xFFFFFFFF;
-		Text text = Text.translatable("hud.tudursguns.fuse", String.format(java.util.Locale.ROOT, "%.1f", seconds));
 		int x = context.getScaledWindowWidth() / 2 + 12;
 		int y = context.getScaledWindowHeight() / 2 + 8;
-		context.drawTextWithShadow(client.textRenderer, text, x, y, color);
+		if (def.cooks()) {
+			int left = Math.max(0, def.fuseTicks() - player.getItemUseTime());
+			float seconds = left / 20f;
+			int color = seconds < 1.5f ? 0xFFFF4040 : 0xFFFFFFFF;
+			Text text = Text.translatable("hud.tudursguns.fuse", String.format(java.util.Locale.ROOT, "%.1f", seconds));
+			context.drawTextWithShadow(client.textRenderer, text, x, y, color);
+			y += client.textRenderer.fontHeight + 2;
+		}
 		if (AimController.isAimKeyHeldRaw(client)) {
-			context.drawTextWithShadow(client.textRenderer, Text.translatable("hud.tudursguns.underhand"), x,
-					y + client.textRenderer.fontHeight + 2, 0xFFC0C0C0);
+			context.drawTextWithShadow(client.textRenderer, Text.translatable("hud.tudursguns.underhand"), x, y, 0xFFC0C0C0);
 		}
 	}
 }

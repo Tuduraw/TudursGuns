@@ -1,0 +1,128 @@
+{
+  "type": "laser_designator",
+  "model": "tudursguns:models/obj/laser_designator.obj",
+  "texture": "tudursguns:textures/handheld/weapons.png",
+  "display": {
+    "gui": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        20,
+        -30,
+        0
+      ],
+      "scale": [
+        2.8,
+        2.8,
+        2.8
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.8,
+        1.8,
+        1.8
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        2.8,
+        2.8,
+        2.8
+      ]
+    },
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.35,
+        0.55
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.4,
+        1.4,
+        1.4
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.35,
+        0.55
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.4,
+        1.4,
+        1.4
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.6,
+        0.45,
+        0.45
+      ],
+      "rotation": [
+        0,
+        -20,
+        0
+      ],
+      "scale": [
+        2.0,
+        2.0,
+        2.0
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.4,
+        0.45,
+        0.45
+      ],
+      "rotation": [
+        0,
+        20,
+        0
+      ],
+      "scale": [
+        2.0,
+        2.0,
+        2.0
+      ]
+    }
+  },
+  "display_name": "Laser Designator",
+  "range": 512
+}

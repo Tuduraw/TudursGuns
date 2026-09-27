@@ -1,0 +1,16 @@
+; Underbarrel Grenade Launcher - Tudur's Guns. Fired from the underbarrel launcher attachment.
+
+DisplayName = Underbarrel Grenade Launcher
+Type = Rocket
+Power = 8
+Explosion = 2.0
+ExplosionBlock = 0
+Acceleration = 1.6
+Gravity = 0.04
+Round = 1
+ReloadTime = 50
+Delay = 10
+Sound = tg_ugl_shot
+SoundVolume = 1.5
+SoundPitchRandom = 0.05
+ModelBullet = tg_ugl_grenade

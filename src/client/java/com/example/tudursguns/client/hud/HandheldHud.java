@@ -83,7 +83,9 @@ public final class HandheldHud {
 	/** Variables available to a handheld HUD script:
 	 * ammo, max_ammo (after attachments), reserve_ammo (-1 = unlimited), reloading (0/1),
 	 * reload_progress (0-1), aiming (0/1), scoped (0/1), zoom (magnification, 1 when not scoped),
-	 * mode (1-based), mode_count, lock_tracking (0/1), locked (0/1), lock_progress (0-1). */
+	 * mode (1-based), mode_count, lock_tracking (0/1), locked (0/1), lock_progress (0-1),
+	 * underbarrel_fitted (0/1), underbarrel (0/1: the launcher is selected), underbarrel_ammo.
+	 * ammo/max_ammo/reload are the weapon's own magazine even while the launcher is selected. */
 	private static Map<String, Double> buildVariables(MinecraftClient client, PlayerEntity player, ItemStack stack,
 			HandheldDefinitions.ClientEntry entry) {
 		Map<String, Double> variables = new HashMap<>();
@@ -110,6 +112,10 @@ public final class HandheldHud {
 		variables.put("zoom", AimController.isScoped() ? (double) AimController.magnification() : 1.0);
 		variables.put("mode", (double) (stack.getOrDefault(ModComponents.MODE, 0) + 1));
 		variables.put("mode_count", (double) entry.weapon().modeCount());
+		boolean hasLauncher = com.example.tudursguns.weapon.Firing.underbarrel(stack, def) != null;
+		variables.put("underbarrel_fitted", hasLauncher ? 1.0 : 0.0);
+		variables.put("underbarrel", hasLauncher && stack.getOrDefault(ModComponents.ALT_SELECTED, false) ? 1.0 : 0.0);
+		variables.put("underbarrel_ammo", (double) stack.getOrDefault(ModComponents.ALT_AMMO, 0));
 
 		LockStatePayload lock = ClientLockState.get();
 		variables.put("lock_tracking", ClientLockState.isTracking() ? 1.0 : 0.0);
@@ -149,6 +155,12 @@ public final class HandheldHud {
 					variables.get("ammo").intValue(), variables.get("max_ammo").intValue(),
 					reserve < 0 ? "-" : Integer.toString(reserve));
 			context.drawTextWithShadow(client.textRenderer, ammo, x, y, 0xFFFFFFFF);
+			y += lineHeight;
+		}
+		if (variables.get("underbarrel_fitted") > 0) {
+			boolean selected = variables.get("underbarrel") > 0;
+			context.drawTextWithShadow(client.textRenderer, Text.translatable(selected ? "hud.tudursguns.underbarrel.selected" : "hud.tudursguns.underbarrel",
+					variables.get("underbarrel_ammo").intValue()), x, y, selected ? 0xFFFFD040 : 0xFF909090);
 			y += lineHeight;
 		}
 		if (variables.get("reloading") > 0) {

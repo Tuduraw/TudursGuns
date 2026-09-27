@@ -1,0 +1,6 @@
+; C4 Charge - Tudur's Guns. Remote charge, set off with a detonator. Sticks to vehicles.
+
+DisplayName = C4 Charge
+Power = 40
+Explosion = 4.0
+ExplosionBlock = 4.0

@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "IRI",
+    "GDG",
+    "III"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "R": "minecraft:redstone",
+    "G": "minecraft:glass_pane",
+    "D": "minecraft:diamond"
+  },
+  "result": {
+    "id": "tudursguns:equipment",
+    "count": 1,
+    "components": {
+      "tudursguns:equipment": "tudursguns:laser_designator"
+    }
+  }
+}

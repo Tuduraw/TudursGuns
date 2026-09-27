@@ -1,0 +1,19 @@
+{
+  "slot": "head",
+  "display_name": "Helmet with Night Vision Goggles",
+  "armor": 2,
+  "toughness": 1,
+  "durability": 300,
+  "protection": {
+    "ballistic": 0.15,
+    "blast": 0.1,
+    "headshot": 0.6
+  },
+  "equipment_asset": "tudursguns:combat_helmet",
+  "item_model": "tudursguns:nvg_helmet",
+  "model": "tudursguns:models/obj/nvg_goggles.obj",
+  "texture": "tudursguns:textures/handheld/weapons.png",
+  "effects": {
+    "night_vision": true
+  }
+}

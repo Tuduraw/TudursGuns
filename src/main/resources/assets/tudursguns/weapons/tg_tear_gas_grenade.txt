@@ -1,0 +1,10 @@
+; Tear Gas Grenade - Tudur's Guns. Releases a gas cloud (see the throwable definition).
+
+DisplayName = Tear Gas Grenade
+Power = 1
+Explosion = 0
+Bound = 0.35
+Gravity = 0.05
+Sound = tg_grenade_throw
+SoundVolume = 0.8
+SoundPitchRandom = 0.1

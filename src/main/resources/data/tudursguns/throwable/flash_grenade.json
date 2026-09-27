@@ -148,6 +148,7 @@
   "effect": {
     "type": "flash",
     "radius": 16,
-    "duration_ticks": 120
+    "duration_ticks": 120,
+    "sound": "tg_flashbang"
   }
 }

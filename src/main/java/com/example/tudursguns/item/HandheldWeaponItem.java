@@ -4,6 +4,7 @@ import com.example.tudursguns.handheld.AttachmentDefinition;
 import com.example.tudursguns.handheld.HandheldDefinition;
 import com.example.tudursguns.handheld.HandheldDefinitions;
 import com.example.tudursguns.registry.ModComponents;
+import com.example.tudursguns.weapon.Firing;
 import com.example.tudursguns.weapon.HandheldCombat;
 import com.example.tudursguns.weapon.WeaponModifiers;
 import com.example.tudursvehiclemod.asset.WeaponStats;
@@ -61,11 +62,11 @@ public class HandheldWeaponItem extends Item {
 		// doesn't fire again until the key is released and pressed again.
 		user.setCurrentHand(hand);
 		if (user instanceof ServerPlayerEntity player) {
-			HandheldDefinition def = serverDefinition(stack);
-			if (def != null) {
-				WeaponStats stats = WeaponStatsLoader.get(def.weapon());
-				if (!HandheldCombat.requiresLock(stats.weaponType())) {
-					HandheldCombat.tryFire(player, stack, hand, def, stats, null);
+			HandheldDefinition base = serverDefinition(stack);
+			if (base != null) {
+				Firing firing = Firing.of(stack, base);
+				if (!HandheldCombat.requiresLock(firing.stats().weaponType())) {
+					HandheldCombat.tryFire(player, stack, hand, firing.definition(), firing.stats(), null);
 				}
 			}
 		}
@@ -81,11 +82,13 @@ public class HandheldWeaponItem extends Item {
 			player.stopUsingItem();
 			return;
 		}
-		HandheldDefinition def = serverDefinition(stack);
-		if (def == null) {
+		HandheldDefinition base = serverDefinition(stack);
+		if (base == null) {
 			return;
 		}
-		WeaponStats stats = WeaponStatsLoader.get(def.weapon());
+		Firing firing = Firing.of(stack, base);
+		HandheldDefinition def = firing.definition();
+		WeaponStats stats = firing.stats();
 		if (HandheldCombat.requiresLock(stats.weaponType())) {
 			HandheldCombat.updateLock(player, stats);
 		} else if (def.fireMode() == HandheldDefinition.FireMode.AUTO) {
@@ -96,13 +99,13 @@ public class HandheldWeaponItem extends Item {
 	@Override
 	public boolean onStoppedUsing(ItemStack stack, World world, LivingEntity user, int remainingUseTicks) {
 		if (user instanceof ServerPlayerEntity player) {
-			HandheldDefinition def = serverDefinition(stack);
-			if (def != null) {
-				WeaponStats stats = WeaponStatsLoader.get(def.weapon());
-				if (HandheldCombat.requiresLock(stats.weaponType())) {
+			HandheldDefinition base = serverDefinition(stack);
+			if (base != null) {
+				Firing firing = Firing.of(stack, base);
+				if (HandheldCombat.requiresLock(firing.stats().weaponType())) {
 					var target = HandheldCombat.completedLockTarget(player);
 					if (target != null) {
-						HandheldCombat.tryFire(player, stack, player.getActiveHand(), def, stats, target);
+						HandheldCombat.tryFire(player, stack, player.getActiveHand(), firing.definition(), firing.stats(), target);
 					}
 				}
 			}
@@ -121,12 +124,12 @@ public class HandheldWeaponItem extends Item {
 		if (!(entity instanceof ServerPlayerEntity player)) {
 			return;
 		}
-		HandheldDefinition def = serverDefinition(stack);
-		if (def == null) {
+		HandheldDefinition base = serverDefinition(stack);
+		if (base == null) {
 			return;
 		}
-		WeaponStats stats = WeaponStatsLoader.get(def.weapon());
-		HandheldCombat.tickReload(player, stack, def, stats);
+		Firing firing = Firing.of(stack, base);
+		HandheldCombat.tickReload(player, stack, firing.definition(), firing.stats());
 		// A lock only lasts while this weapon is actually being held down.
 		if (HandheldCombat.hasLockState(player) && !(player.isUsingItem() && player.getActiveItem().getItem() instanceof HandheldWeaponItem)) {
 			HandheldCombat.clearLock(player);
@@ -163,6 +166,10 @@ public class HandheldWeaponItem extends Item {
 			return;
 		}
 		HandheldDefinitions.ClientEntry entry = HandheldDefinitions.getClient(id);
+		if (stack.contains(ModComponents.ALT_AMMO) || stack.getOrDefault(ModComponents.ALT_SELECTED, false)) {
+			textConsumer.accept(Text.translatable("tooltip.tudursguns.underbarrel_ammo", stack.getOrDefault(ModComponents.ALT_AMMO, 0))
+					.formatted(Formatting.GRAY));
+		}
 		if (entry != null) {
 			int magazineSize = WeaponModifiers.of(stack, entry.definition()).magazineSize(entry.weapon().magazineSize());
 			if (magazineSize > 0) {

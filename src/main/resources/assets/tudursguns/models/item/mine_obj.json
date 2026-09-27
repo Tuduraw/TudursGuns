@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "particle": "tudursguns:item/mine"
+  },
+  "gui_light": "front"
+}

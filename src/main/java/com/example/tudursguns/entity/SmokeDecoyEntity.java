@@ -17,7 +17,7 @@ import net.minecraft.world.World;
 /** An invisible, intangible stand-in for "the smoke" as a lock-on target - see SmokeCloudEntity.
  * A LivingEntity because Tudur's Vehicle Mod's lock-on only considers living entities and vehicles.
  * Nothing can hit, push or hurt it, and it removes itself as soon as its cloud is gone. */
-public class SmokeDecoyEntity extends LivingEntity {
+public class SmokeDecoyEntity extends LivingEntity implements MarkerEntity {
 
 	private SmokeCloudEntity cloud;
 
@@ -44,9 +44,14 @@ public class SmokeDecoyEntity extends LivingEntity {
 	@Override
 	public void tick() {
 		super.tick();
-		if (!this.getEntityWorld().isClient() && (this.cloud == null || this.cloud.isRemoved())) {
+		if (!this.getEntityWorld().isClient() && isOrphaned()) {
 			this.discard();
 		}
+	}
+
+	/** Server side: true once whatever this stands in for is gone. */
+	protected boolean isOrphaned() {
+		return this.cloud == null || this.cloud.isRemoved();
 	}
 
 	@Override

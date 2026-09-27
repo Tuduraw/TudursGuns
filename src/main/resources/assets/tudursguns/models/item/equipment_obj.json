@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "particle": "tudursguns:item/equipment"
+  },
+  "gui_light": "front"
+}

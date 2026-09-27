@@ -79,6 +79,13 @@
           }
         }
       }
+    },
+    "underbarrel": {
+      "accepts": {
+        "tudursguns:underbarrel_launcher": {
+          "model": "tudursguns:models/obj/underbarrel_launcher.obj"
+        }
+      }
     }
   },
   "display": {
