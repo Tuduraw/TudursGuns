@@ -39,6 +39,11 @@ public class HandheldWeaponItem extends DefinedItem<HandheldDefinition> {
 		super(settings, ModDefinitions.HANDHELD, ModComponents.WEAPON);
 	}
 
+	/** A weapon stack that names its definition. */
+	public static boolean isWeapon(ItemStack stack) {
+		return stack.getItem() instanceof HandheldWeaponItem && stack.contains(ModComponents.WEAPON);
+	}
+
 	/** The stack's definition on the server, or null. */
 	public static HandheldDefinition serverDefinition(ItemStack stack) {
 		return ModDefinitions.HANDHELD.getServer(stack.get(ModComponents.WEAPON));

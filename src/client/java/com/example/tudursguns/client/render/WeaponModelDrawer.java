@@ -22,8 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-/** Draws OBJ models (weapons with their attachments, attachment items) through Tudur's Vehicle Mod's
- * OBJ loader and render layer. */
+/** Draws OBJ models and flat icons through Tudur's Vehicle Mod's OBJ loader and render layer. */
 public final class WeaponModelDrawer {
 
 	private WeaponModelDrawer() {
@@ -33,15 +32,10 @@ public final class WeaponModelDrawer {
 	private static final Set<Identifier> REPORTED_MISSING = new HashSet<>();
 
 	/** The weapon's own model (minus groups hidden by its attachments), then each fitted attachment
-	 * that has a model of its own, at its mount transform. */
-	public static void drawWeapon(OrderedRenderCommandQueue queue, MatrixStack matrices, HandheldDefinition def,
-			Map<String, Identifier> fitted, int light, int overlay) {
-		drawWeapon(queue, matrices, def, fitted, light, overlay, null);
-	}
-
-	/** Same, with animated parts posed (pose may be null for none). The pose's root offset is NOT
-	 * applied here - the caller applies it first (in first person the arms follow it too). Every group
-	 * belonging to a part is drawn at that part's chain of offsets; the rest move with the root. */
+	 * that has a model of its own, at its mount transform - with animated parts posed (pose may be null
+	 * for none). The pose's root offset is NOT applied here - the caller applies it first (in first
+	 * person the arms follow it too). Every group belonging to a part is drawn at that part's chain of
+	 * offsets; the rest move with the root. */
 	public static void drawWeapon(OrderedRenderCommandQueue queue, MatrixStack matrices, HandheldDefinition def,
 			Map<String, Identifier> fitted, int light, int overlay, WeaponPose pose) {
 		if (def.model().isEmpty() || def.texture().isEmpty()) {
@@ -140,7 +134,7 @@ public final class WeaponModelDrawer {
 	}
 
 	/** Only the named groups of a model (skipping hidden ones), one after another. */
-	public static void drawGroups(OrderedRenderCommandQueue queue, MatrixStack matrices, Identifier modelId, Identifier texture,
+	private static void drawGroups(OrderedRenderCommandQueue queue, MatrixStack matrices, Identifier modelId, Identifier texture,
 			List<String> groups, Set<String> hiddenGroups, int light, int overlay) {
 		ObjModel model = ObjModelLoader.get(modelId).orElse(null);
 		if (model == null) {

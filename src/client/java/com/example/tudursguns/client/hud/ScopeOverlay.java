@@ -24,6 +24,8 @@ public final class ScopeOverlay {
 	private ScopeOverlay() {
 	}
 
+	private static final double RANGEFINDER_MAX = 1024.0;
+
 	public static void register() {
 		HudElementRegistry.attachElementBefore(VanillaHudElements.CROSSHAIR,
 				Identifier.of(TudursGuns.MOD_ID, "scope_overlay"), ScopeOverlay::render);
@@ -33,8 +35,6 @@ public final class ScopeOverlay {
 			}
 		});
 	}
-
-	private static final double RANGEFINDER_MAX = 1024.0;
 
 	/** Distance from the eye to the block under the centre of the view (as far as the client has the
 	 * world loaded - its render distance). */
@@ -64,8 +64,9 @@ public final class ScopeOverlay {
 		int y = (height - size) / 2;
 		// An overlay shipped in an addon folder (textures/vehicle/...) is loaded by Tudur's Vehicle Mod on
 		// request; resource-pack textures are unaffected.
-		AddonTextureLoader.requestLoad(AimController.scopeOverlay());
-		context.drawTexture(RenderPipelines.GUI_TEXTURED, AimController.scopeOverlay(), x, y, 0.0f, 0.0f, size, size, size, size);
+		Identifier overlay = AimController.scopeOverlay();
+		AddonTextureLoader.requestLoad(overlay);
+		context.drawTexture(RenderPipelines.GUI_TEXTURED, overlay, x, y, 0.0f, 0.0f, size, size, size, size);
 		int black = 0xFF000000;
 		context.fill(0, 0, width, y, black);
 		context.fill(0, y + size, width, height, black);

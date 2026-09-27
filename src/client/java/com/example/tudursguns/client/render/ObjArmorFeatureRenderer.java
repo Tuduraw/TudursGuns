@@ -34,11 +34,6 @@ public class ObjArmorFeatureRenderer<S extends BipedEntityRenderState, M extends
 		super(context);
 	}
 
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	public static FeatureRenderer create(FeatureRendererContext context) {
-		return new ObjArmorFeatureRenderer(context);
-	}
-
 	@Override
 	public void render(MatrixStack matrices, OrderedRenderCommandQueue queue, int light, S state, float limbAngle, float limbDistance) {
 		M model = this.getContextModel();

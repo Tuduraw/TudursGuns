@@ -41,12 +41,10 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 
 	public static final Identifier TYPE_ID = Identifier.of(TudursGuns.MOD_ID, "obj_handheld");
 
-	/** What the renderer needs from the stack. raised: the entity holding it is in the aiming pose
-	 * (only meaningful for third-person contexts - see AimRenderState.ENTITY_BEING_UPDATED_AIMS). */
+	/** What the renderer needs from the stack. raised / sprintCarry: the entity holding it is in the
+	 * aiming / sprint pose (third-person contexts only - see AimRenderState.entityBeingUpdatedAims). */
 	public record Data(Identifier weaponId, Map<String, Identifier> fitted, boolean raised, boolean sprintCarry,
 			Map<String, WeaponAnimationEvents.Occurrence> events, Map<String, Integer> counters, int ammo) {
-
-
 	}
 
 	@Override
@@ -74,20 +72,20 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 			return;
 		}
 		boolean firstPerson = def.aim().isPresent() && isLocalMainHand(displayContext);
+		float tickProgress = MinecraftClient.getInstance().getRenderTickCounter().getTickProgress(true);
 		// How far the weapon is raised: the local player's own smooth progress in first person, the
 		// holder's aiming pose (all or nothing) otherwise.
 		float aimProgress = firstPerson
-				? AimController.progress(MinecraftClient.getInstance().getRenderTickCounter().getTickProgress(true))
+				? AimController.progress(tickProgress)
 				: (data.raised() && isThirdPersonHand(displayContext) ? 1f : 0f);
-		WeaponPose pose = pose(def, data, isHand(displayContext), aimProgress);
+		WeaponPose pose = pose(def, data, isHand(displayContext), aimProgress, tickProgress);
 		if (firstPerson) {
-			renderFirstPerson(def, data.fitted(), pose, matrices, queue, light, overlay);
+			renderFirstPerson(def, data.fitted(), pose, aimProgress, tickProgress, matrices, queue, light, overlay);
 			return;
 		}
 		HandheldDefinition.DisplayTransform transform =
 				def.display().getOrDefault(displayContext, HandheldDefinition.DisplayTransform.IDENTITY);
-		// The raised pose normally needs no correction (tested in game: the weapon stays level as the
-		// arm comes up); third_person_aiming is there for a model that does need one.
+		// third_person_aiming / _sprinting replace the display transform in those poses, when set.
 		if (data.raised() && isThirdPersonHand(displayContext)) {
 			transform = def.aim().flatMap(HandheldDefinition.AimSettings::thirdPersonAiming).orElse(transform);
 		} else if (data.sprintCarry() && isThirdPersonHand(displayContext)) {
@@ -104,13 +102,12 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 
 	/** The definition's animated pose right now, or null if it has no animation. Motions (sequences)
 	 * only play in hand; elsewhere just the counters' resting positions show. */
-	private static WeaponPose pose(HandheldDefinition def, Data data, boolean inHand, float aimProgress) {
+	private static WeaponPose pose(HandheldDefinition def, Data data, boolean inHand, float aimProgress, float tickProgress) {
 		if (def.animation().isEmpty()) {
 			return null;
 		}
 		MinecraftClient client = MinecraftClient.getInstance();
-		double now = client.world == null ? 0.0
-				: client.world.getTime() + client.getRenderTickCounter().getTickProgress(true);
+		double now = client.world == null ? 0.0 : client.world.getTime() + tickProgress;
 		return WeaponPose.compute(def.animation().get(), data.events(), data.counters(), now, inHand && client.world != null,
 				aimProgress, data.ammo());
 	}
@@ -135,8 +132,18 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 		return displayContext == (leftHanded ? ItemDisplayContext.FIRST_PERSON_LEFT_HAND : ItemDisplayContext.FIRST_PERSON_RIGHT_HAND);
 	}
 
-	private static void renderFirstPerson(HandheldDefinition def, Map<String, Identifier> fitted, WeaponPose pose, MatrixStack matrices,
-			OrderedRenderCommandQueue queue, int light, int overlay) {
+	/** A first-person hand pose (camera space; rotation in degrees) plus the config's hip offset,
+	 * mirrored for the left hand. Writes the translation, returns the rotation. */
+	private static Quaternionf handPose(Vector3fc translation, Vector3fc rotation, boolean leftHanded, Vector3f translationOut) {
+		translationOut.set(translation).add(TudursGunsClientConfig.hipOffset());
+		float mirror = leftHanded ? -1f : 1f;
+		translationOut.x *= mirror;
+		return new Quaternionf().rotationXYZ((float) Math.toRadians(rotation.x()),
+				(float) Math.toRadians(rotation.y() * mirror), (float) Math.toRadians(rotation.z() * mirror));
+	}
+
+	private static void renderFirstPerson(HandheldDefinition def, Map<String, Identifier> fitted, WeaponPose pose, float aimProgress,
+			float tickProgress, MatrixStack matrices, OrderedRenderCommandQueue queue, int light, int overlay) {
 		if (AimController.isScoped()) {
 			return;
 		}
@@ -145,36 +152,18 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 		float scale = aim.scale();
 		boolean leftHanded = client.player.getMainArm() == Arm.LEFT;
 
-		float t = AimController.progress(client.getRenderTickCounter().getTickProgress(true));
-		float eased = t * t * (3f - 2f * t);
+		float eased = AnimationDefinition.Easing.SMOOTH.apply(aimProgress);
 
-		// Hip: the definition's pose (mirrored for the left hand) plus the config offset.
-		Vector3f hipTranslation = new Vector3f(aim.hipTranslation()).add(TudursGunsClientConfig.hipOffset());
-		Vector3f hipRotation = new Vector3f(aim.hipRotation());
-		if (leftHanded) {
-			hipTranslation.x = -hipTranslation.x;
-			hipRotation.y = -hipRotation.y;
-			hipRotation.z = -hipRotation.z;
-		}
-		Quaternionf hipQuaternion = new Quaternionf().rotationXYZ(
-				(float) Math.toRadians(hipRotation.x), (float) Math.toRadians(hipRotation.y), (float) Math.toRadians(hipRotation.z));
-
-		// Sprinting: the weapon swings across the body (mirrored for the left hand like the hip pose).
-		// Blended in from the hip pose; aiming always wins, as it ends the sprint.
-		float s = AimController.sprintProgress(client.getRenderTickCounter().getTickProgress(true));
-		if (s > 0f) {
-			float sprintEased = s * s * (3f - 2f * s);
-			Vector3f sprintTranslation = new Vector3f(aim.sprintTranslation()).add(TudursGunsClientConfig.hipOffset());
-			Vector3f sprintRotation = new Vector3f(aim.sprintRotation());
-			if (leftHanded) {
-				sprintTranslation.x = -sprintTranslation.x;
-				sprintRotation.y = -sprintRotation.y;
-				sprintRotation.z = -sprintRotation.z;
-			}
-			Quaternionf sprintQuaternion = new Quaternionf().rotationXYZ((float) Math.toRadians(sprintRotation.x),
-					(float) Math.toRadians(sprintRotation.y), (float) Math.toRadians(sprintRotation.z));
-			hipTranslation.lerp(sprintTranslation, sprintEased);
-			hipQuaternion.slerp(sprintQuaternion, sprintEased);
+		// Hip: the definition's pose. Sprinting swings the weapon across the body, blended in from the
+		// hip pose; aiming always wins, as it ends the sprint.
+		Vector3f hipTranslation = new Vector3f();
+		Quaternionf hipQuaternion = handPose(aim.hipTranslation(), aim.hipRotation(), leftHanded, hipTranslation);
+		float sprint = AnimationDefinition.Easing.SMOOTH.apply(AimController.sprintProgress(tickProgress));
+		if (sprint > 0f) {
+			Vector3f sprintTranslation = new Vector3f();
+			Quaternionf sprintQuaternion = handPose(aim.sprintTranslation(), aim.sprintRotation(), leftHanded, sprintTranslation);
+			hipTranslation.lerp(sprintTranslation, sprint);
+			hipQuaternion.slerp(sprintQuaternion, sprint);
 		}
 
 		// Aiming: no rotation (the model's barrel already points down -Z, the view direction), placed

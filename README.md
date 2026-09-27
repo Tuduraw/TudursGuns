@@ -616,7 +616,6 @@
 | `aim_offset` | `[0, 0, 0]` | 構えたときの武器の位置の補正。全武器共通、カメラ座標、ブロック単位 |
 | `hip_offset` | `[0, 0, 0]` | 下げた状態の位置の補正 |
 | `right_arm_offset` / `left_arm_offset` | `[0, 0, 0]` | 腕の位置の補正(モデル座標) |
-| `aim_transition_ticks` | `4` | 構え/下げの動きにかかる tick 数。`aim` の設定がない武器にだけ使います(`aim` がある武器は、定義の `raise_ticks` に従います) |
 | `show_arms` | `true` | 一人称で腕を表示するか |
 | `scale_sensitivity_with_zoom` | `true` | スコープの倍率に応じてマウス感度を下げるか |
 | `scope_magnification` | `{}` | スコープごとの倍率。ゲーム内で変えると保存され、次回もその倍率で始まります。値を書いておけば初期倍率になります |

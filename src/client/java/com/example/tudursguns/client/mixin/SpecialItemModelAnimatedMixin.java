@@ -17,11 +17,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Inventories draw each item once and reuse the picture for as long as its model key stays the
- * same. This mod's OBJ items can use textures from an addon folder, which Tudur's Vehicle Mod loads
- * only when first drawn (a tick or two later) - so the first, reused picture had no texture.
- * Marking them animated (as vanilla does for items whose look changes) has them drawn every frame
- * instead, so they pick the texture up as soon as it's loaded; animated weapon parts need it too. */
+/** Marks this mod's OBJ items animated, so inventories draw them every frame instead of reusing the
+ * first picture: addon textures load a tick or two after they're first drawn, and animated weapon
+ * parts change anyway. */
 @Mixin(SpecialItemModel.class)
 public abstract class SpecialItemModelAnimatedMixin<T> {
 

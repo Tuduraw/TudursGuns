@@ -36,8 +36,6 @@ public final class TudursGunsClientConfig {
 		float[] hip_offset = {0f, 0f, 0f};
 		float[] right_arm_offset = {0f, 0f, 0f};
 		float[] left_arm_offset = {0f, 0f, 0f};
-		/** Ticks to raise the weapon from the hip to the aiming position (and back). */
-		int aim_transition_ticks = 4;
 		/** Draw the player's arms holding the weapon in first person (weapons whose definition places them). */
 		boolean show_arms = true;
 		/** Slow the mouse down in proportion to the scope's magnification. */
@@ -63,7 +61,7 @@ public final class TudursGunsClientConfig {
 		save();
 	}
 
-	public static void save() {
+	private static void save() {
 		try {
 			Files.createDirectories(PATH.getParent());
 			try (Writer writer = Files.newBufferedWriter(PATH, StandardCharsets.UTF_8)) {
@@ -81,7 +79,6 @@ public final class TudursGunsClientConfig {
 		loaded.hip_offset = vector(loaded.hip_offset, defaults.hip_offset);
 		loaded.right_arm_offset = vector(loaded.right_arm_offset, defaults.right_arm_offset);
 		loaded.left_arm_offset = vector(loaded.left_arm_offset, defaults.left_arm_offset);
-		loaded.aim_transition_ticks = Math.max(1, loaded.aim_transition_ticks);
 		if (loaded.scope_magnification == null) {
 			loaded.scope_magnification = new LinkedHashMap<>();
 		}
@@ -106,10 +103,6 @@ public final class TudursGunsClientConfig {
 
 	public static Vector3f leftArmOffset() {
 		return new Vector3f(data.left_arm_offset[0], data.left_arm_offset[1], data.left_arm_offset[2]);
-	}
-
-	public static int aimTransitionTicks() {
-		return data.aim_transition_ticks;
 	}
 
 	public static boolean showArms() {

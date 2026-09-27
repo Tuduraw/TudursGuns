@@ -74,10 +74,11 @@ public final class HandheldHud {
 		drawDefault(context, client, weapon, variables, centerX, centerY);
 	}
 
-	private static ItemStack heldWeapon(PlayerEntity player) {
+	/** The weapon in either hand (main hand first), or null. */
+	public static ItemStack heldWeapon(PlayerEntity player) {
 		for (Hand hand : Hand.values()) {
 			ItemStack stack = player.getStackInHand(hand);
-			if (stack.getItem() instanceof HandheldWeaponItem && stack.contains(ModComponents.WEAPON)) {
+			if (HandheldWeaponItem.isWeapon(stack)) {
 				return stack;
 			}
 		}

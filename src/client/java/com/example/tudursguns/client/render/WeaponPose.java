@@ -8,7 +8,6 @@ import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,14 +34,8 @@ public final class WeaponPose {
 	}
 
 	/** now: world time plus the frame's tick progress. sequences: false to show only the counters'
-	 * resting state (items in an inventory, on the ground, in a frame). */
-	public static WeaponPose compute(AnimationDefinition animation, Map<String, WeaponAnimationEvents.Occurrence> events,
-			Map<String, Integer> counters, double now, boolean sequences) {
-		return compute(animation, events, counters, now, sequences, 0f, -1);
-	}
-
-	/** aimProgress: 0-1, how far the weapon is raised (parts' aiming offsets); ammo: rounds loaded, for
-	 * ammo_poses (-1 to skip them). */
+	 * resting state (items in an inventory, on the ground, in a frame). aimProgress: 0-1, how far the
+	 * weapon is raised (parts' aiming offsets); ammo: rounds loaded, for ammo_poses (-1 to skip them). */
 	public static WeaponPose compute(AnimationDefinition animation, Map<String, WeaponAnimationEvents.Occurrence> events,
 			Map<String, Integer> counters, double now, boolean sequences, float aimProgress, int ammo) {
 		WeaponPose pose = new WeaponPose(animation);
@@ -109,11 +102,10 @@ public final class WeaponPose {
 	/** The track's offset at time t: between the keyframes around t (from rest before the first one),
 	 * nothing once its last keyframe has passed. */
 	private void evaluate(AnimationDefinition.Track track, float t) {
-		List<AnimationDefinition.Keyframe> keyframes = new ArrayList<>(track.keyframes());
+		List<AnimationDefinition.Keyframe> keyframes = track.keyframes();
 		if (keyframes.isEmpty()) {
 			return;
 		}
-		keyframes.sort(Comparator.comparingDouble(AnimationDefinition.Keyframe::tick));
 		if (t > keyframes.get(keyframes.size() - 1).tick()) {
 			return;
 		}
@@ -137,11 +129,10 @@ public final class WeaponPose {
 	/** Like evaluate, but at x (rounds loaded): interpolated between keyframes, holding the nearest one
 	 * outside them. */
 	private void evaluateClamped(AnimationDefinition.Track track, float x) {
-		List<AnimationDefinition.Keyframe> keyframes = new ArrayList<>(track.keyframes());
+		List<AnimationDefinition.Keyframe> keyframes = track.keyframes();
 		if (keyframes.isEmpty()) {
 			return;
 		}
-		keyframes.sort(Comparator.comparingDouble(AnimationDefinition.Keyframe::tick));
 		AnimationDefinition.Keyframe first = keyframes.get(0);
 		AnimationDefinition.Keyframe last = keyframes.get(keyframes.size() - 1);
 		if (x <= first.tick()) {

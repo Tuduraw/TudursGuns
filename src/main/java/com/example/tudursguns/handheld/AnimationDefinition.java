@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.joml.Vector3f;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -105,6 +106,11 @@ public record AnimationDefinition(
 	}
 
 	public record Track(String part, List<Keyframe> keyframes) {
+
+		/** Keyframes in tick order. */
+		public Track {
+			keyframes = keyframes.stream().sorted(Comparator.comparingDouble(Keyframe::tick)).toList();
+		}
 
 		public static final Codec<Track> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 				Codec.STRING.fieldOf("part").forGetter(Track::part),

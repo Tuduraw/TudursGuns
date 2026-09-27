@@ -42,9 +42,8 @@ public class GunCraftingScreen extends HandledScreen<GunCraftingScreenHandler> {
 	private static final int VISIBLE_INGREDIENTS = 6;
 
 	private int scroll;
-	private int selected = -1;
-	private int lastMouseX;
-	private int lastMouseY;
+	/** The selected recipe (by id, so a re-sync while the screen is open can't swap it for another). */
+	private Identifier selected;
 	private ButtonWidget craftButton;
 
 	public GunCraftingScreen(GunCraftingScreenHandler handler, PlayerInventory inventory, Text title) {
@@ -82,30 +81,29 @@ public class GunCraftingScreen extends HandledScreen<GunCraftingScreenHandler> {
 		return rows;
 	}
 
-	private GunRecipeDefinition selectedRecipe(List<Identifier> ids) {
-		return this.selected >= 0 && this.selected < ids.size() ? ModDefinitions.GUN_RECIPES.client().get(ids.get(this.selected)) : null;
+	private GunRecipeDefinition selectedRecipe() {
+		return this.selected == null ? null : ModDefinitions.GUN_RECIPES.client().get(this.selected);
 	}
 
+	/** The server is told the recipe's position in the list (see GunCraftingScreenHandler.onButtonClick). */
 	private void craft() {
-		List<Identifier> ids = GunCrafting.recipeIds(true);
-		if (selectedRecipe(ids) != null && this.client != null && this.client.interactionManager != null && this.client.player != null
-				&& this.handler.onButtonClick(this.client.player, this.selected)) {
-			this.client.interactionManager.clickButton(this.handler.syncId, this.selected);
+		int index = GunCrafting.recipeIds(true).indexOf(this.selected);
+		if (index >= 0 && this.client != null && this.client.interactionManager != null && this.client.player != null
+				&& this.handler.onButtonClick(this.client.player, index)) {
+			this.client.interactionManager.clickButton(this.handler.syncId, index);
 		}
 	}
 
+
 	@Override
 	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-		this.lastMouseX = mouseX;
-		this.lastMouseY = mouseY;
-		List<Identifier> ids = GunCrafting.recipeIds(true);
-		GunRecipeDefinition recipe = selectedRecipe(ids);
+		GunRecipeDefinition recipe = selectedRecipe();
 		if (this.craftButton != null) {
 			this.craftButton.active = recipe != null && this.client != null && this.client.player != null
 					&& GunCrafting.canCraft(this.client.player, recipe);
 		}
 		super.render(context, mouseX, mouseY, delta);
-		ItemStack hovered = hoveredStack(ids, mouseX, mouseY);
+		ItemStack hovered = hoveredStack(mouseX, mouseY);
 		if (!hovered.isEmpty()) {
 			context.drawItemTooltip(this.textRenderer, hovered, mouseX, mouseY);
 		}
@@ -136,7 +134,7 @@ public class GunCraftingScreen extends HandledScreen<GunCraftingScreenHandler> {
 				continue;
 			}
 			boolean hover = mouseX >= x + LIST_X && mouseX < x + LIST_X + LIST_WIDTH && mouseY >= rowY && mouseY < rowY + ROW_HEIGHT;
-			if (row.recipe() == this.selected) {
+			if (ids.get(row.recipe()).equals(this.selected)) {
 				context.fill(x + LIST_X, rowY, x + LIST_X + LIST_WIDTH, rowY + ROW_HEIGHT, ROW_SELECTED);
 			} else if (hover) {
 				context.fill(x + LIST_X, rowY, x + LIST_X + LIST_WIDTH, rowY + ROW_HEIGHT, ROW_HOVER);
@@ -144,10 +142,10 @@ public class GunCraftingScreen extends HandledScreen<GunCraftingScreenHandler> {
 			ItemStack result = ModDefinitions.GUN_RECIPES.client().get(ids.get(row.recipe())).result().createStack();
 			context.drawItem(result, x + LIST_X + 1, rowY + 1);
 			String name = this.textRenderer.trimToWidth(result.getName().getString(), LIST_WIDTH - 22);
-			context.drawText(this.textRenderer, name, x + LIST_X + 20, rowY + 5, row.recipe() == this.selected ? TEXT_COLOR : ROW_TEXT, false);
+			context.drawText(this.textRenderer, name, x + LIST_X + 20, rowY + 5, ids.get(row.recipe()).equals(this.selected) ? TEXT_COLOR : ROW_TEXT, false);
 		}
 
-		GunRecipeDefinition recipe = selectedRecipe(ids);
+		GunRecipeDefinition recipe = selectedRecipe();
 		if (recipe == null || this.client == null || this.client.player == null) {
 			context.drawText(this.textRenderer, Text.translatable("gui.tudursguns.gun_crafting.select"), x + DETAIL_X, listTop + 4, TEXT_COLOR, false);
 			return;
@@ -191,13 +189,13 @@ public class GunCraftingScreen extends HandledScreen<GunCraftingScreenHandler> {
 	}
 
 	/** The result or ingredient under the mouse, for its tooltip. */
-	private ItemStack hoveredStack(List<Identifier> ids, int mouseX, int mouseY) {
+	private ItemStack hoveredStack(int mouseX, int mouseY) {
 		int listTop = this.y + LIST_Y;
 		int left = this.x + DETAIL_X;
 		if (mouseX < left || mouseX >= left + 16) {
 			return ItemStack.EMPTY;
 		}
-		GunRecipeDefinition recipe = selectedRecipe(ids);
+		GunRecipeDefinition recipe = selectedRecipe();
 		if (recipe == null) {
 			return ItemStack.EMPTY;
 		}
@@ -216,14 +214,14 @@ public class GunCraftingScreen extends HandledScreen<GunCraftingScreenHandler> {
 	@Override
 	public boolean mouseClicked(Click click, boolean doubled) {
 		int listTop = this.y + LIST_Y;
-		int mouseX = this.lastMouseX;
-		int mouseY = this.lastMouseY;
+		int mouseX = (int) click.x();
+		int mouseY = (int) click.y();
 		if (click.button() == 0 && mouseX >= this.x + LIST_X && mouseX < this.x + LIST_X + LIST_WIDTH
 				&& mouseY >= listTop && mouseY < listTop + VISIBLE_ROWS * ROW_HEIGHT) {
 			List<Row> rows = rows(GunCrafting.recipeIds(true));
 			int index = this.scroll + (mouseY - listTop) / ROW_HEIGHT;
 			if (index < rows.size() && rows.get(index).heading() == null) {
-				this.selected = rows.get(index).recipe();
+				this.selected = GunCrafting.recipeIds(true).get(rows.get(index).recipe());
 			}
 			return true;
 		}

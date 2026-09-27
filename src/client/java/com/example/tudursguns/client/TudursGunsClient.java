@@ -13,7 +13,6 @@ import com.example.tudursguns.client.screen.GunCraftingScreen;
 import com.example.tudursguns.client.screen.WeaponWorkbenchScreen;
 import com.example.tudursguns.handheld.DefinitionSet;
 import com.example.tudursguns.handheld.ModDefinitions;
-import com.example.tudursguns.item.HandheldWeaponItem;
 import com.example.tudursguns.network.FlashPayload;
 import com.example.tudursguns.network.LockStatePayload;
 import com.example.tudursguns.network.PlayerAimPayload;
@@ -37,14 +36,12 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.entity.LivingEntityRenderer;
-import net.minecraft.client.render.entity.feature.FeatureRenderer;
 import net.minecraft.client.render.entity.model.BipedEntityModel;
 import net.minecraft.client.render.item.model.special.SpecialModelTypes;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.resource.ResourceType;
-import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 
@@ -136,10 +133,11 @@ public class TudursGunsClient implements ClientModInitializer {
 		GearClient.register();
 	}
 
+	/** Raw types: the renderer's state and model types are only known to be biped ones at run time. */
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	private static void registerArmorFeature(LivingEntityFeatureRendererRegistrationCallback.RegistrationHelper helper,
 			LivingEntityRenderer<?, ?, ?> renderer) {
-		helper.register((FeatureRenderer) ObjArmorFeatureRenderer.create(renderer));
+		helper.register(new ObjArmorFeatureRenderer(renderer));
 	}
 
 	private static void onEndTick(MinecraftClient client) {
@@ -161,7 +159,7 @@ public class TudursGunsClient implements ClientModInitializer {
 			switchUnderbarrel = true;
 		}
 		PlayerEntity player = client.player;
-		if (player == null || player.getVehicle() != null || !isHoldingWeapon(player)) {
+		if (player == null || player.getVehicle() != null || HandheldHud.heldWeapon(player) == null) {
 			return;
 		}
 		if (reload) {
@@ -173,14 +171,5 @@ public class TudursGunsClient implements ClientModInitializer {
 		if (switchUnderbarrel) {
 			ClientPlayNetworking.send(SwitchUnderbarrelRequestPayload.INSTANCE);
 		}
-	}
-
-	private static boolean isHoldingWeapon(PlayerEntity player) {
-		for (Hand hand : Hand.values()) {
-			if (player.getStackInHand(hand).getItem() instanceof HandheldWeaponItem) {
-				return true;
-			}
-		}
-		return false;
 	}
 }

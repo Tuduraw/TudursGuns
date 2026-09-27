@@ -1,5 +1,6 @@
 package com.example.tudursguns.client;
 
+import com.example.tudursguns.handheld.AnimationDefinition;
 import com.example.tudursguns.handheld.AttachmentDefinition;
 import com.example.tudursguns.handheld.EquipmentDefinition;
 import com.example.tudursguns.handheld.HandheldDefinition;
@@ -102,8 +103,7 @@ public final class AimController {
 		if (scoped || ironSightZoom <= 1f) {
 			return 1f;
 		}
-		float t = progress(tickProgress);
-		return 1f + (ironSightZoom - 1f) * t * t * (3f - 2f * t);
+		return 1f + (ironSightZoom - 1f) * AnimationDefinition.Easing.SMOOTH.apply(progress(tickProgress));
 	}
 
 	/** Looking through binoculars (rather than a weapon's scope). */
@@ -124,7 +124,7 @@ public final class AimController {
 	/** Whether this player carries their weapon in the sprint pose (sprinting with a weapon in the main
 	 * hand, not aiming). Other players' sprinting is synced by vanilla. */
 	public static boolean isSprintCarrying(PlayerEntity player) {
-		return player.isSprinting() && player.getVehicle() == null && isWeapon(player.getMainHandStack()) && !isAiming(player);
+		return player.isSprinting() && player.getVehicle() == null && HandheldWeaponItem.isWeapon(player.getMainHandStack()) && !isAiming(player);
 	}
 
 	/** 0 = lowered at the hip, 1 = fully raised; interpolated for the frame. */
@@ -139,15 +139,11 @@ public final class AimController {
 		if (player == client.player) {
 			return aiming;
 		}
-		if (player.getVehicle() != null || !isWeapon(player.getMainHandStack())) {
+		if (player.getVehicle() != null || !HandheldWeaponItem.isWeapon(player.getMainHandStack())) {
 			return false;
 		}
 		return REMOTE_AIM_KEY.contains(player.getId())
 				|| (player.isUsingItem() && player.getActiveHand() == Hand.MAIN_HAND);
-	}
-
-	private static boolean isWeapon(ItemStack stack) {
-		return stack.getItem() instanceof HandheldWeaponItem && stack.contains(ModComponents.WEAPON);
 	}
 
 	/** Read straight from the keyboard/mouse rather than KeyBinding.isPressed(): Left Alt is also
@@ -180,13 +176,13 @@ public final class AimController {
 			return;
 		}
 		ItemStack main = player.getMainHandStack();
-		boolean weapon = isWeapon(main);
+		boolean weapon = HandheldWeaponItem.isWeapon(main);
 		boolean available = weapon && player.getVehicle() == null
 				&& TvMissileControlState.controlledEntityId == null;
 		boolean aimKeyDown = available && client.currentScreen == null && isAimKeyDown(client);
 		boolean usingWeapon = available && player.isUsingItem() && player.getActiveHand() == Hand.MAIN_HAND;
 		HandheldDefinition heldDef = weapon ? ModDefinitions.HANDHELD.getAny(main.get(ModComponents.WEAPON)) : null;
-		int raiseTicks = heldDef != null && heldDef.aim().isPresent() ? heldDef.raiseTicks() : TudursGunsClientConfig.aimTransitionTicks();
+		int raiseTicks = heldDef != null ? heldDef.raiseTicks() : 0;
 		if (usingWeapon && !wasUsingWeapon && progress < 1f) {
 			holdRaisedTicks = (int) Math.ceil((1f - progress) * raiseTicks) + 2;
 		} else if (holdRaisedTicks > 0) {
@@ -198,28 +194,25 @@ public final class AimController {
 		}
 		aiming = aimKeyDown || usingWeapon || holdRaisedTicks > 0;
 		ironSightZoom = heldDef != null && heldDef.aim().isPresent() ? heldDef.aim().get().zoom() : 1f;
-		// Raising the weapon ends a sprint (ClientPlayerEntityMixin also stops a new one starting while
+		// Raising the weapon ends a sprint (ClientPlayerEntitySprintMixin also stops a new one starting while
 		// aiming); the sprint state is sent to the server by vanilla as usual.
 		if (aiming && player.isSprinting()) {
 			player.setSprinting(false);
 		}
 
-		WeaponModifiers modifiers = weapon
-				? WeaponModifiers.of(main, ModDefinitions.HANDHELD.getAny(main.get(ModComponents.WEAPON)))
-				: WeaponModifiers.NONE;
+		WeaponModifiers modifiers = WeaponModifiers.of(main, heldDef);
 		EquipmentDefinition gear = EquipmentItem.definition(main);
 		boolean holdingBinoculars = gear != null && gear.type() == EquipmentDefinition.Type.BINOCULARS && gear.zoom().isPresent()
 				&& player.getVehicle() == null;
 		Identifier zoomId = null;
 		AttachmentDefinition.Zoom zoom = null;
-		HandheldDefinition zoomDef = weapon ? ModDefinitions.HANDHELD.getAny(main.get(ModComponents.WEAPON)) : null;
 		if (modifiers.hasZoom()) {
 			zoomId = modifiers.zoomAttachment();
 			zoom = modifiers.zoom();
-		} else if (zoomDef != null && zoomDef.aim().flatMap(HandheldDefinition.AimSettings::scope).isPresent()) {
+		} else if (heldDef != null && heldDef.aim().flatMap(HandheldDefinition.AimSettings::scope).isPresent()) {
 			// The weapon's own built-in scope.
 			zoomId = main.get(ModComponents.WEAPON);
-			zoom = zoomDef.aim().get().scope().get();
+			zoom = heldDef.aim().get().scope().get();
 		} else if (holdingBinoculars) {
 			zoomId = main.get(ModComponents.EQUIPMENT);
 			zoom = gear.zoom().get();

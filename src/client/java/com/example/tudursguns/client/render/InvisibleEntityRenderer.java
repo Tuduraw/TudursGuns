@@ -8,7 +8,7 @@ import net.minecraft.client.render.state.CameraRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 
-/** Draws nothing - for the smoke cloud (its particles are the visuals) and its lock-on decoys. */
+/** Draws nothing - for entities with no look of their own (smoke cloud, lock-on decoys, laser spot). */
 public final class InvisibleEntityRenderer<T extends Entity> extends EntityRenderer<T, EntityRenderState> {
 
 	public InvisibleEntityRenderer(EntityRendererFactory.Context context) {

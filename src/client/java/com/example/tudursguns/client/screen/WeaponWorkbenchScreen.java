@@ -4,6 +4,7 @@ import com.example.tudursguns.screen.WeaponWorkbenchScreenHandler;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 
 import java.util.List;
@@ -31,13 +32,16 @@ public class WeaponWorkbenchScreen extends HandledScreen<WeaponWorkbenchScreenHa
 		int y = this.y;
 		context.fill(x, y, x + this.backgroundWidth, y + this.backgroundHeight, PANEL_COLOR);
 
-		drawSlot(context, x + WeaponWorkbenchScreenHandler.WEAPON_SLOT_X, y + WeaponWorkbenchScreenHandler.WEAPON_SLOT_Y);
+		for (Slot slot : this.handler.slots) {
+			if (slot.isEnabled()) {
+				drawSlot(context, x + slot.x, y + slot.y);
+			}
+		}
 		List<String> names = this.handler.slotNames();
 		for (int i = 0; i < WeaponWorkbenchScreenHandler.MAX_ATTACHMENT_SLOTS && i < names.size(); i++) {
-			int slotX = x + WeaponWorkbenchScreenHandler.ATTACHMENT_SLOT_X;
-			int slotY = y + WeaponWorkbenchScreenHandler.ATTACHMENT_SLOT_Y + i * WeaponWorkbenchScreenHandler.ATTACHMENT_SLOT_SPACING;
-			drawSlot(context, slotX, slotY);
-			context.drawText(this.textRenderer, slotLabel(names.get(i)), slotX + 20, slotY + 4, TEXT_COLOR, false);
+			context.drawText(this.textRenderer, slotLabel(names.get(i)), x + WeaponWorkbenchScreenHandler.ATTACHMENT_SLOT_X + 20,
+					y + WeaponWorkbenchScreenHandler.ATTACHMENT_SLOT_Y + i * WeaponWorkbenchScreenHandler.ATTACHMENT_SLOT_SPACING + 4,
+					TEXT_COLOR, false);
 		}
 		if (this.handler.weapon().isEmpty()) {
 			context.drawText(this.textRenderer, Text.translatable("gui.tudursguns.weapon_workbench.insert_weapon"),
@@ -45,15 +49,6 @@ public class WeaponWorkbenchScreen extends HandledScreen<WeaponWorkbenchScreenHa
 		} else if (names.isEmpty()) {
 			context.drawText(this.textRenderer, Text.translatable("gui.tudursguns.weapon_workbench.no_slots"),
 					x + WeaponWorkbenchScreenHandler.ATTACHMENT_SLOT_X, y + 39, TEXT_COLOR, false);
-		}
-
-		for (int row = 0; row < 3; row++) {
-			for (int col = 0; col < 9; col++) {
-				drawSlot(context, x + 8 + col * 18, y + 102 + row * 18);
-			}
-		}
-		for (int col = 0; col < 9; col++) {
-			drawSlot(context, x + 8 + col * 18, y + 160);
 		}
 	}
 

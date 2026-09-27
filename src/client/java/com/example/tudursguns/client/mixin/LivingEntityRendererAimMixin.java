@@ -11,9 +11,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Marks a player's render state as "aiming a handheld weapon" - BipedEntityModelAimMixin turns that
- * into the raised two-handed pose. Render states are reused between frames, so it's written every
- * time (null when not aiming). */
+/** Marks a player's render state as aiming / sprint-carrying a handheld weapon - BipedEntityModelAimMixin
+ * turns that into the arm pose. HEAD also records it for the entity being updated, which the held
+ * item's renderer reads while the state is built (ObjHandheldModelRenderer.getData). Render states
+ * are reused between frames, so the marks are written every time (null when off). */
 @Mixin(LivingEntityRenderer.class)
 public abstract class LivingEntityRendererAimMixin {
 
@@ -25,9 +26,7 @@ public abstract class LivingEntityRendererAimMixin {
 
 	@Inject(method = "updateRenderState(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;F)V", at = @At("TAIL"))
 	private void tudursguns$markAiming(LivingEntity entity, LivingEntityRenderState state, float tickProgress, CallbackInfo ci) {
-		boolean aiming = entity instanceof PlayerEntity player && AimController.isAiming(player);
-		state.setData(AimRenderState.AIMING, aiming ? Boolean.TRUE : null);
-		boolean sprintCarry = entity instanceof PlayerEntity player && AimController.isSprintCarrying(player);
-		state.setData(AimRenderState.SPRINT_CARRY, sprintCarry ? Boolean.TRUE : null);
+		state.setData(AimRenderState.AIMING, AimRenderState.entityBeingUpdatedAims() ? Boolean.TRUE : null);
+		state.setData(AimRenderState.SPRINT_CARRY, AimRenderState.entityBeingUpdatedSprintCarries() ? Boolean.TRUE : null);
 	}
 }
