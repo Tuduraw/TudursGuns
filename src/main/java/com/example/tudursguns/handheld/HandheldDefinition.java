@@ -5,7 +5,6 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.item.ItemDisplayContext;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.Util;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -41,10 +40,6 @@ public record HandheldDefinition(
 		Optional<AnimationDefinition> animation
 ) {
 
-	/** [x, y, z] as a JSON array of three numbers. */
-	public static final Codec<Vector3f> VECTOR_3F = Codec.FLOAT.listOf().comapFlatMap(
-			list -> Util.decodeFixedLengthList(list, 3).map(xyz -> new Vector3f(xyz.get(0), xyz.get(1), xyz.get(2))),
-			vector -> List.of(vector.x(), vector.y(), vector.z()));
 
 	public static final Codec<HandheldDefinition> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 			Codec.STRING.fieldOf("weapon").forGetter(HandheldDefinition::weapon),
@@ -55,7 +50,7 @@ public record HandheldDefinition(
 			Identifier.CODEC.optionalFieldOf("ammo_item").forGetter(HandheldDefinition::ammoItem),
 			Codec.intRange(1, 1_000_000).optionalFieldOf("rounds_per_ammo_item", 1).forGetter(HandheldDefinition::roundsPerAmmoItem),
 			FireMode.CODEC.optionalFieldOf("fire_mode", FireMode.SEMI).forGetter(HandheldDefinition::fireMode),
-			VECTOR_3F.optionalFieldOf("muzzle_offset", new Vector3f(0.25f, -0.2f, 0.8f)).forGetter(HandheldDefinition::muzzleOffset),
+			DefinitionCodecs.VECTOR_3F.optionalFieldOf("muzzle_offset", new Vector3f(0.25f, -0.2f, 0.8f)).forGetter(HandheldDefinition::muzzleOffset),
 			Codec.BOOL.optionalFieldOf("inherit_shooter_velocity", false).forGetter(HandheldDefinition::inheritShooterVelocity),
 			Presentation.MAP_CODEC.forGetter(HandheldDefinition::presentation),
 			DefinitionCodecs.DISPLAY.forGetter(HandheldDefinition::display),
@@ -200,16 +195,16 @@ public record HandheldDefinition(
 	) {
 
 		public static final Codec<AimSettings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-				VECTOR_3F.optionalFieldOf("sight_position", new Vector3f(0f, 0.1f, 0f)).forGetter(AimSettings::sightPosition),
+				DefinitionCodecs.VECTOR_3F.optionalFieldOf("sight_position", new Vector3f(0f, 0.1f, 0f)).forGetter(AimSettings::sightPosition),
 				Codec.FLOAT.optionalFieldOf("eye_distance", 0.2f).forGetter(AimSettings::eyeDistance),
 				Codec.FLOAT.optionalFieldOf("scale", 0.5f).forGetter(AimSettings::scale),
-				VECTOR_3F.optionalFieldOf("hip_translation", new Vector3f(0.3f, -0.3f, -0.45f)).forGetter(AimSettings::hipTranslation),
-				VECTOR_3F.optionalFieldOf("hip_rotation", new Vector3f()).forGetter(AimSettings::hipRotation),
+				DefinitionCodecs.VECTOR_3F.optionalFieldOf("hip_translation", new Vector3f(0.3f, -0.3f, -0.45f)).forGetter(AimSettings::hipTranslation),
+				DefinitionCodecs.VECTOR_3F.optionalFieldOf("hip_rotation", new Vector3f()).forGetter(AimSettings::hipRotation),
 				DisplayTransform.CODEC.optionalFieldOf("right_arm").forGetter(AimSettings::rightArm),
 				DisplayTransform.CODEC.optionalFieldOf("left_arm").forGetter(AimSettings::leftArm),
 				DisplayTransform.CODEC.optionalFieldOf("third_person_aiming").forGetter(AimSettings::thirdPersonAiming),
-				VECTOR_3F.optionalFieldOf("sprint_translation", new Vector3f(0.1f, -0.36f, -0.42f)).forGetter(AimSettings::sprintTranslation),
-				VECTOR_3F.optionalFieldOf("sprint_rotation", new Vector3f(-20f, 60f, 20f)).forGetter(AimSettings::sprintRotation),
+				DefinitionCodecs.VECTOR_3F.optionalFieldOf("sprint_translation", new Vector3f(0.1f, -0.36f, -0.42f)).forGetter(AimSettings::sprintTranslation),
+				DefinitionCodecs.VECTOR_3F.optionalFieldOf("sprint_rotation", new Vector3f(-20f, 60f, 20f)).forGetter(AimSettings::sprintRotation),
 				DisplayTransform.CODEC.optionalFieldOf("third_person_sprinting").forGetter(AimSettings::thirdPersonSprinting),
 				Codec.intRange(0, 200).optionalFieldOf("raise_ticks", 4).forGetter(AimSettings::raiseTicks),
 				Codec.floatRange(1f, 100f).optionalFieldOf("zoom", 1f).forGetter(AimSettings::zoom),
@@ -251,7 +246,7 @@ public record HandheldDefinition(
 				DisplayTransform.CODEC.optionalFieldOf("transform", DisplayTransform.IDENTITY).forGetter(AttachmentMount::transform),
 				Codec.STRING.listOf().optionalFieldOf("show_groups", List.of()).forGetter(AttachmentMount::showGroups),
 				Codec.STRING.listOf().optionalFieldOf("hide_groups", List.of()).forGetter(AttachmentMount::hideGroups),
-				VECTOR_3F.optionalFieldOf("sight_position").forGetter(AttachmentMount::sightPosition),
+				DefinitionCodecs.VECTOR_3F.optionalFieldOf("sight_position").forGetter(AttachmentMount::sightPosition),
 				Codec.STRING.optionalFieldOf("part").forGetter(AttachmentMount::part),
 				Codec.STRING.optionalFieldOf("sound_override").forGetter(AttachmentMount::soundOverride)
 		).apply(instance, AttachmentMount::new));
@@ -273,9 +268,9 @@ public record HandheldDefinition(
 				new DisplayTransform(new Vector3f(), new Vector3f(), new Vector3f(1f, 1f, 1f));
 
 		public static final Codec<DisplayTransform> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-				VECTOR_3F.optionalFieldOf("translation", new Vector3f()).forGetter(DisplayTransform::translation),
-				VECTOR_3F.optionalFieldOf("rotation", new Vector3f()).forGetter(DisplayTransform::rotation),
-				VECTOR_3F.optionalFieldOf("scale", new Vector3f(1f, 1f, 1f)).forGetter(DisplayTransform::scale)
+				DefinitionCodecs.VECTOR_3F.optionalFieldOf("translation", new Vector3f()).forGetter(DisplayTransform::translation),
+				DefinitionCodecs.VECTOR_3F.optionalFieldOf("rotation", new Vector3f()).forGetter(DisplayTransform::rotation),
+				DefinitionCodecs.VECTOR_3F.optionalFieldOf("scale", new Vector3f(1f, 1f, 1f)).forGetter(DisplayTransform::scale)
 		).apply(instance, DisplayTransform::new));
 	}
 }

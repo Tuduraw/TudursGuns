@@ -73,7 +73,7 @@ public record ThrowableDefinition(
 				Type.CODEC.fieldOf("type").forGetter(Effect::type),
 				Codec.floatRange(0f, 64f).optionalFieldOf("radius", 4f).forGetter(Effect::radius),
 				Codec.intRange(0, 72000).optionalFieldOf("duration_ticks", 400).forGetter(Effect::durationTicks),
-				HandheldDefinition.VECTOR_3F.optionalFieldOf("color", new Vector3f(0.6f, 0.6f, 0.6f)).forGetter(Effect::color),
+				DefinitionCodecs.VECTOR_3F.optionalFieldOf("color", new Vector3f(0.6f, 0.6f, 0.6f)).forGetter(Effect::color),
 				Codec.STRING.optionalFieldOf("sound").forGetter(Effect::sound)
 		).apply(instance, Effect::new));
 

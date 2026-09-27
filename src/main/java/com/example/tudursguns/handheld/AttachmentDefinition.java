@@ -86,7 +86,7 @@ public record AttachmentDefinition(
 				Identifier.CODEC.optionalFieldOf("ammo_item").forGetter(Underbarrel::ammoItem),
 				Codec.intRange(1, 1_000_000).optionalFieldOf("rounds_per_ammo_item", 1).forGetter(Underbarrel::roundsPerAmmoItem),
 				Codec.STRING.optionalFieldOf("reload_sound").forGetter(Underbarrel::reloadSound),
-				HandheldDefinition.VECTOR_3F.optionalFieldOf("muzzle_offset").forGetter(Underbarrel::muzzleOffset)
+				DefinitionCodecs.VECTOR_3F.optionalFieldOf("muzzle_offset").forGetter(Underbarrel::muzzleOffset)
 		).apply(instance, Underbarrel::new));
 	}
 

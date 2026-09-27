@@ -57,11 +57,11 @@ public record AnimationDefinition(
 		public static final Codec<Part> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 				Codec.STRING.listOf().optionalFieldOf("groups", List.of()).forGetter(Part::groups),
 				Codec.STRING.optionalFieldOf("parent").forGetter(Part::parent),
-				HandheldDefinition.VECTOR_3F.optionalFieldOf("pivot", new Vector3f()).forGetter(Part::pivot),
-				HandheldDefinition.VECTOR_3F.optionalFieldOf("translation", new Vector3f()).forGetter(Part::translation),
-				HandheldDefinition.VECTOR_3F.optionalFieldOf("rotation", new Vector3f()).forGetter(Part::rotation),
-				HandheldDefinition.VECTOR_3F.optionalFieldOf("aiming_translation", new Vector3f()).forGetter(Part::aimingTranslation),
-				HandheldDefinition.VECTOR_3F.optionalFieldOf("aiming_rotation", new Vector3f()).forGetter(Part::aimingRotation)
+				DefinitionCodecs.VECTOR_3F.optionalFieldOf("pivot", new Vector3f()).forGetter(Part::pivot),
+				DefinitionCodecs.VECTOR_3F.optionalFieldOf("translation", new Vector3f()).forGetter(Part::translation),
+				DefinitionCodecs.VECTOR_3F.optionalFieldOf("rotation", new Vector3f()).forGetter(Part::rotation),
+				DefinitionCodecs.VECTOR_3F.optionalFieldOf("aiming_translation", new Vector3f()).forGetter(Part::aimingTranslation),
+				DefinitionCodecs.VECTOR_3F.optionalFieldOf("aiming_rotation", new Vector3f()).forGetter(Part::aimingRotation)
 		).apply(instance, Part::new));
 	}
 
@@ -124,8 +124,8 @@ public record AnimationDefinition(
 
 		public static final Codec<Keyframe> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 				Codec.floatRange(0f, 72000f).fieldOf("tick").forGetter(Keyframe::tick),
-				HandheldDefinition.VECTOR_3F.optionalFieldOf("translation", new Vector3f()).forGetter(Keyframe::translation),
-				HandheldDefinition.VECTOR_3F.optionalFieldOf("rotation", new Vector3f()).forGetter(Keyframe::rotation),
+				DefinitionCodecs.VECTOR_3F.optionalFieldOf("translation", new Vector3f()).forGetter(Keyframe::translation),
+				DefinitionCodecs.VECTOR_3F.optionalFieldOf("rotation", new Vector3f()).forGetter(Keyframe::rotation),
 				Easing.CODEC.optionalFieldOf("easing", Easing.SMOOTH).forGetter(Keyframe::easing)
 		).apply(instance, Keyframe::new));
 	}
@@ -143,8 +143,8 @@ public record AnimationDefinition(
 				Codec.STRING.listOf().optionalFieldOf("reset_on", List.of()).forGetter(Counter::resetOn),
 				Codec.floatRange(0f, 72000f).optionalFieldOf("ticks", 2f).forGetter(Counter::ticks),
 				Codec.STRING.fieldOf("part").forGetter(Counter::part),
-				HandheldDefinition.VECTOR_3F.optionalFieldOf("translation_per_step", new Vector3f()).forGetter(Counter::translationPerStep),
-				HandheldDefinition.VECTOR_3F.optionalFieldOf("rotation_per_step", new Vector3f()).forGetter(Counter::rotationPerStep)
+				DefinitionCodecs.VECTOR_3F.optionalFieldOf("translation_per_step", new Vector3f()).forGetter(Counter::translationPerStep),
+				DefinitionCodecs.VECTOR_3F.optionalFieldOf("rotation_per_step", new Vector3f()).forGetter(Counter::rotationPerStep)
 		).apply(instance, Counter::new));
 
 		public int advance(int value) {
