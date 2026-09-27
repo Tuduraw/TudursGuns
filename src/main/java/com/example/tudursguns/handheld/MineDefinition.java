@@ -9,24 +9,10 @@ import net.minecraft.util.Identifier;
 import java.util.Map;
 import java.util.Optional;
 
-/** One placeable explosive (mine, claymore, demolition charge), read from data/<namespace>/mine/<name>.json.
- *
- * The explosion is weapon's own (the weapon file's Explosion/Power/...), set off by a Tudur's Vehicle
- * Mod projectile at the charge, so it damages vehicles exactly like a vehicle weapon's explosion.
- * A placed charge is visible to everyone and goes off for anyone - there is no owner or team check
- * on what sets it off.
- *
- * trigger: proximity (anything allowed by trigger_living/trigger_vehicles within trigger_radius of
- *   it), directional (the same, but only inside the fragments' cone in front of it and in line of
- *   sight - a claymore), or remote (only a detonator - see EquipmentDefinition).
- * placement: ground (on top of a block), surface (any face of a block), anywhere (any face, or stuck
- *   to a vehicle - sneak and use it on the vehicle; it then moves with the vehicle).
- * arming_ticks: after placing, before it can go off. trigger_delay_ticks: from being set off to
- *   exploding (the click of a pressure fuse).
- * fragments: projectiles fired from the charge when it goes off, from their own weapon file, spread
- *   over spread_degrees around the direction the placer faced.
- * defuse_ticks: how long a defuse kit takes. The placer can also pick it back up (sneak + use).
- * placed: model transform when placed (the model's +Y points out of the surface). */
+/** One placeable explosive - mine, claymore, demolition charge (data/<namespace>/mine/<name>.json;
+ * keys in the README). It explodes as its weapon file says, through a Tudur's Vehicle Mod projectile,
+ * so it damages vehicles exactly like a vehicle weapon. A placed charge is visible to everyone and
+ * goes off for anyone. */
 public record MineDefinition(
 		String weapon,
 		Optional<String> displayName,

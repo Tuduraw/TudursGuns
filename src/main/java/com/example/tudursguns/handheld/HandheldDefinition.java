@@ -1,15 +1,20 @@
 package com.example.tudursguns.handheld;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.item.ItemDisplayContext;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 import org.joml.Vector3f;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /** One handheld weapon, read from data/<namespace>/handheld/<name>.json.
  *
@@ -80,7 +85,7 @@ public record HandheldDefinition(
 	public record Handling(HeldMovement movement, float recoil, Optional<Float> recoilSneaking, float adsSpreadMultiplier,
 			int pellets, int burstCount, float meleeDamage, Optional<Identifier> icon, Optional<Identifier> ammo) {
 
-		public static final com.mojang.serialization.MapCodec<Handling> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+		public static final MapCodec<Handling> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
 				HeldMovement.MAP_CODEC.forGetter(Handling::movement),
 				Codec.floatRange(0f, 90f).optionalFieldOf("recoil", 0f).forGetter(Handling::recoil),
 				Codec.floatRange(0f, 90f).optionalFieldOf("recoil_sneaking").forGetter(Handling::recoilSneaking),
@@ -122,7 +127,7 @@ public record HandheldDefinition(
 	 * to keep the record within the codec builder's field limit). */
 	public record Presentation(Optional<String> hud, Optional<String> reloadSound, HandheldEffects effects) {
 
-		public static final com.mojang.serialization.MapCodec<Presentation> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+		public static final MapCodec<Presentation> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
 				Codec.STRING.optionalFieldOf("hud").forGetter(Presentation::hud),
 				Codec.STRING.optionalFieldOf("reload_sound").forGetter(Presentation::reloadSound),
 				HandheldEffects.CODEC.optionalFieldOf("effects", HandheldEffects.AUTO).forGetter(Presentation::effects)
@@ -136,8 +141,8 @@ public record HandheldDefinition(
 
 	/** Attachment slot names in a stable order (the workbench lists them in this order). */
 	public List<String> attachmentSlotNames() {
-		List<String> names = new java.util.ArrayList<>(this.attachments.keySet());
-		java.util.Collections.sort(names);
+		List<String> names = new ArrayList<>(this.attachments.keySet());
+		Collections.sort(names);
 		return names;
 	}
 
@@ -150,8 +155,8 @@ public record HandheldDefinition(
 	/** Model groups hidden for the given attachments: every group some mount shows (they're hidden
 	 * unless that attachment is fitted), minus the ones the fitted attachments show, plus the ones
 	 * the fitted attachments hide. See AttachmentMount. */
-	public java.util.Set<String> hiddenGroups(Map<String, Identifier> fitted) {
-		java.util.Set<String> hidden = new java.util.HashSet<>();
+	public Set<String> hiddenGroups(Map<String, Identifier> fitted) {
+		Set<String> hidden = new HashSet<>();
 		for (AttachmentSlot slot : this.attachments.values()) {
 			for (AttachmentMount mount : slot.accepts().values()) {
 				hidden.addAll(mount.showGroups());
@@ -172,21 +177,11 @@ public record HandheldDefinition(
 		return hidden;
 	}
 
-	/** First-person aiming. The model is drawn in camera space: lowered at the hip pose, and when
-	 * aiming moved so sight_position (a point in model space, e.g. the rear sight notch) lands on the
-	 * screen centre, eye_distance blocks in front of the eye. Arms, if given, are placed in model
-	 * space (so they follow the weapon between the two poses).
-	 * third_person_aiming, if set, replaces the third-person display transform while the holder is
-	 * aiming (the raised two-handed pose); by default the ordinary one is used for both poses.
-	 * sprint_translation/sprint_rotation: the first-person pose while sprinting (camera space, like
-	 * hip_translation/hip_rotation) - by default carried across the body, muzzle to the left and down.
-	 * third_person_sprinting, if set, replaces the third-person display transform while sprinting
-	 * (the arms are put in a cross-body carry either way).
-	 * zoom: magnification while aimed down the iron sights (1 = none).
-	 * scope: a built-in scope (same form as a scope attachment's zoom), looked through with the aim
-	 *   key when no scope attachment is fitted.
-	 * raise_ticks: how long raising (and lowering) takes. A shot fired with use from the hip goes off
-	 * once the weapon is fully up - the server waits this long too. */
+	/** First-person aiming (keys in the README). The model is drawn in camera space: at the hip pose
+	 * when lowered, and when aimed moved so sight_position (a point in model space, e.g. the rear sight
+	 * notch) lands on the screen centre, eye_distance in front of the eye. The third_person_* transforms
+	 * replace the display transform in those poses. raise_ticks is how long raising takes - a shot
+	 * fired with use from the hip goes off once the weapon is up, and the server waits too. */
 	public record AimSettings(
 			Vector3f sightPosition,
 			float eyeDistance,
@@ -196,12 +191,12 @@ public record HandheldDefinition(
 			Optional<DisplayTransform> rightArm,
 			Optional<DisplayTransform> leftArm,
 			Optional<DisplayTransform> thirdPersonAiming,
-		Vector3f sprintTranslation,
-		Vector3f sprintRotation,
-		Optional<DisplayTransform> thirdPersonSprinting,
-		int raiseTicks,
-		float zoom,
-		Optional<AttachmentDefinition.Zoom> scope
+			Vector3f sprintTranslation,
+			Vector3f sprintRotation,
+			Optional<DisplayTransform> thirdPersonSprinting,
+			int raiseTicks,
+			float zoom,
+			Optional<AttachmentDefinition.Zoom> scope
 	) {
 
 		public static final Codec<AimSettings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -236,9 +231,9 @@ public record HandheldDefinition(
 	 * attachment fitted (an alternative to a separate model). hide_groups: weapon groups hidden while
 	 * it's fitted (e.g. the iron sights under a scope, or the standard magazine). sight_position: if
 	 * set, replaces the weapon's aim.sight_position while fitted. part: the animated part (see
- * AnimationDefinition) a separate model moves with - "root" (the whole weapon) by default.
- * sound_override: this weapon's own firing sound with the attachment (a suppressed shot) - takes
- * precedence over the attachment's general sound_override. */
+	 * AnimationDefinition) a separate model moves with - "root" (the whole weapon) by default.
+	 * sound_override: this weapon's own firing sound with the attachment (a suppressed shot) - takes
+	 * precedence over the attachment's general sound_override. */
 	public record AttachmentMount(
 			Optional<Identifier> model,
 			Optional<Identifier> texture,
@@ -246,8 +241,8 @@ public record HandheldDefinition(
 			List<String> showGroups,
 			List<String> hideGroups,
 			Optional<Vector3f> sightPosition,
-		Optional<String> part,
-		Optional<String> soundOverride
+			Optional<String> part,
+			Optional<String> soundOverride
 	) {
 
 		public static final Codec<AttachmentMount> CODEC = RecordCodecBuilder.create(instance -> instance.group(

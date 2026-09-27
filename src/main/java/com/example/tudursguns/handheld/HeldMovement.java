@@ -3,6 +3,11 @@ package com.example.tudursguns.handheld;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
+
+import java.util.Locale;
+import java.util.function.Consumer;
 
 /** How carrying something changes the holder's walking speed - read from the same JSON object as
  * the rest of its definition (weapons, attachments, throwables, mines, equipment):
@@ -25,17 +30,17 @@ public record HeldMovement(float speed, float aimingSpeed) {
 	}
 
 	/** Tooltip lines ("Movement speed -10%", "While aiming -25%"), none when there's no effect. */
-	public void appendTooltip(java.util.function.Consumer<net.minecraft.text.Text> textConsumer) {
+	public void appendTooltip(Consumer<Text> textConsumer) {
 		line(textConsumer, "tooltip.tudursguns.movement_speed", this.speed);
 		line(textConsumer, "tooltip.tudursguns.aiming_movement_speed", this.aimingSpeed);
 	}
 
-	private static void line(java.util.function.Consumer<net.minecraft.text.Text> textConsumer, String key, float value) {
+	private static void line(Consumer<Text> textConsumer, String key, float value) {
 		if (value == 0f) {
 			return;
 		}
-		String percent = String.format(java.util.Locale.ROOT, "%+d%%", Math.round(value * 100f));
-		textConsumer.accept(net.minecraft.text.Text.translatable(key, percent)
-				.formatted(value < 0f ? net.minecraft.util.Formatting.RED : net.minecraft.util.Formatting.GREEN));
+		String percent = String.format(Locale.ROOT, "%+d%%", Math.round(value * 100f));
+		textConsumer.accept(Text.translatable(key, percent)
+				.formatted(value < 0f ? Formatting.RED : Formatting.GREEN));
 	}
 }

@@ -1,9 +1,11 @@
 package com.example.tudursguns.handheld;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.item.ItemDisplayContext;
 import net.minecraft.util.Identifier;
+import org.joml.Vector3f;
 
 import java.util.Map;
 import java.util.Optional;
@@ -65,7 +67,7 @@ public record AttachmentDefinition(
 	 * within the codec builder's field limit). */
 	public record Tuning(float recoilMultiplier, float muzzleFlashMultiplier) {
 
-		public static final com.mojang.serialization.MapCodec<Tuning> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+		public static final MapCodec<Tuning> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
 				Codec.floatRange(0f, 100f).optionalFieldOf("recoil_multiplier", 1f).forGetter(Tuning::recoilMultiplier),
 				Codec.floatRange(0f, 100f).optionalFieldOf("muzzle_flash_multiplier", 1f).forGetter(Tuning::muzzleFlashMultiplier)
 		).apply(instance, Tuning::new));
@@ -76,7 +78,7 @@ public record AttachmentDefinition(
 	 * rounds (loaded separately - the weapon file's Round), ammo item and projectile item, and fires
 	 * one shot per press. muzzle_offset defaults to the weapon's own. */
 	public record Underbarrel(String weapon, Identifier projectileItem, Optional<Identifier> ammoItem, int roundsPerAmmoItem,
-			Optional<String> reloadSound, Optional<org.joml.Vector3f> muzzleOffset) {
+			Optional<String> reloadSound, Optional<Vector3f> muzzleOffset) {
 
 		public static final Codec<Underbarrel> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 				Codec.STRING.fieldOf("weapon").forGetter(Underbarrel::weapon),

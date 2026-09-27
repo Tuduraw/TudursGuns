@@ -6,6 +6,7 @@ import com.example.tudursguns.entity.MineEntity;
 import com.example.tudursguns.entity.SmokeCloudEntity;
 import com.example.tudursguns.entity.SmokeDecoyEntity;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.registry.Registries;
@@ -39,7 +40,7 @@ public final class ModEntityTypes {
 				.dimensions(0.5f, 0.2f).maxTrackingRange(8).trackingTickInterval(1).disableSummon());
 	}
 
-	private static <T extends net.minecraft.entity.Entity> EntityType<T> register(String path, EntityType.Builder<T> builder) {
+	private static <T extends Entity> EntityType<T> register(String path, EntityType.Builder<T> builder) {
 		RegistryKey<EntityType<?>> key = RegistryKey.of(RegistryKeys.ENTITY_TYPE, Identifier.of(TudursGuns.MOD_ID, path));
 		return Registry.register(Registries.ENTITY_TYPE, key, builder.build(key));
 	}

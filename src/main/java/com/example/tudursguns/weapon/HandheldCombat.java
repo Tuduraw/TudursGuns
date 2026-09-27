@@ -54,7 +54,7 @@ public final class HandheldCombat {
 	/** Weapon types a handheld weapon can fire. The rest need a vehicle (CAS/Carrier/DropTank/
 	 * Torpedo/Depth/ASWeapon), produce no projectile (Smoke/TargetingPod/Dummy) or aren't defined
 	 * for a single shooter (Other). */
-	public static final Set<WeaponType> SUPPORTED_TYPES = EnumSet.of(
+	private static final Set<WeaponType> SUPPORTED_TYPES = EnumSet.of(
 			WeaponType.MACHINE_GUN, WeaponType.ROCKET, WeaponType.BOMB,
 			WeaponType.AS_MISSILE, WeaponType.MK_ROCKET,
 			WeaponType.AA_MISSILE, WeaponType.AT_MISSILE, WeaponType.MISSILE,
@@ -73,7 +73,7 @@ public final class HandheldCombat {
 	private static final Map<UUID, Long> LAST_FIRED = new ConcurrentHashMap<>();
 
 	/** How long after a shot a weapon still counts as in use (see isInAction). */
-	public static final int ACTION_COOLDOWN_TICKS = 60;
+	private static final int ACTION_COOLDOWN_TICKS = 60;
 
 	private record LockState(int targetId, int progressTicks, int requiredTicks) {
 	}
@@ -419,7 +419,7 @@ public final class HandheldCombat {
 	/** A pending shot not fired within this long after it was asked for is dropped. */
 	private static final int PENDING_SHOT_TIMEOUT_TICKS = 40;
 
-	public static void startRaising(ServerPlayerEntity player) {
+	private static void startRaising(ServerPlayerEntity player) {
 		RAISE_START.putIfAbsent(player.getUuid(), player.getEntityWorld().getTime());
 	}
 

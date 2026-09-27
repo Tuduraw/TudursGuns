@@ -9,25 +9,9 @@ import net.minecraft.util.Identifier;
 import java.util.Map;
 import java.util.Optional;
 
-/** One piece of armor, read from data/<namespace>/armor/<name>.json.
- *
- * slot: head, chest, legs or feet. armor/toughness/knockback_resistance: as vanilla armor.
- * movement_speed: added to the wearer's speed as a fraction (-0.1 = 10% slower). durability: 0 = never
- * wears out.
- * protection: fractions (0-1) taken off on top of armor - ballistic from bullets and other projectile
- * hits, blast from explosions, headshot from the extra damage of a hit to the head (helmets).
- *
- * How it looks when worn - either or both:
- * - equipment_asset: a vanilla 2D equipment asset (assets/<namespace>/equipment/<name>.json and its
- *   textures under textures/entity/equipment/), exactly like vanilla armor.
- * - model/texture: an OBJ model drawn on the wearer's head, body or legs (the model part the slot
- *   belongs to), placed by worn (in model-part space: 1 = one block, +Y up, origin at the part's pivot).
- * An OBJ-only helmet is drawn by vanilla on the head (like a carved pumpkin), placed by display.head;
- *   OBJ armor faces +Z in both cases (the renderer turns it for vanilla's head context).
- * item_model: the item's own model (e.g. a flat sprite); by default the OBJ model is drawn as the item.
- *
- * effects: night_vision (a helmet with goggles), gas_protection (a gas mask - see gas grenades),
- * detection_multiplier (how far mobs notice the wearer, like a mob head: 0.5 = half as far). */
+/** One piece of armor (data/<namespace>/armor/<name>.json; keys in the README). It is worn through
+ * vanilla's equippable component (see ArmorEffects.applyComponents) and looks like a vanilla 2D
+ * equipment asset, an OBJ model, or both. OBJ armor faces +Z. */
 public record ArmorDefinition(
 		EquipmentSlot slot,
 		Optional<String> displayName,

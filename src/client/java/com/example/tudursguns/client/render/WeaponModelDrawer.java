@@ -13,10 +13,14 @@ import net.minecraft.client.render.command.OrderedRenderCommandQueue;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.RotationAxis;
+import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /** Draws OBJ models (weapons with their attachments, attachment items) through Tudur's Vehicle Mod's
  * OBJ loader and render layer. */
@@ -101,11 +105,11 @@ public final class WeaponModelDrawer {
 	}
 
 	/** Item bounds: the unit cube item model space is built around. */
-	public static void unitCube(java.util.function.Consumer<org.joml.Vector3fc> consumer) {
+	public static void unitCube(Consumer<Vector3fc> consumer) {
 		for (int x = 0; x <= 1; x++) {
 			for (int y = 0; y <= 1; y++) {
 				for (int z = 0; z <= 1; z++) {
-					consumer.accept(new org.joml.Vector3f(x, y, z));
+					consumer.accept(new Vector3f(x, y, z));
 				}
 			}
 		}
@@ -137,7 +141,7 @@ public final class WeaponModelDrawer {
 
 	/** Only the named groups of a model (skipping hidden ones), one after another. */
 	public static void drawGroups(OrderedRenderCommandQueue queue, MatrixStack matrices, Identifier modelId, Identifier texture,
-			java.util.List<String> groups, Set<String> hiddenGroups, int light, int overlay) {
+			List<String> groups, Set<String> hiddenGroups, int light, int overlay) {
 		ObjModel model = ObjModelLoader.get(modelId).orElse(null);
 		if (model == null) {
 			return;

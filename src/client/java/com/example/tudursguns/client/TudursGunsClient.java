@@ -36,6 +36,8 @@ import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.render.entity.LivingEntityRenderer;
+import net.minecraft.client.render.entity.feature.FeatureRenderer;
 import net.minecraft.client.render.entity.model.BipedEntityModel;
 import net.minecraft.client.render.item.model.special.SpecialModelTypes;
 import net.minecraft.client.util.InputUtil;
@@ -136,8 +138,8 @@ public class TudursGunsClient implements ClientModInitializer {
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	private static void registerArmorFeature(LivingEntityFeatureRendererRegistrationCallback.RegistrationHelper helper,
-			net.minecraft.client.render.entity.LivingEntityRenderer<?, ?, ?> renderer) {
-		helper.register((net.minecraft.client.render.entity.feature.FeatureRenderer) ObjArmorFeatureRenderer.create(renderer));
+			LivingEntityRenderer<?, ?, ?> renderer) {
+		helper.register((FeatureRenderer) ObjArmorFeatureRenderer.create(renderer));
 	}
 
 	private static void onEndTick(MinecraftClient client) {

@@ -6,9 +6,11 @@ import com.example.tudursguns.handheld.HandheldDefinition;
 import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.item.EquipmentItem;
 import com.example.tudursguns.item.HandheldWeaponItem;
+import com.example.tudursguns.item.ThrowableItem;
 import com.example.tudursguns.network.AimKeyPayload;
 import com.example.tudursguns.registry.ModComponents;
 import com.example.tudursguns.weapon.WeaponModifiers;
+import com.example.tudursvehiclemod.client.TvMissileControlState;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
@@ -180,7 +182,7 @@ public final class AimController {
 		ItemStack main = player.getMainHandStack();
 		boolean weapon = isWeapon(main);
 		boolean available = weapon && player.getVehicle() == null
-				&& com.example.tudursvehiclemod.client.TvMissileControlState.controlledEntityId == null;
+				&& TvMissileControlState.controlledEntityId == null;
 		boolean aimKeyDown = available && client.currentScreen == null && isAimKeyDown(client);
 		boolean usingWeapon = available && player.isUsingItem() && player.getActiveHand() == Hand.MAIN_HAND;
 		HandheldDefinition heldDef = weapon ? ModDefinitions.HANDHELD.getAny(main.get(ModComponents.WEAPON)) : null;
@@ -251,8 +253,8 @@ public final class AimController {
 
 		// Other players only need the aim KEY; aiming with use is visible to them already. Also sent
 		// while holding a throwable: the server uses it to decide on an underhand throw.
-		boolean holdingThrowable = player.getMainHandStack().getItem() instanceof com.example.tudursguns.item.ThrowableItem
-				|| player.getOffHandStack().getItem() instanceof com.example.tudursguns.item.ThrowableItem;
+		boolean holdingThrowable = player.getMainHandStack().getItem() instanceof ThrowableItem
+				|| player.getOffHandStack().getItem() instanceof ThrowableItem;
 		boolean sendAimKey = aimKeyDown || (holdingThrowable && player.getVehicle() == null && isAimKeyHeldRaw(client));
 		if (sendAimKey != lastSentAimKey && client.getNetworkHandler() != null) {
 			lastSentAimKey = sendAimKey;

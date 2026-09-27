@@ -5,13 +5,13 @@ import com.example.tudursguns.registry.ModEntityTypes;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.decoration.ArmorStandEntity;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
+import net.minecraft.entity.decoration.ArmorStandEntity;
+import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.particle.DustParticleEffect;
 import net.minecraft.particle.ParticleTypes;
@@ -24,25 +24,18 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
-/** A smoke grenade's cloud (or a signal grenade's column) - invisible itself, it keeps emitting smoke
- * particles for its duration. Clients darken the view while the camera is inside one (SmokeOverlay).
+/** A smoke, signal or gas grenade's cloud - invisible itself, it keeps emitting smoke particles for
+ * its duration (clients grey out the view inside one - VisionOverlay). Not saved.
  *
- * Lock-on decoy: a smoke cloud (not a signal) draws missile locks onto itself. Tudur's Vehicle Mod's
- * lock-on picks whatever is closest to the centre of the shooter's view, so for every player near
- * enough to be aiming at it, the cloud keeps one invisible SmokeDecoyEntity exactly on that player's
- * line of sight where it passes through the cloud - dead centre, which beats any target in or behind
- * the smoke. A lock (vehicle or handheld alike) therefore settles on the smoke, and a missile fired
- * at it flies into the smoke. No change to Tudur's Vehicle Mod is needed.
- *
- * A gas cloud is a smoke cloud (it hides and draws locks the same way) whose smoke also sickens
- * anything breathing it - nausea, slowness and weakness, renewed while it stays inside - unless it
- * wears a gas mask (ArmorEffects.hasGasProtection).
- *
- * Not saved (the entity type has saving disabled) - a cloud is gone after a reload. */
+ * Smoke and gas draw missile locks: Tudur's Vehicle Mod locks onto whatever is nearest the centre of
+ * the shooter's view, so for each nearby player the cloud keeps an invisible SmokeDecoyEntity on
+ * that player's line of sight through it. Gas also sickens anything breathing it without a gas mask. */
 public class SmokeCloudEntity extends Entity {
 
 	private static final TrackedData<Float> RADIUS = DataTracker.registerData(SmokeCloudEntity.class, TrackedDataHandlerRegistry.FLOAT);
@@ -169,8 +162,8 @@ public class SmokeCloudEntity extends Entity {
 	private void updateDecoys(ServerWorld world) {
 		float radius = currentRadius();
 		Vec3d center = this.getEntityPos().add(0, radius * 0.4, 0);
-		java.util.Set<UUID> seen = new java.util.HashSet<>();
-		for (ServerPlayerEntity player : world.getPlayers(candidate -> true)) {
+		Set<UUID> seen = new HashSet<>();
+		for (ServerPlayerEntity player : world.getPlayers()) {
 			if (player.isSpectator() || player.squaredDistanceTo(center) > DECOY_PLAYER_RANGE * DECOY_PLAYER_RANGE) {
 				continue;
 			}

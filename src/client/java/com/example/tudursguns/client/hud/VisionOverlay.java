@@ -1,6 +1,7 @@
 package com.example.tudursguns.client.hud;
 
 import com.example.tudursguns.TudursGuns;
+import com.example.tudursguns.armor.ArmorEffects;
 import com.example.tudursguns.entity.SmokeCloudEntity;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
@@ -54,7 +55,7 @@ public final class VisionOverlay {
 		int width = context.getScaledWindowWidth();
 		int height = context.getScaledWindowHeight();
 		if (client.player != null && client.options.getPerspective().isFirstPerson()
-				&& com.example.tudursguns.armor.ArmorEffects.hasNightVision(client.player)) {
+				&& ArmorEffects.hasNightVision(client.player)) {
 			context.fill(0, 0, width, height, 0x2A20FF50);
 		}
 		float smoke = smokeAtCamera(client);

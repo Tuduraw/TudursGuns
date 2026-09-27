@@ -51,14 +51,7 @@ public class MineItem extends DefinedItem<MineDefinition> {
 			return ActionResult.FAIL;
 		}
 		if (context.getWorld() instanceof ServerWorld world) {
-			Vec3d hit = context.getHitPos();
-			Vec3d pos = switch (side) {
-				case UP -> hit;
-				case DOWN -> hit.add(0, -0.2, 0);
-				default -> hit.add(side.getDoubleVector().multiply(0.1)).add(0, -0.1, 0);
-			};
-			float yaw = side.getAxis().isHorizontal() ? yawOf(side.getDoubleVector()) : player.getYaw();
-			MineEntity.place(world, player, id, pos, side, yaw, null);
+			MineEntity.place(world, player, id, mountPos(context.getHitPos(), side), side, mountYaw(side, player), null);
 			stack.decrementUnlessCreative(1, player);
 		}
 		return ActionResult.SUCCESS;
@@ -95,13 +88,24 @@ public class MineItem extends DefinedItem<MineDefinition> {
 		}
 		if (world instanceof ServerWorld serverWorld) {
 			Direction face = faceOf(best.getBoundingBox(), bestHit);
-			float yaw = face.getAxis().isHorizontal() ? yawOf(face.getDoubleVector()) : user.getYaw();
-			Vec3d pos = face == Direction.DOWN ? bestHit.add(0, -0.2, 0)
-					: face.getAxis().isHorizontal() ? bestHit.add(face.getDoubleVector().multiply(0.1)).add(0, -0.1, 0) : bestHit;
-			MineEntity.place(serverWorld, user, id, pos, face, yaw, best);
+			MineEntity.place(serverWorld, user, id, mountPos(bestHit, face), face, mountYaw(face, user), best);
 			stack.decrementUnlessCreative(1, user);
 		}
 		return ActionResult.SUCCESS;
+	}
+
+	/** Where a mine placed at hit on a face sits: on top, hanging under, or just off a side. */
+	private static Vec3d mountPos(Vec3d hit, Direction face) {
+		return switch (face) {
+			case UP -> hit;
+			case DOWN -> hit.add(0, -0.2, 0);
+			default -> hit.add(face.getDoubleVector().multiply(0.1)).add(0, -0.1, 0);
+		};
+	}
+
+	/** On a side it faces out from it; on top or underneath, the way the player looks. */
+	private static float mountYaw(Direction face, PlayerEntity player) {
+		return face.getAxis().isHorizontal() ? yawOf(face.getDoubleVector()) : player.getYaw();
 	}
 
 	/** The face of box that point lies on (the nearest one). */

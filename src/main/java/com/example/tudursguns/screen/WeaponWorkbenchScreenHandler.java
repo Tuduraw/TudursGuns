@@ -41,8 +41,9 @@ public class WeaponWorkbenchScreenHandler extends ScreenHandler {
 	public static final int ATTACHMENT_SLOT_X = 80;
 	public static final int ATTACHMENT_SLOT_Y = 17;
 	public static final int ATTACHMENT_SLOT_SPACING = 18;
+	private static final int WORKBENCH_SLOTS = 1 + MAX_ATTACHMENT_SLOTS;
 
-	private final SimpleInventory inventory = new SimpleInventory(1 + MAX_ATTACHMENT_SLOTS);
+	private final SimpleInventory inventory = new SimpleInventory(WORKBENCH_SLOTS);
 	private final ScreenHandlerContext context;
 	private final PlayerEntity player;
 	/** True while this handler itself rewrites the attachment slots, so that doesn't count as the
@@ -107,23 +108,24 @@ public class WeaponWorkbenchScreenHandler extends ScreenHandler {
 		return this.inventory.getStack(0);
 	}
 
+	private HandheldDefinition weaponDefinition() {
+		return ModDefinitions.HANDHELD.getAny(weapon().get(ModComponents.WEAPON));
+	}
+
 	/** Attachment slot names of the weapon in the workbench, in slot order. */
 	public List<String> slotNames() {
-		HandheldDefinition def = ModDefinitions.HANDHELD.getAny(weapon().get(ModComponents.WEAPON));
+		HandheldDefinition def = weaponDefinition();
 		return def == null ? List.of() : def.attachmentSlotNames();
 	}
 
 	private boolean accepts(int attachmentIndex, ItemStack stack) {
-		if (!(stack.getItem() instanceof AttachmentItem)) {
-			return false;
-		}
-		HandheldDefinition def = ModDefinitions.HANDHELD.getAny(weapon().get(ModComponents.WEAPON));
-		if (def == null) {
+		HandheldDefinition def = weaponDefinition();
+		Identifier attachmentId = stack.get(ModComponents.ATTACHMENT);
+		if (!(stack.getItem() instanceof AttachmentItem) || def == null || attachmentId == null) {
 			return false;
 		}
 		List<String> names = def.attachmentSlotNames();
-		Identifier attachmentId = stack.get(ModComponents.ATTACHMENT);
-		return attachmentIndex < names.size() && attachmentId != null && def.mountFor(names.get(attachmentIndex), attachmentId) != null;
+		return attachmentIndex < names.size() && def.mountFor(names.get(attachmentIndex), attachmentId) != null;
 	}
 
 	private void onWorkbenchChanged(Inventory changed) {
@@ -199,7 +201,6 @@ public class WeaponWorkbenchScreenHandler extends ScreenHandler {
 		});
 	}
 
-	private static final int WORKBENCH_SLOTS = 1 + MAX_ATTACHMENT_SLOTS;
 
 	@Override
 	public ItemStack quickMove(PlayerEntity player, int index) {

@@ -17,9 +17,10 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.debug.gizmo.GizmoDrawing;
+
+import java.util.Locale;
 
 /** Client side of the support equipment that only shows something to its holder:
  * - mine detector: outlines placed mines within range (through walls), beeps faster the nearer the
@@ -110,7 +111,7 @@ public final class GearClient {
 			return;
 		}
 		Text text = nearestMine < 0 ? Text.translatable("hud.tudursguns.detector.none")
-				: Text.translatable("hud.tudursguns.detector.nearest", String.format(java.util.Locale.ROOT, "%.1f", nearestMine));
+				: Text.translatable("hud.tudursguns.detector.nearest", String.format(Locale.ROOT, "%.1f", nearestMine));
 		context.drawTextWithShadow(client.textRenderer, text, context.getScaledWindowWidth() / 2 + 12,
 				context.getScaledWindowHeight() / 2 - 16, nearestMine < 0 ? 0xFF80FF80 : 0xFFFFC020);
 	}

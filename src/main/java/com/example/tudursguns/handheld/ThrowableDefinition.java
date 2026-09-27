@@ -45,7 +45,7 @@ public record ThrowableDefinition(
 			Codec.floatRange(0f, 10f).optionalFieldOf("underhand_velocity", 0.5f).forGetter(ThrowableDefinition::underhandVelocity),
 			Codec.intRange(0, 72000).optionalFieldOf("fuse_ticks", 80).forGetter(ThrowableDefinition::fuseTicks),
 			Codec.BOOL.optionalFieldOf("cookable", true).forGetter(ThrowableDefinition::cookable),
-	Codec.BOOL.optionalFieldOf("impact", false).forGetter(ThrowableDefinition::impact),
+			Codec.BOOL.optionalFieldOf("impact", false).forGetter(ThrowableDefinition::impact),
 			Effect.CODEC.optionalFieldOf("effect", Effect.NONE).forGetter(ThrowableDefinition::effect),
 			Codec.STRING.optionalFieldOf("pin_sound").forGetter(ThrowableDefinition::pinSound),
 			HeldMovement.MAP_CODEC.forGetter(ThrowableDefinition::movement)
@@ -58,7 +58,7 @@ public record ThrowableDefinition(
 	}
 
 	/** What happens where it ends up, besides the weapon file's own explosion.
-	 * type: none | smoke | signal | flash | incendiary.
+	 * type: none | smoke | signal | flash | incendiary | gas.
 	 * smoke: a cloud of radius blocks for duration_ticks that hides what's in or behind it and draws
 	 * missile locks onto itself. signal: a coloured column of smoke, purely a marker. flash: blinds
 	 * players within radius who can see it (more the more directly they look at it) and makes mobs
@@ -74,7 +74,7 @@ public record ThrowableDefinition(
 				Codec.floatRange(0f, 64f).optionalFieldOf("radius", 4f).forGetter(Effect::radius),
 				Codec.intRange(0, 72000).optionalFieldOf("duration_ticks", 400).forGetter(Effect::durationTicks),
 				HandheldDefinition.VECTOR_3F.optionalFieldOf("color", new Vector3f(0.6f, 0.6f, 0.6f)).forGetter(Effect::color),
-	Codec.STRING.optionalFieldOf("sound").forGetter(Effect::sound)
+				Codec.STRING.optionalFieldOf("sound").forGetter(Effect::sound)
 		).apply(instance, Effect::new));
 
 		/** color is [r, g, b], each 0-1. */

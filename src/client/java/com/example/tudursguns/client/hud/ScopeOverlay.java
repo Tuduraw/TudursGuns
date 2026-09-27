@@ -2,6 +2,7 @@ package com.example.tudursguns.client.hud;
 
 import com.example.tudursguns.TudursGuns;
 import com.example.tudursguns.client.AimController;
+import com.example.tudursvehiclemod.client.render.AddonTextureLoader;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.client.MinecraftClient;
@@ -10,8 +11,10 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.entity.Entity;
 import net.minecraft.text.Text;
-import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.hit.HitResult;
+
+import java.util.Locale;
 
 /** What the player sees through a scope: the scope texture as a centred square (the spyglass's by
  * default), black around it, and the current magnification. Drawn before the crosshair, which is
@@ -46,7 +49,7 @@ public final class ScopeOverlay {
 			return Text.translatable("hud.tudursguns.range", "---");
 		}
 		double distance = hit.getPos().distanceTo(camera.getCameraPosVec(tickProgress));
-		return Text.translatable("hud.tudursguns.range", String.format(java.util.Locale.ROOT, "%.0f", distance));
+		return Text.translatable("hud.tudursguns.range", String.format(Locale.ROOT, "%.0f", distance));
 	}
 
 	private static void render(DrawContext context, RenderTickCounter tickCounter) {
@@ -61,7 +64,7 @@ public final class ScopeOverlay {
 		int y = (height - size) / 2;
 		// An overlay shipped in an addon folder (textures/vehicle/...) is loaded by Tudur's Vehicle Mod on
 		// request; resource-pack textures are unaffected.
-		com.example.tudursvehiclemod.client.render.AddonTextureLoader.requestLoad(AimController.scopeOverlay());
+		AddonTextureLoader.requestLoad(AimController.scopeOverlay());
 		context.drawTexture(RenderPipelines.GUI_TEXTURED, AimController.scopeOverlay(), x, y, 0.0f, 0.0f, size, size, size, size);
 		int black = 0xFF000000;
 		context.fill(0, 0, width, y, black);
@@ -69,7 +72,7 @@ public final class ScopeOverlay {
 		context.fill(0, y, x, y + size, black);
 		context.fill(x + size, y, width, y + size, black);
 
-		String magnification = String.format(java.util.Locale.ROOT, "x%.1f", AimController.magnification());
+		String magnification = String.format(Locale.ROOT, "x%.1f", AimController.magnification());
 		context.drawTextWithShadow(client.textRenderer, Text.literal(magnification),
 				x + size - client.textRenderer.getWidth(magnification) - 8, y + size - 16, 0xFFFFFFFF);
 		if (AimController.hasRangefinder()) {

@@ -37,7 +37,7 @@ public final class HeldMovementEffects {
 	private static final Identifier MODIFIER_ID = Identifier.of(TudursGuns.MOD_ID, "held_item_movement");
 
 	public static void tickWorld(ServerWorld world) {
-		for (ServerPlayerEntity player : world.getPlayers(candidate -> true)) {
+		for (ServerPlayerEntity player : world.getPlayers()) {
 			apply(player, player.isSpectator() ? 0f : total(player));
 		}
 	}
@@ -54,7 +54,7 @@ public final class HeldMovementEffects {
 	}
 
 	/** What one held stack adds (0 for anything that isn't this mod's). */
-	public static float contribution(ItemStack stack, boolean aiming) {
+	private static float contribution(ItemStack stack, boolean aiming) {
 		Item item = stack.getItem();
 		if (item instanceof HandheldWeaponItem) {
 			HandheldDefinition def = ModDefinitions.HANDHELD.getServer(stack.get(ModComponents.WEAPON));

@@ -14,6 +14,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 
 import java.util.ArrayList;
@@ -66,7 +67,7 @@ public final class ModNetworking {
 					ServerPlayerEntity player = context.player();
 					HeldWeapon held = heldWeapon(player);
 					if (held != null && !HandheldCombat.toggleUnderbarrel(player, held.stack(), held.base())) {
-						player.sendMessage(net.minecraft.text.Text.translatable("message.tudursguns.underbarrel.none"), true);
+						player.sendMessage(Text.translatable("message.tudursguns.underbarrel.none"), true);
 					}
 				}));
 

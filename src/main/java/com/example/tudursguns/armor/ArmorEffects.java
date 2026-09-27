@@ -193,7 +193,7 @@ public final class ArmorEffects {
 		if (world.getTime() % 20 != 0) {
 			return;
 		}
-		for (ServerPlayerEntity player : world.getPlayers(candidate -> true)) {
+		for (ServerPlayerEntity player : world.getPlayers()) {
 			if (hasNightVision(player)) {
 				NIGHT_VISION.add(player.getUuid());
 				player.addStatusEffect(new StatusEffectInstance(StatusEffects.NIGHT_VISION, NIGHT_VISION_TICKS, 0, true, false, false));

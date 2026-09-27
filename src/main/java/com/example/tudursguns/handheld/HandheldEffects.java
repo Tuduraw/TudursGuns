@@ -11,19 +11,17 @@ import org.joml.Vector3f;
 import java.util.Locale;
 import java.util.Optional;
 
-/** The "effects" object of a handheld definition: what a shot and a reload look like around the
- * weapon - a muzzle flash, spent cartridges thrown out, an empty magazine dropped.
- *
- * Each of the three can be left out (the default for the weapon's type: guns - weapon files of
- * Type MachineGun - get all three, rockets and missiles only the flash), set to false (none), set
- * to true (the default settings), or given as an object whose missing keys take the defaults. */
+/** The "effects" object of a handheld definition: the muzzle flash, spent cartridges and empty
+ * magazines. Each can be false (none), true (the defaults), an object (missing keys take the
+ * defaults), or left out - then FiringEffects uses the weapon file's own AddMuzzleFlash/SetCartridge,
+ * else the weapon type's default. */
 public record HandheldEffects(Optional<MuzzleFlash> muzzleFlash, Optional<Ejection> cartridge, Optional<Ejection> magazine) {
 
 	/** Nothing specified: every effect follows the weapon's type. */
 	public static final HandheldEffects AUTO = new HandheldEffects(Optional.empty(), Optional.empty(), Optional.empty());
 
 	/** A colour as "#RRGGBB" or a number. */
-	static final Codec<Integer> COLOR = Codec.either(Codec.INT, Codec.STRING.comapFlatMap(text -> {
+	private static final Codec<Integer> COLOR = Codec.either(Codec.INT, Codec.STRING.comapFlatMap(text -> {
 		String hex = text.startsWith("#") ? text.substring(1) : text;
 		try {
 			return DataResult.success(Integer.parseInt(hex, 16) & 0xFFFFFF);
@@ -42,7 +40,7 @@ public record HandheldEffects(Optional<MuzzleFlash> muzzleFlash, Optional<Ejecti
 
 	/** false -> off, true -> on, an object -> as given. Off is written back as false (the definitions
 	 * are re-encoded to be sent to clients). */
-	static <T> Codec<T> toggle(Codec<T> object, T on, T off) {
+	private static <T> Codec<T> toggle(Codec<T> object, T on, T off) {
 		return Codec.either(Codec.BOOL, object).xmap(
 				either -> either.map(enabled -> enabled ? on : off, value -> value),
 				value -> value.equals(off) ? Either.left(false) : Either.right(value));
@@ -80,24 +78,10 @@ public record HandheldEffects(Optional<MuzzleFlash> muzzleFlash, Optional<Ejecti
 		public static final Codec<Trigger> CODEC = DefinitionCodecs.lenientEnum(Trigger.class, FIRE);
 	}
 
-	/** Something thrown out of the weapon - a spent cartridge or an empty magazine. It's a small model
-	 * that falls, bounces and disappears lifetime ticks after it first lands; it hits nothing and
-	 * isn't saved with the world.
-	 *
-	 * type: a built-in model - "rifle", "pistol", "shotgun", "large" (grenade) cartridges, or
-	 *   "magazine". model / texture replace it (an OBJ and its PNG, like a weapon's).
-	 * scale: model size.
-	 * offset: where it comes out - [right, up, forward] from the eye, like muzzle_offset (mirrored in
-	 *   the left hand). Defaults to a point along muzzle_offset (the ejection port / magazine well).
-	 * velocity: [right, up, forward] blocks per tick, plus up to velocity_random in any direction and
-	 *   the shooter's own movement.
-	 * gravity, bounce: fall acceleration and how much speed a bounce keeps (0 = stops on landing).
-	 * on: "fire" (with each shot) or "reload" (when a reload starts).
-	 * delay: ticks after the shot / reload start (a bolt action throws its case out when the bolt
-	 *   opens).
-	 * count: how many; for on = "reload", 0 means one per round fired since the last reload (a
-	 *   revolver emptying its cylinder, up to 12).
-	 * lifetime: ticks it stays after landing. */
+	/** Something thrown out of the weapon - a spent cartridge or an empty magazine (keys in the README).
+	 * It falls, bounces and disappears lifetime ticks after it lands; offset and velocity are
+	 * [right, up, forward] in the player's view, like muzzle_offset. For on = "reload", count 0 means
+	 * one per round fired since the last reload. */
 	public record Ejection(boolean enabled, String type, Optional<Identifier> model, Optional<Identifier> texture, float scale,
 			Optional<Vector3f> offset, Vector3f velocity, float velocityRandom, float gravity, float bounce, Trigger on, int delay,
 			int count, int lifetime) {

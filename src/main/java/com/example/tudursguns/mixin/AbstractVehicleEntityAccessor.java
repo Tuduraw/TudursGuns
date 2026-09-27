@@ -4,9 +4,9 @@ import com.example.tudursvehiclemod.entity.AbstractVehicleEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
-/** Tudur's Vehicle Mod's own per-second supply steps (the ones its supply vehicles apply) are
- * private; the ammo box reuses them so it rearms vehicles by exactly the same rules. remap = false:
- * these are the vehicle mod's own methods, not Minecraft's. */
+/** Tudur's Vehicle Mod's private supply steps (the ones its supply vehicles apply), reused by the ammo
+ * box and the repair kit so they work by exactly the same rules. remap = false: these are the vehicle
+ * mod's own methods, not Minecraft's. */
 @Mixin(value = AbstractVehicleEntity.class, remap = false)
 public interface AbstractVehicleEntityAccessor {
 

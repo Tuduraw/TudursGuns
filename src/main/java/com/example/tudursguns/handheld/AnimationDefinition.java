@@ -8,41 +8,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/** A weapon's moving parts and their motions - the "animation" section of a handheld definition.
- *
- * parts: named pieces of the weapon's OBJ model (by OBJ group), each with a pivot (the point it turns
- *   about, in model space) and a parent. Everything moves with its parent: "root" is the whole weapon
- *   (every group not given to another part), so e.g. the hammer can be a child of the frame, and
- *   tilting "root" tilts everything - including, in first person, the arms. The arms can be moved
- *   themselves as the parts "right_arm" and "left_arm" (children of root; pivot = their own origin).
- *
- * sequences: motions played when something happens to the weapon (see Event for the names: fire,
- *   reload, ...). Each is a list of tracks; a track moves one part through keyframes - at tick t
- *   (counted from the event), be translated/rotated this much from rest. Values between keyframes are
- *   interpolated (the later keyframe's easing), the part starts from rest at tick 0 unless a keyframe
- *   says otherwise, and once the last keyframe is passed the track no longer applies - so a pull-and-
- *   release is keyframes rest -> pulled -> rest. fit_to_event stretches the whole sequence to the
- *   event's actual duration (a reload, which attachments can make faster or slower).
- *   Several sequences can play at once; their offsets add up.
- *
- * counters: state that builds up and stays - a revolver's cylinder turning one chamber per shot. On
- *   each "on" event the counter goes up by add (wrapping at modulo, if set), and its part is posed at
- *   counter x rotation_per_step / translation_per_step, moving to the new position over ticks.
- *   reset_on events put it back to 0. The count is kept on the weapon itself, so it survives saving
- *   and is the same for everyone looking.
- *
- * ammo_poses: tracks whose keyframe "tick" is instead the number of rounds loaded - a magazine
- *   follower rising, a belt shortening. Between keyframes the pose is interpolated; outside them it
- *   holds the nearest one.
- *
- * A part can also have a fixed offset (translation/rotation - always applied) and an aimed offset
- * (aiming_translation/aiming_rotation - blended in as the weapon is raised).
- *
- * A sequence can play sounds: "sounds": [{"tick": 2, "sound": "tg_reload_bolt"}] - played by the
- * server at those ticks after the event (stretched with fit_to_event), heard by everyone near.
- *
- * Only the model poses change; nothing here affects firing. Sequences play in hand (first and third
- * person); counters show everywhere, the inventory included. */
+/** A weapon's moving parts and their motions - the "animation" section of a handheld definition
+ * (the keys are described in the README):
+ * - parts: groups of the OBJ model with a pivot and a parent ("root" is the whole weapon; the arms
+ *   are the parts "right_arm" and "left_arm");
+ * - sequences: keyframed motions played when an Event happens, optionally with sounds;
+ * - counters: state that builds up and stays on the stack (a revolver's cylinder);
+ * - ammo_poses: poses keyed on the number of rounds loaded.
+ * Only the model's pose changes; nothing here affects firing. */
 public record AnimationDefinition(
 		Map<String, Part> parts,
 		Map<String, Sequence> sequences,

@@ -12,10 +12,10 @@ import net.minecraft.util.Identifier;
 import java.util.Map;
 import java.util.function.UnaryOperator;
 
-/** Per-stack state of a handheld weapon.
+/** Per-stack state: which definition a stack is, and a weapon's loaded rounds, reload, mode and so on.
  *
- * Everything that changes while the weapon is in use (loaded rounds, reload, mode) skips the
- * held-item re-equip animation - otherwise every shot would visibly lower and raise the weapon. */
+ * Everything that changes while a weapon is in use skips the held-item re-equip animation -
+ * otherwise every shot would visibly lower and raise the weapon. */
 public final class ModComponents {
 
 	private ModComponents() {

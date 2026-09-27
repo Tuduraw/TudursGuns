@@ -78,7 +78,7 @@ public final class EquipmentActions {
 	}
 
 	/** The nearest entity of the given class the player is looking at within range, not behind a block. */
-	public static <T extends Entity> T lookedAt(ServerPlayerEntity player, Class<T> type, double range, Predicate<? super T> filter) {
+	private static <T extends Entity> T lookedAt(ServerPlayerEntity player, Class<T> type, double range, Predicate<? super T> filter) {
 		ServerWorld world = (ServerWorld) player.getEntityWorld();
 		Vec3d eye = player.getEyePos();
 		Vec3d end = eye.add(player.getRotationVec(1.0f).multiply(range));

@@ -14,6 +14,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /** Recipe list on the left (result icon and name, grouped under category headings), the selected
@@ -65,7 +66,7 @@ public class GunCraftingScreen extends HandledScreen<GunCraftingScreenHandler> {
 	}
 
 	private List<Row> rows(List<Identifier> ids) {
-		List<Row> rows = new java.util.ArrayList<>();
+		List<Row> rows = new ArrayList<>();
 		String category = null;
 		for (int i = 0; i < ids.size(); i++) {
 			GunRecipeDefinition recipe = ModDefinitions.GUN_RECIPES.client().get(ids.get(i));

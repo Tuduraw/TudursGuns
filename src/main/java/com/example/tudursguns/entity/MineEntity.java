@@ -126,12 +126,12 @@ public class MineEntity extends Entity {
 	}
 
 	/** Where the charge is: a little out from the surface it sits on. */
-	public Vec3d center() {
+	private Vec3d center() {
 		return this.getEntityPos().add(normal().getDoubleVector().multiply(0.1));
 	}
 
 	/** The direction a directional charge fires in: the way it faces (horizontal). */
-	public Vec3d facing() {
+	private Vec3d facing() {
 		return Vec3d.fromPolar(0f, this.getYaw());
 	}
 
@@ -210,15 +210,10 @@ public class MineEntity extends Entity {
 	private boolean isSetOff(ServerWorld world, MineDefinition def) {
 		Vec3d c = center();
 		double r = def.triggerRadius();
-		Box box;
-		if (def.trigger() == MineDefinition.Trigger.DIRECTIONAL) {
-			box = new Box(c, c).expand(r);
-		} else if (normal() == Direction.UP) {
-			// A ground mine feels what's on the ground around it.
-			box = new Box(c.x - r, c.y - 0.25, c.z - r, c.x + r, c.y + 1.0, c.z + r);
-		} else {
-			box = new Box(c, c).expand(r);
-		}
+		// A ground mine feels what's on the ground around it.
+		Box box = normal() == Direction.UP && def.trigger() != MineDefinition.Trigger.DIRECTIONAL
+				? new Box(c.x - r, c.y - 0.25, c.z - r, c.x + r, c.y + 1.0, c.z + r)
+				: new Box(c, c).expand(r);
 		if (def.triggerLiving()) {
 			for (LivingEntity living : world.getEntitiesByClass(LivingEntity.class, box, MineEntity::canSetOff)) {
 				if (def.trigger() != MineDefinition.Trigger.DIRECTIONAL || inCone(world, def, living.getBoundingBox().getCenter())) {

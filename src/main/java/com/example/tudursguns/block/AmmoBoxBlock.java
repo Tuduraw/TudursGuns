@@ -11,8 +11,7 @@ import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-/** Ammo box: a fixed supply point - see AmmoBoxBlockEntity. (For an OBJ-modelled ammo point, Tudur's
- * Vehicle Mod's static emplacements can already act as supply vehicles.) */
+/** Ammo box: a fixed supply point - see AmmoBoxBlockEntity. */
 public class AmmoBoxBlock extends BlockWithEntity {
 
 	public static final MapCodec<AmmoBoxBlock> CODEC = createCodec(AmmoBoxBlock::new);

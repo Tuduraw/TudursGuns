@@ -7,6 +7,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
+import java.util.Locale;
 import java.util.function.Consumer;
 
 /** The one item every weapon attachment is; which one comes from its tudursguns:attachment
@@ -48,6 +49,6 @@ public class AttachmentItem extends DefinedItem<AttachmentDefinition> {
 	}
 
 	private static String format(float value) {
-		return value == Math.rint(value) ? Integer.toString((int) value) : String.format(java.util.Locale.ROOT, "%.2f", value);
+		return value == Math.rint(value) ? Integer.toString((int) value) : String.format(Locale.ROOT, "%.2f", value);
 	}
 }
