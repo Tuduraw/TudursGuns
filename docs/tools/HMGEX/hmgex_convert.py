@@ -5,7 +5,7 @@ Reads an HMG EX pack (a folder, or a .zip of one) and writes:
 
   <out>/tudursvehiclemod-addons/<pack>/   - drop into the game folder's tudursvehiclemod-addons/
       assets/<ns>/weapons/*.txt             weapon files (Tudur's Vehicle Mod format)
-      assets/<ns>/models/obj/*.obj          models, re-axised and scaled to blocks
+      assets/<ns>/models/obj/*.obj          models, re-axised and scaled to blocks (bullets only scaled)
       assets/<ns>/textures/vehicle/...      model textures, inventory icons, scope overlays
       assets/<ns>/sounds/*.ogg              sounds shipped in the pack (if any)
       data/<ns>/handheld/*.json             weapons
@@ -21,7 +21,6 @@ Only the Python 3.8+ standard library is used. See README.md next to this script
 
 import argparse
 import json
-import math
 import os
 import re
 import shutil
@@ -135,19 +134,21 @@ _UNSUPPORTED_GROUPS = [
     ("ノーマルレンダー(Mat22/25/31/32)の動きは未対応。パーツレンダー(AddParts)の動きのみ変換",
      ["reloadmat31", "mat31point", "mat31rotation", "mat32point", "mat32rotation", "mat22", "mat22point",
       "mat22rotation", "mat25point", "mat25rotation"]),
-    ("パーツレンダー用のアタッチメント位置のうち、対応する枠がないもの", ["gripsetangle"]),
+    ("弾の加速は未対応", ["acceleration"]),
+    ("リロード音の音量は未対応(常に 1.0)", ["gunsoundreloadlv"]),
+    ("スプリント時の回転中心は Tudur's Guns の既定を使用", ["sprintingpoint"]),
 ]
 UNSUPPORTED_REASONS = {key: reason for reason, keys in _UNSUPPORTED_GROUPS for key in keys}
 
 #: Gun keys the converter uses (the rest are reported as unknown).
 USED_GUN_KEYS = {
-    "name", "bulletpower", "bulletspeed", "explosion", "blockdestory", "bulletgravity", "acceleration",
+    "name", "bulletpower", "bulletspeed", "explosion", "blockdestory", "bulletgravity",
     "induction_precision", "bulletfuse", "bulletspread", "ads_spread_coefficient", "recoil", "recoil_sneaking",
     "reloadtime", "remainingbullet", "attacking", "motion", "zoom", "cycle", "bursts", "texture", "gunsound",
-    "soundspeed", "gunsoundlv", "gunsoundreload", "gunsoundreloadlv", "gunsoundcooking", "magazine",
-    "objmodel", "objtexture", "modelscala", "modelarm", "sprintingpoint", "sprintingrotation", "cockingtime",
+    "soundspeed", "gunsoundlv", "gunsoundreload", "gunsoundcooking", "magazine",
+    "objmodel", "objtexture", "modelscala", "modelarm", "sprintingrotation", "cockingtime",
     "perfireround", "muzzlejump", "attachrestriction", "allowattach", "sightsetpoint", "sightattachrotation",
-    "lightsetpoint", "lightsetangle", "muzzlesetpoint", "gripsetpoint", "canlock", "canlockentity", "guntype",
+    "lightsetpoint", "lightsetangle", "muzzlesetpoint", "gripsetpoint", "gripsetangle", "canlock", "canlockentity", "guntype",
     "automatic", "canobj", "bulletnameall", "bulletnamenormal",
     "cartridge", "cartridgetype", "cartcount", "dropcartridgeendcocked", "bulletnamecart",
     "dropmagazine", "magtype", "magcount", "bulletnamemag", "muzzleflash",
@@ -308,11 +309,37 @@ def locate_pack_root(path, workdir):
 
 # --------------------------------------------------------------------------- gun files
 
+class Props:
+    """key -> [values] of an HMG txt file, read with defaults."""
+
+    def __init__(self, path):
+        self.path = path
+        self.file = os.path.basename(path)
+        self.props = {}
+        self.internal_name = None
+
+    def get(self, key, index=0, default=None):
+        values = self.props.get(key.lower())
+        if not values or index >= len(values) or values[index] == "":
+            return default
+        return values[index]
+
+    def f(self, key, default=0.0):
+        value = self.get(key)
+        return default if value is None else num(value, default)
+
+    def b(self, key, default=False):
+        value = self.get(key)
+        return default if value is None else boolean(value)
+
+    def has(self, key):
+        return key.lower() in self.props
+
+
 class Part:
     def __init__(self, name, parent):
         self.name = name
         self.parent = parent
-        self.children = []
         self.pivot = (0.0, 0.0, 0.0)
         self.def_offset = None
         self.ads = None
@@ -328,48 +355,20 @@ class Part:
         self.unsupported = set()
 
 
-class Gun:
+class Gun(Props):
     def __init__(self, path):
-        self.path = path
-        self.file = os.path.basename(path)
-        self.props = {}
+        super().__init__(path)
         self.registration = None
-        self.internal_name = None
-        self.parts = []
         self.all_parts = []
         self.warnings = []
-
-    def get(self, key, index=0, default=None):
-        values = self.props.get(key.lower())
-        if not values or index >= len(values) or values[index] == "":
-            return default
-        return values[index]
-
-    def f(self, key, default=0.0, index=0):
-        value = self.get(key, index)
-        return default if value is None else num(value, default)
-
-    def b(self, key, default=False):
-        value = self.get(key)
-        return default if value is None else boolean(value)
-
-    def has(self, key):
-        return key.lower() in self.props
 
 
 def parse_motion_keys(values):
     """[start, 6 floats, end, 6 floats] -> ((start, pose), (end, pose)), or None (e.g. the visibility form)."""
-    numbers = [v for v in values if v != ""]
+    numbers = [num(v) for v in values if v != ""]
     if len(numbers) != 14:
         return None
-    try:
-        start = num(numbers[0])
-        start_pose = [num(v) for v in numbers[1:7]]
-        end = num(numbers[7])
-        end_pose = [num(v) for v in numbers[8:14]]
-    except ValueError:
-        return None
-    return (start, start_pose), (end, end_pose)
+    return (numbers[0], numbers[1:7]), (numbers[7], numbers[8:14])
 
 
 def six(values):
@@ -385,7 +384,6 @@ def parse_gun(path):
         lower = key.lower()
         if lower == "addparts":
             current = Part(values[0] if values else "part", None)
-            gun.parts.append(current)
             gun.all_parts.append(current)
             stack = [current]
             continue
@@ -394,7 +392,6 @@ def parse_gun(path):
                 gun.warnings.append(f"{number}行目: AddChildParts の前に AddParts がありません")
                 continue
             child = Part(values[0] if values else "part", current)
-            current.children.append(child)
             gun.all_parts.append(child)
             stack.append(child)
             current = child
@@ -458,23 +455,10 @@ def apply_part_key(part, key, values):
 
 # --------------------------------------------------------------------------- attachments
 
-class Attachment:
+class Attachment(Props):
     def __init__(self, path):
-        self.path = path
-        self.file = os.path.basename(path)
-        self.props = {}
+        super().__init__(path)
         self.kind = None
-        self.internal_name = None
-
-    def get(self, key, index=0, default=None):
-        values = self.props.get(key.lower())
-        if not values or index >= len(values) or values[index] == "":
-            return default
-        return values[index]
-
-    def f(self, key, default=0.0):
-        value = self.get(key)
-        return default if value is None else num(value, default)
 
 
 def parse_attachment(path):
@@ -507,16 +491,17 @@ class Frame:
     """HMG model space -> Tudur's Guns model space: HMG models face +Z, ours -Z (a turn of 180
     degrees about Y), scaled to blocks and moved so the origin sits where our aiming expects it."""
 
-    def __init__(self, origin, scale):
+    def __init__(self, origin, scale, turn=True):
         self.origin = origin
         self.scale = scale
+        self.sign = -1.0 if turn else 1.0  # x and z; turn=False only centres and scales (bullet models)
 
     def point(self, p):
         ox, oy, oz = self.origin
-        return (-(p[0] - ox) * self.scale, (p[1] - oy) * self.scale, -(p[2] - oz) * self.scale)
+        return (self.sign * (p[0] - ox) * self.scale, (p[1] - oy) * self.scale, self.sign * (p[2] - oz) * self.scale)
 
     def vector(self, v):
-        return (-v[0] * self.scale, v[1] * self.scale, -v[2] * self.scale)
+        return (self.sign * v[0] * self.scale, v[1] * self.scale, self.sign * v[2] * self.scale)
 
     @staticmethod
     def rotation(r):
@@ -524,17 +509,13 @@ class Frame:
 
 
 def read_obj(path):
+    """An OBJ's vertex positions."""
     vertices = []
-    groups = []
     for line in read_text(path).splitlines():
         t = line.split()
-        if not t:
-            continue
-        if t[0] == "v" and len(t) >= 4:
+        if t and t[0] == "v" and len(t) >= 4:
             vertices.append(tuple(float(x) for x in t[1:4]))
-        elif t[0] in ("o", "g"):
-            groups.append(" ".join(t[1:]))
-    return vertices, groups
+    return vertices
 
 
 def bounds(vertices):
@@ -564,7 +545,7 @@ def write_converted_obj(source, destination, frame, drop_groups=()):
             out.append(f"v {x:.6f} {y:.6f} {z:.6f}")
         elif head == "vn" and len(t) >= 4:
             nx, ny, nz = (float(v) for v in t[1:4])
-            out.append(f"vn {-nx:.6f} {ny:.6f} {-nz:.6f}")
+            out.append(f"vn {frame.sign * nx:.6f} {ny:.6f} {frame.sign * nz:.6f}")
         elif head == "vt":
             out.append(line.strip())
         elif head == "f":
@@ -643,10 +624,11 @@ class Converter:
         self.pack_sounds = self.read_pack_sounds()
         self.report = []
         self.copied = set()
-        self.item_ids = {}      # HMG internal name (lower) -> ("weapon"|"attachment"|"ammo", our id)
+        self.item_ids = {}      # HMG internal name (lower) -> ("weapon"|"attachment"|"ammo", our id, rounds)
         self.attachments = []
         self.magazines = {}     # HMG magazine internal name (lower) -> our ammo id
         self.bullet_types = {}  # HMG bullet/cart/mag type name (lower) -> props
+        self.bullets = {}       # HMG bullet type name (lower) -> converted bullet_<slug> model
         self.recipe_count = 0
 
     # ----------------------------------------------------------------- assets
@@ -728,7 +710,7 @@ class Converter:
         if model_name:
             source = self.pack.find_asset("textures/model/" + model_name, "textures/model/" + model_name + ".obj")
             if source:
-                vertices, _ = read_obj(source)
+                vertices = read_obj(source)
                 mins, maxs = bounds(vertices)
                 length = maxs[2] - mins[2]
                 height = maxs[1] - mins[1]
@@ -777,7 +759,7 @@ class Converter:
         cocking_time = int(gun.f("cockingtime", 0))
         delay = max(1, cycle, cocking_time)
         lines.append(f"Delay = {delay}")
-        if gun.has("bulletfuse") and gun.f("bulletfuse") > 0:
+        if gun.f("bulletfuse") > 0:
             lines.append(f"TimeFuse = {int(gun.f('bulletfuse'))}")
         fire_sound = self.sound(gun.get("gunsound"), notes)
         suppressed_sound = self.sound(gun.get("gunsound", 1), notes)
@@ -848,7 +830,7 @@ class Converter:
         definition["aim"] = aim
 
         motion = gun.f("motion", 1.0)
-        if gun.has("motion") and abs(motion - 1.0) > 1e-6:
+        if abs(motion - 1.0) > 1e-6:
             definition["movement_speed"] = round(max(-1.0, motion - 1.0), 4)
             converted.append("Motion → movement_speed")
         recoil = gun.f("recoil", 0.0) * self.args.recoil_scale
@@ -877,12 +859,17 @@ class Converter:
             definition["effects"] = effects
 
         # ---- parts / motions
+        cock_sound = self.sound(gun.get("gunsoundcooking"), notes)
+        animation = None
         if frame is not None:
             animation = self.animation(gun, frame, rounds, cocking_time, reload_ticks=int(gun.f("reloadtime", 40)),
-                                       cock_sound=self.sound(gun.get("gunsoundcooking"), notes), notes=notes,
-                                       converted=converted, approximated=approximated)
-            if animation:
-                definition["animation"] = animation
+                                       cock_sound=cock_sound, notes=notes, converted=converted, approximated=approximated)
+        elif cock_sound:
+            # No model to move, but the cocking sound still plays after each shot.
+            delay = self.args.cock_delay if cocking_time > 0 else 0
+            animation = {"sequences": {"fire": {"tracks": [], "sounds": [{"tick": delay, "sound": cock_sound}]}}}
+        if animation:
+            definition["animation"] = animation
 
         # ---- attachment slots
         slots = self.attachment_slots(gun, frame, suppressed_sound, notes)
@@ -930,9 +917,7 @@ class Converter:
                 converted.append(f"{label} → {name}: false")
                 continue
             ejection = {"type": EJECT_TYPES.get(int(gun.f(type_key, default_type)), EJECT_TYPES[default_type])}
-            if name == "magazine" or ejection["type"] == "magazine":
-                ejection["on"] = "reload" if name == "magazine" else "fire"
-            if gun.has(count_key) and int(gun.f(count_key, 1)) > 1:
+            if int(gun.f(count_key, 1)) > 1:
                 ejection["count"] = int(gun.f(count_key, 1))
             if name == "cartridge" and gun.b("dropcartridgeendcocked") and cocking_time > 0:
                 ejection["delay"] = int(round(self.args.cock_delay + cocking_time))
@@ -954,32 +939,31 @@ class Converter:
         return None
 
     def bullet_asset(self, name, notes):
-        """A bullets/ type's model, converted to models/obj/bullet_<slug>.obj (texture alongside)."""
-        if name:
-            props = self.bullet_types.get(name.lower())
-            if not props:
-                notes.append(f"弾頭種類 `{name}` が bullets/ にありません")
-                return None
-            model = props.get("objmodel", [None])[0]
-            source = model and self.pack.find_asset("textures/model/" + model, "textures/model/" + model + ".obj")
-            if not source:
-                notes.append(f"弾頭の模型 `{model}` が見つかりません")
-                return None
-            bullet = slug(f"{self.ns}_{name}")
-            scale = num(props.get("objscale", ["1"])[0], 1.0) * self.args.scale_factor
-            # Bullet models face +Z in both mods: no turn, only scale.
-            vertices, _ = read_obj(source)
-            mins, maxs = bounds(vertices)
-            centre = tuple((mins[i] + maxs[i]) / 2 for i in range(3))
-            frame = Frame(centre, scale)
-            frame.point = lambda p, c=centre, s=scale: ((p[0] - c[0]) * s, (p[1] - c[1]) * s, (p[2] - c[2]) * s)
-            write_converted_obj_plain(source, os.path.join(self.assets, "models/obj", f"bullet_{bullet}.obj"), frame)
-            texture = props.get("objtexture", [None])[0]
-            texture_source = texture and self.pack.find_asset("textures/model/" + texture, "textures/model/" + texture + ".png")
-            if texture_source:
-                self.copy_asset(texture_source, f"textures/vehicle/bullet_{bullet}.png")
-            return bullet
-        return None
+        """A bullets/ type's model, converted to models/obj/bullet_<slug>.obj (texture alongside), once
+        per pack. Returns the slug, or None."""
+        if name.lower() in self.bullets:
+            return self.bullets[name.lower()]
+        props = self.bullet_types.get(name.lower())
+        if not props:
+            notes.append(f"弾頭種類 `{name}` が bullets/ にありません")
+            return None
+        model = props.get("objmodel", [None])[0]
+        source = model and self.pack.find_asset("textures/model/" + model, "textures/model/" + model + ".obj")
+        if not source:
+            notes.append(f"弾頭の模型 `{model}` が見つかりません")
+            return None
+        bullet = slug(f"{self.ns}_{name}")
+        scale = num(props.get("objscale", ["1"])[0], 1.0) * self.args.scale_factor
+        # Bullet models face +Z in both mods: centred and scaled, not turned.
+        mins, maxs = bounds(read_obj(source))
+        centre = tuple((mins[i] + maxs[i]) / 2 for i in range(3))
+        write_converted_obj(source, os.path.join(self.assets, "models/obj", f"bullet_{bullet}.obj"), Frame(centre, scale, turn=False))
+        texture = props.get("objtexture", [None])[0]
+        texture_source = texture and self.pack.find_asset("textures/model/" + texture, "textures/model/" + texture + ".png")
+        if texture_source:
+            self.copy_asset(texture_source, f"textures/vehicle/bullet_{bullet}.png")
+        self.bullets[name.lower()] = bullet
+        return bullet
 
     def ammo(self, gun, definition, notes, launcher, rounds):
         names = []
@@ -1061,7 +1045,7 @@ class Converter:
             fire_tracks.append({"part": "root", "keyframes": [
                 {"tick": 1, "rotation": [round(-muzzle_jump, 3), 0, 0], "easing": "ease_out"}, {"tick": 5}]})
             converted.append("MuzzleJump → 射撃時に銃全体が跳ねる動き")
-        if not (parts or fire_tracks):
+        if not (parts or fire_tracks or cock_sound):
             return None
         animation = {"parts": parts}
         sequences = {}
@@ -1251,7 +1235,7 @@ class Converter:
                 if lower in ("addrecipe", "addshapedrecipe"):
                     shapeless = False
                     continue
-                if lower in ("addshapelessrecipe",):
+                if lower == "addshapelessrecipe":
                     shapeless = True
                     continue
                 if lower.startswith("slot"):
@@ -1263,7 +1247,7 @@ class Converter:
                     current = {}
             for index, block in enumerate(blocks, 1):
                 result = self.result(block["result"], notes)
-                keys, grid, ok = {}, {}, result is not None
+                grid, ok = {}, result is not None
                 for slot in range(1, 10):
                     if slot not in block:
                         continue
@@ -1292,6 +1276,10 @@ class Converter:
     # ----------------------------------------------------------------- run
 
     def run(self):
+        # A re-run replaces this pack's earlier output.
+        for folder in (self.addon, self.datapack):
+            if os.path.exists(folder):
+                shutil.rmtree(folder)
         for path in self.pack.txt_files("bullets"):
             name, props = parse_bullet_type(path)
             self.bullet_types[name.lower()] = props
@@ -1311,9 +1299,8 @@ class Converter:
                 "description": f"Recipes converted from the Hand Made Guns EX pack {self.pack.name}",
                 "pack_format": self.args.pack_format,
                 "supported_formats": [48, 999], "min_format": 48, "max_format": 999}})
-        for folder in ("addscripts",):
-            if self.pack.folder(folder):
-                self.report.append(("フォルダ", folder, "-", [], [], ["JavaScript のスクリプトは未対応のため省略"], []))
+        if self.pack.folder("addscripts"):
+            self.report.append(("フォルダ", "addscripts", "-", [], [], ["JavaScript のスクリプトは未対応のため省略"], []))
         if self.pack.folder("addtab"):
             self.report.append(("フォルダ", "addTab", "-", [], [], ["クリエイティブタブは Tudur's Guns のタブにまとめるため省略"], []))
         self.write_report(len(guns))
@@ -1340,21 +1327,6 @@ class Converter:
 
 
 # --------------------------------------------------------------------------- helpers using the frame
-
-def write_converted_obj_plain(source, destination, frame):
-    """Like write_converted_obj, but using frame.point for normals' direction too (no axis turn)."""
-    out = ["# converted from Hand Made Guns EX by hmgex_convert.py"]
-    for line in read_text(source).splitlines():
-        t = line.split()
-        if not t or t[0] in ("mtllib", "usemtl", "s"):
-            continue
-        if t[0] == "v" and len(t) >= 4:
-            x, y, z = frame.point(tuple(float(v) for v in t[1:4]))
-            out.append(f"v {x:.6f} {y:.6f} {z:.6f}")
-        else:
-            out.append(line.strip())
-    write_text(destination, "\n".join(out) + "\n")
-
 
 def pose_keyframe(frame, tick, pose):
     translation = frame.vector(pose[:3])
@@ -1428,7 +1400,7 @@ def item_ref(value):
     for component, (field, category) in _REF_KINDS.items():
         if component in components:
             return {field: components[component]}, category
-    return {"item": value.get("id") or value.get("base")}, None
+    return {"item": value["id"]}, None
 
 
 def gun_recipe(ingredients, result):
@@ -1481,12 +1453,6 @@ def main(argv=None):
         root = locate_pack_root(os.path.abspath(args.pack), workdir)
         pack = Pack(root)
         out = os.path.abspath(args.out)
-        target = os.path.join(out, "tudursvehiclemod-addons", pack.name)
-        if os.path.exists(target):
-            shutil.rmtree(target)
-        datapack = os.path.join(out, "datapacks", pack.name)
-        if os.path.exists(datapack):
-            shutil.rmtree(datapack)
         converter = Converter(pack, out, args)
         converter.run()
     print(f"変換しました: {out}")

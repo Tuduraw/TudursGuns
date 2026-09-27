@@ -36,7 +36,8 @@ python hmgex_convert.py HMG_MyPack.zip -o converted
 └─ conversion_report.md                  … ファイルごとの変換結果(変換・近似・未対応・注意)
 ```
 
-- 名前空間は、パック名を小文字にしたものです(`--namespace` で変更可)。
+- 名前空間は、パック名を小文字にし、英数字以外を `_` にしたものです(`--namespace` で変更可)。
+- 同じ出力先で再び変換すると、そのパックの出力フォルダは作り直されます。手で調整した値も消えるので、調整後のファイルは別に保存してください。
 - アイテムは Tudur's Guns の共通アイテム(銃・アタッチメント・弾薬)として追加されます。クリエイティブタブ「Tudur's Guns」に並びます。
 - レシピは銃器製作台(`tudursguns:gun_crafting_table`)で使えます。アドオンのフォルダに入っているため、ワールドごとのデータパックは不要です。
 - 普通の作業台でも作れるようにしたい場合は `--datapack-recipes` を付けます。データパックの `pack_format` は既定で 94 です。ゲームのバージョンに合わない場合は `--pack-format` で指定してください。
@@ -45,6 +46,7 @@ python hmgex_convert.py HMG_MyPack.zip -o converted
 
 | オプション | 既定値 | 内容 |
 |---|---|---|
+| `-o`、`--out` | `hmgex_converted` | 出力先フォルダ |
 | `--namespace` | パック名 | 出力の名前空間 |
 | `--scale-factor` | `0.16` | 模型の大きさ。`ModelScala` にこれを掛けてブロック単位にします(小銃がおよそ1ブロックになる値) |
 | `--speed-scale` | `1.0` | `BulletSpeed` に掛ける値 |
@@ -106,7 +108,7 @@ HMG の標準の音(`handmadeguns.fireRifle` など)は HMG 本体に入って�
 | `Magazine`、`MultiMagazine` | パック内のマガジンなら、その弾薬アイテム。なければ `--default-ammo` |
 | `Canlock`、`Induction_precision` | 対戦車ミサイル(ロックオン)、旋回性能 |
 | `MuzzleFlash` | マズルフラッシュ(`false` なら `effects.muzzle_flash: false`) |
-| `Cartridge`、`CartridgeType`、`CartCount`、`DropCartridgeEndCocked`、`BulletNameCart` | 薬莢の排出(`effects.cartridge`)。種類は収録の模型(1 小銃、2 拳銃、3 散弾、4 擲弾、5 マガジン)、`BulletNameCart` があればその模型。コッキング終了時の排莢は `CockingTime` 後に出す |
+| `Cartridge`、`CartridgeType`、`CartCount`、`DropCartridgeEndCocked`、`BulletNameCart` | 薬莢の排出(`effects.cartridge`)。種類は収録の模型(1 小銃、2 拳銃、3 散弾、4 擲弾、5 マガジン)、`BulletNameCart` があればその模型。`DropCartridgeEndCocked` なら射撃から `--cock-delay` + `CockingTime` tick 後に出す |
 | `DropMagazine`、`MagType`、`MagCount`、`BulletNameMAG` | リロード時のマガジンの排出(`effects.magazine`)。種類の番号は `CartridgeType` と同じ |
 | `ObjModel`、`ObjTexture`、`ModelScala` | 模型とテクスチャ |
 | `BulletNameNormal`、`BulletNameALL` | 弾の模型(`bullets/` の定義から) |
@@ -144,7 +146,7 @@ HMG のパーツレンダー(`AddParts`)を、Tudur's Guns のモーション(`a
 
 ### レシピ(`addpackrecipe/*.txt`)
 
-- 銃器製作台のレシピ(`gun_recipe`)にします。`Slot1`〜`Slot9` の材料を種類ごとにまとめて数えます(並びは問いません)。
+- 銃器製作台のレシピ(`gun_recipe`)にします。`Slot1`〜`Slot9` の材料を種類ごとにまとめて数えます(並びは問いません)。形の決まらないレシピ(`AddShapelessRecipe`)も同じです。
 - `--datapack-recipes` のときは、3×3の並びを、形の決まった作業台のレシピにもします。空いた行・列は詰めます。
 - 1.7.10 の名前が変わったもの(`planks`、`log`、`wool` など)は、1.21 の名前やタグに置き換えます。メタデータ(色違いなど)は無視します。
 - 材料が変換した銃・アタッチメント・マガジンのときは、そのアイテムだけに一致する材料にします(`gun_recipe` の `weapon`・`attachment`・`ammo`。作業台のレシピでは Fabric API の `fabric:components`)。
@@ -165,6 +167,6 @@ HMG のパーツレンダー(`AddParts`)を、Tudur's Guns のモーション(`a
 
 - HMG の模型は +Z が前、Tudur's Guns は -Z が前です。Y 軸まわりに180度回します(X と Z の符号を反転)。
 - 大きさは `ModelScala × --scale-factor` 倍です(1 = 1ブロック)。
-- 原点は、銃口から模型の長さの 63%(拳銃は 78%)後ろ、高さの 55% の位置です。サンプル銃のグリップ付近に当たります。
+- 原点は、銃口から模型の長さの 63%(拳銃は 78%、ランチャーは 60%)後ろ、高さの 55% の位置です。サンプル銃のグリップ付近に当たります。
 - 照準位置(`aim.sight_position`)は、原点付近でいちばん高い点(照門・機関部の上面)を推定しています。
 - 部品の回転の中心・移動量・回転も同じ変換をします(回転は X と Z の符号を反転)。
