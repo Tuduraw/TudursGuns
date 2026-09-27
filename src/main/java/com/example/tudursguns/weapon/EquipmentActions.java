@@ -34,8 +34,15 @@ public final class EquipmentActions {
 	private EquipmentActions() {
 	}
 
-	/** Same "stationary" threshold as the ammo box and Tudur's Vehicle Mod's own supply. */
+	/** Tudur's Vehicle Mod's own "stationary" threshold for supply (horizontal speed). */
 	private static final double STATIONARY_VELOCITY_SQUARED = 0.02 * 0.02;
+
+	/** A vehicle that can be resupplied or repaired: intact and standing still, as Tudur's Vehicle
+	 * Mod's own supply vehicles require. */
+	public static boolean isSuppliable(AbstractVehicleEntity vehicle) {
+		return vehicle.isAlive() && !vehicle.tudursvehiclemod$isDestroyed()
+				&& vehicle.getVelocity().horizontalLengthSquared() <= STATIONARY_VELOCITY_SQUARED;
+	}
 
 	private record DefuseProgress(UUID mine, int ticks) {
 	}
@@ -115,8 +122,7 @@ public final class EquipmentActions {
 	 * Returns false to stop using (no vehicle, or fully repaired). */
 	public static boolean repairTick(ServerPlayerEntity player, ItemStack stack, Hand hand, EquipmentDefinition def, int ticksUsed) {
 		AbstractVehicleEntity vehicle = lookedAt(player, AbstractVehicleEntity.class, def.effectiveRange(),
-				candidate -> candidate.isAlive() && !candidate.tudursvehiclemod$isDestroyed()
-						&& candidate.getVelocity().horizontalLengthSquared() <= STATIONARY_VELOCITY_SQUARED);
+				EquipmentActions::isSuppliable);
 		if (vehicle == null) {
 			player.sendMessage(Text.translatable("message.tudursguns.repair.no_vehicle"), true);
 			return false;

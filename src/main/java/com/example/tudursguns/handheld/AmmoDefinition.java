@@ -30,7 +30,7 @@ public record AmmoDefinition(
 			Codec.intRange(1, 99).optionalFieldOf("max_stack", 16).forGetter(AmmoDefinition::maxStack),
 			Identifier.CODEC.optionalFieldOf("model").forGetter(AmmoDefinition::model),
 			Identifier.CODEC.optionalFieldOf("texture").forGetter(AmmoDefinition::texture),
-			Codec.unboundedMap(ItemDisplayContext.CODEC, HandheldDefinition.DisplayTransform.CODEC).optionalFieldOf("display", Map.of()).forGetter(AmmoDefinition::display),
+			DefinitionCodecs.DISPLAY.forGetter(AmmoDefinition::display),
 			Identifier.CODEC.optionalFieldOf("icon").forGetter(AmmoDefinition::icon)
 	).apply(instance, AmmoDefinition::new));
 }

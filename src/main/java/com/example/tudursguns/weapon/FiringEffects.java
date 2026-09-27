@@ -12,21 +12,16 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.particle.DustParticleEffect;
 import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Arm;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Vector3f;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /** What a handheld shot or reload looks like around the weapon (a definition's "effects" - see
  * HandheldEffects): the muzzle flash, spent cartridges and empty magazines.
@@ -45,12 +40,6 @@ public final class FiringEffects {
 
 	/** Most rounds a "reload" ejection throws out at once. */
 	private static final int MAX_RELOAD_COUNT = 12;
-
-	private record Scheduled(UUID player, boolean rightSide, Vector3f muzzleOffset, long due, HandheldEffects.Ejection ejection,
-			int count) {
-	}
-
-	private static final List<Scheduled> SCHEDULED = new ArrayList<>();
 
 	// ---------------------------------------------------------------- events
 
@@ -93,26 +82,6 @@ public final class FiringEffects {
 		}
 	}
 
-	/** Throws out the delayed cartridges and magazines that are due. Called at the end of every server tick. */
-	public static void tick(MinecraftServer server) {
-		if (SCHEDULED.isEmpty()) {
-			return;
-		}
-		Iterator<Scheduled> it = SCHEDULED.iterator();
-		while (it.hasNext()) {
-			Scheduled scheduled = it.next();
-			ServerPlayerEntity player = server.getPlayerManager().getPlayer(scheduled.player());
-			if (player == null) {
-				it.remove();
-				continue;
-			}
-			if (player.getEntityWorld().getTime() >= scheduled.due()) {
-				it.remove();
-				eject(player, scheduled.rightSide(), scheduled.muzzleOffset(), scheduled.ejection(), scheduled.count());
-			}
-		}
-	}
-
 	// ---------------------------------------------------------------- what applies
 
 	private static boolean isGun(WeaponStats stats) {
@@ -127,7 +96,7 @@ public final class FiringEffects {
 	}
 
 	/** The definition's muzzle_flash, else the weapon file's AddMuzzleFlash, else the type's default. */
-	static HandheldEffects.MuzzleFlash muzzleFlash(HandheldDefinition def, WeaponStats stats) {
+	private static HandheldEffects.MuzzleFlash muzzleFlash(HandheldDefinition def, WeaponStats stats) {
 		if (def.effects().muzzleFlash().isPresent()) {
 			return def.effects().muzzleFlash().get();
 		}
@@ -140,7 +109,7 @@ public final class FiringEffects {
 	}
 
 	/** The definition's cartridge, else the weapon file's SetCartridge, else the type's default. */
-	static HandheldEffects.Ejection cartridge(HandheldDefinition def, WeaponStats stats) {
+	private static HandheldEffects.Ejection cartridge(HandheldDefinition def, WeaponStats stats) {
 		if (def.effects().cartridge().isPresent()) {
 			return def.effects().cartridge().get();
 		}
@@ -151,7 +120,7 @@ public final class FiringEffects {
 	}
 
 	/** The definition's magazine, else the type's default (guns holding more than one round). */
-	static HandheldEffects.Ejection magazine(HandheldDefinition def, WeaponStats stats) {
+	private static HandheldEffects.Ejection magazine(HandheldDefinition def, WeaponStats stats) {
 		if (def.effects().magazine().isPresent()) {
 			return def.effects().magazine().get();
 		}
@@ -193,13 +162,9 @@ public final class FiringEffects {
 
 	private static void schedule(ServerPlayerEntity player, Hand hand, HandheldDefinition def, HandheldEffects.Ejection ejection,
 			int count) {
-		boolean rightSide = (hand == Hand.MAIN_HAND) == (player.getMainArm() == Arm.RIGHT);
-		if (ejection.delay() <= 0) {
-			eject(player, rightSide, def.muzzleOffset(), ejection, count);
-			return;
-		}
-		SCHEDULED.add(new Scheduled(player.getUuid(), rightSide, new Vector3f(def.muzzleOffset()),
-				player.getEntityWorld().getTime() + ejection.delay(), ejection, count));
+		boolean rightSide = ViewSpace.rightSide(player, hand);
+		Vector3f muzzleOffset = new Vector3f(def.muzzleOffset());
+		PlayerTasks.schedule(player, ejection.delay(), target -> eject(target, rightSide, muzzleOffset, ejection, count));
 	}
 
 	/** Where it comes out when the definition doesn't say: the ejection port (cartridges) or the
@@ -218,16 +183,14 @@ public final class FiringEffects {
 			int count) {
 		ServerWorld world = (ServerWorld) player.getEntityWorld();
 		Vec3d forward = player.getRotationVec(1.0f);
-		double yawRad = Math.toRadians(player.getYaw());
-		Vec3d right = new Vec3d(-Math.cos(yawRad), 0.0, -Math.sin(yawRad));
+		Vec3d right = ViewSpace.right(player);
 		Vec3d up = right.crossProduct(forward).normalize();
 		if (up.y < 0) {
 			up = up.multiply(-1.0);
 		}
 		double side = rightSide ? 1.0 : -1.0;
 		Vector3f offset = ejection.offset().orElseGet(() -> defaultOffset(ejection, muzzleOffset));
-		Vec3d origin = player.getEyePos().add(right.multiply(offset.x() * side)).add(0.0, offset.y(), 0.0)
-				.add(forward.multiply(offset.z()));
+		Vec3d origin = ViewSpace.point(player, offset, rightSide);
 		Vector3f v = ejection.velocity();
 		Vec3d baseVelocity = right.multiply(v.x() * side).add(up.multiply(v.y())).add(forward.multiply(v.z()))
 				.add(player.getVelocity());
@@ -240,11 +203,7 @@ public final class FiringEffects {
 			Vec3d velocity = baseVelocity.add((world.random.nextDouble() * 2 - 1) * r, (world.random.nextDouble() * 2 - 1) * r,
 					(world.random.nextDouble() * 2 - 1) * r);
 			entity.setVelocity(velocity);
-			double speed = velocity.length();
-			if (speed > 1.0E-6) {
-				entity.setAngles((float) Math.toDegrees(Math.atan2(-velocity.x, velocity.z)),
-						(float) Math.toDegrees(-Math.asin(MathHelper.clamp(velocity.y / speed, -1.0, 1.0))));
-			}
+			ViewSpace.faceAlong(entity, velocity);
 			entity.tudursvehiclemod$setBounceStrength(ejection.bounce());
 			// Gone lifetime ticks after landing, and in any case a while after that.
 			entity.tudursvehiclemod$setFuseTicks(ejection.lifetime(), ejection.lifetime() + 200);

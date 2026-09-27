@@ -4,6 +4,7 @@ import com.example.tudursguns.TudursGunsConfig;
 import com.example.tudursguns.handheld.ArmorDefinition;
 import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.item.ArmorItem;
+import com.example.tudursguns.item.DefinedItem;
 import com.example.tudursguns.registry.ModComponents;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.AttributeModifierSlot;
@@ -30,10 +31,10 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 /** Everything armor does beyond vanilla's armor points: the components its stack needs, protection
  * against bullets/blasts/headshots, night vision, gas masks and camouflage. */
@@ -65,7 +66,7 @@ public final class ArmorEffects {
 		EquippableComponent.Builder equippable = EquippableComponent.builder(def.slot());
 		def.equipmentAsset().ifPresent(asset -> equippable.model(RegistryKey.of(EquipmentAssetKeys.REGISTRY_KEY, asset)));
 		Registries.SOUND_EVENT.getEntry(Identifier.ofVanilla("item.armor.equip_iron")).ifPresent(equippable::equipSound);
-		setIfChanged(stack, DataComponentTypes.EQUIPPABLE, equippable.build());
+		DefinedItem.setIfChanged(stack, DataComponentTypes.EQUIPPABLE, equippable.build());
 
 		AttributeModifierSlot slot = AttributeModifierSlot.forEquipmentSlot(def.slot());
 		Identifier modifierId = Identifier.of(id.getNamespace(), "armor." + def.slot().getName());
@@ -82,10 +83,10 @@ public final class ArmorEffects {
 		if (def.movementSpeed() != 0f) {
 			attributes.add(EntityAttributes.MOVEMENT_SPEED, new EntityAttributeModifier(modifierId, def.movementSpeed(), EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL), slot);
 		}
-		setIfChanged(stack, DataComponentTypes.ATTRIBUTE_MODIFIERS, attributes.build());
+		DefinedItem.setIfChanged(stack, DataComponentTypes.ATTRIBUTE_MODIFIERS, attributes.build());
 
 		if (def.durability() > 0) {
-			setIfChanged(stack, DataComponentTypes.MAX_DAMAGE, def.durability());
+			DefinedItem.setIfChanged(stack, DataComponentTypes.MAX_DAMAGE, def.durability());
 			if (!stack.contains(DataComponentTypes.DAMAGE)) {
 				stack.set(DataComponentTypes.DAMAGE, 0);
 			}
@@ -94,13 +95,7 @@ public final class ArmorEffects {
 			stack.remove(DataComponentTypes.DAMAGE);
 		}
 		if (def.itemModel().isPresent()) {
-			setIfChanged(stack, DataComponentTypes.ITEM_MODEL, def.itemModel().get());
-		}
-	}
-
-	private static <T> void setIfChanged(ItemStack stack, net.minecraft.component.ComponentType<T> type, T value) {
-		if (!Objects.equals(stack.get(type), value)) {
-			stack.set(type, value);
+			DefinedItem.setIfChanged(stack, DataComponentTypes.ITEM_MODEL, def.itemModel().get());
 		}
 	}
 
@@ -158,14 +153,22 @@ public final class ArmorEffects {
 
 	// ---------------------------------------------------------------- effects
 
-	public static boolean hasGasProtection(LivingEntity entity) {
+	private static boolean anyWorn(LivingEntity entity, Predicate<ArmorDefinition> test) {
 		for (EquipmentSlot slot : ARMOR_SLOTS) {
 			ArmorDefinition def = worn(entity, slot);
-			if (def != null && def.effects().gasProtection()) {
+			if (def != null && test.test(def)) {
 				return true;
 			}
 		}
 		return false;
+	}
+
+	public static boolean hasGasProtection(LivingEntity entity) {
+		return anyWorn(entity, def -> def.effects().gasProtection());
+	}
+
+	public static boolean hasNightVision(LivingEntity entity) {
+		return anyWorn(entity, def -> def.effects().nightVision());
 	}
 
 	/** Product of the worn armor's detection multipliers (1 = normal). */
@@ -178,16 +181,6 @@ public final class ArmorEffects {
 			}
 		}
 		return multiplier;
-	}
-
-	public static boolean hasNightVision(LivingEntity entity) {
-		for (EquipmentSlot slot : ARMOR_SLOTS) {
-			ArmorDefinition def = worn(entity, slot);
-			if (def != null && def.effects().nightVision()) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	/** Players whose night vision comes from their goggles (so taking them off ends it). */

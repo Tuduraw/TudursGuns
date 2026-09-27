@@ -11,7 +11,6 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
-import java.util.Objects;
 import java.util.function.Consumer;
 
 /** The one item every ammo definition (magazine, clip, shell box) is; which one comes from its
@@ -25,8 +24,8 @@ public class AmmoItem extends DefinedItem<AmmoDefinition> {
 	@Override
 	public void inventoryTick(ItemStack stack, ServerWorld world, Entity entity, EquipmentSlot slot) {
 		AmmoDefinition def = ModDefinitions.AMMO.getServer(stack.get(ModComponents.AMMO_TYPE));
-		if (def != null && !Objects.equals(stack.get(DataComponentTypes.MAX_STACK_SIZE), def.maxStack())) {
-			stack.set(DataComponentTypes.MAX_STACK_SIZE, def.maxStack());
+		if (def != null) {
+			setIfChanged(stack, DataComponentTypes.MAX_STACK_SIZE, def.maxStack());
 		}
 	}
 

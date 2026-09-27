@@ -5,7 +5,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.joml.Vector3f;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -178,15 +177,7 @@ public record AnimationDefinition(
 	public enum Easing {
 		LINEAR, SMOOTH, EASE_IN, EASE_OUT, STEP;
 
-		public static final Codec<Easing> CODEC = Codec.STRING.xmap(
-				s -> switch (s.toLowerCase(Locale.ROOT)) {
-					case "linear" -> LINEAR;
-					case "ease_in" -> EASE_IN;
-					case "ease_out" -> EASE_OUT;
-					case "step" -> STEP;
-					default -> SMOOTH;
-				},
-				easing -> easing.name().toLowerCase(Locale.ROOT));
+		public static final Codec<Easing> CODEC = DefinitionCodecs.lenientEnum(Easing.class, SMOOTH);
 
 		/** t in 0-1 -> eased 0-1. step jumps at the end. */
 		public float apply(float t) {

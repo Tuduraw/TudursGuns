@@ -37,7 +37,7 @@ public record AttachmentDefinition(
 			Codec.STRING.fieldOf("display_name").forGetter(AttachmentDefinition::displayName),
 			Identifier.CODEC.optionalFieldOf("model").forGetter(AttachmentDefinition::model),
 			Identifier.CODEC.optionalFieldOf("texture").forGetter(AttachmentDefinition::texture),
-			Codec.unboundedMap(ItemDisplayContext.CODEC, HandheldDefinition.DisplayTransform.CODEC).optionalFieldOf("display", Map.of()).forGetter(AttachmentDefinition::display),
+			DefinitionCodecs.DISPLAY.forGetter(AttachmentDefinition::display),
 			Codec.floatRange(0.0f, 100.0f).optionalFieldOf("magazine_size_multiplier", 1.0f).forGetter(AttachmentDefinition::magazineSizeMultiplier),
 			Codec.INT.optionalFieldOf("magazine_size_bonus", 0).forGetter(AttachmentDefinition::magazineSizeBonus),
 			Codec.floatRange(0.0f, 100.0f).optionalFieldOf("reload_time_multiplier", 1.0f).forGetter(AttachmentDefinition::reloadTimeMultiplier),

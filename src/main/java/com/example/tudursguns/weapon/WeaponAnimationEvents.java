@@ -8,16 +8,11 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.world.World;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 /** Records what just happened to a weapon (see AnimationDefinition.Event) on the stack itself, so
  * every client drawing it - the holder in first person, everyone else in third person - plays the
@@ -40,46 +35,13 @@ public final class WeaponAnimationEvents {
 
 	private static final int EMPTY_REPEAT_TICKS = 10;
 
-	private record ScheduledSound(UUID player, long due, AnimationDefinition.SoundCue cue) {
+	public static void trigger(PlayerEntity player, ItemStack stack, String event) {
+		trigger(player, stack, event, 0);
 	}
 
-	private static final List<ScheduledSound> SCHEDULED = new ArrayList<>();
-
-	/** Plays the sequence sounds that are due. Called at the end of every server tick. */
-	public static void tick(MinecraftServer server) {
-		if (SCHEDULED.isEmpty()) {
-			return;
-		}
-		Iterator<ScheduledSound> it = SCHEDULED.iterator();
-		while (it.hasNext()) {
-			ScheduledSound scheduled = it.next();
-			ServerPlayerEntity player = server.getPlayerManager().getPlayer(scheduled.player());
-			if (player == null) {
-				it.remove();
-				continue;
-			}
-			if (player.getEntityWorld().getTime() >= scheduled.due()) {
-				it.remove();
-				HandheldCombat.playSound(player, scheduled.cue().sound(), player.getEyePos(), scheduled.cue().volume(),
-						scheduled.cue().pitch(), 0.05f);
-			}
-		}
-	}
-
-	public static void trigger(ItemStack stack, World world, String event) {
-		trigger(stack, world, event, 0);
-	}
-
-	public static void trigger(ItemStack stack, World world, String event, int duration) {
-		trigger(null, stack, world, event, duration);
-	}
-
-	public static void trigger(PlayerEntity player, ItemStack stack, World world, String event) {
-		trigger(player, stack, world, event, 0);
-	}
-
-	/** With a player, the event's sequence sounds are played (from that player) at their ticks. */
-	public static void trigger(PlayerEntity player, ItemStack stack, World world, String event, int duration) {
+	/** Records event on the stack; its sequence's sounds play from the player at their ticks. */
+	public static void trigger(PlayerEntity player, ItemStack stack, String event, int duration) {
+		World world = player.getEntityWorld();
 		HandheldDefinition def = ModDefinitions.HANDHELD.getServer(stack.get(ModComponents.WEAPON));
 		if (def == null || def.animation().isEmpty()) {
 			return;
@@ -92,10 +54,11 @@ public final class WeaponAnimationEvents {
 			return;
 		}
 		AnimationDefinition.Sequence sequence = animation.sequences().get(event);
-		if (player != null && sequence != null && !sequence.sounds().isEmpty()) {
+		if (player instanceof ServerPlayerEntity serverPlayer && sequence != null) {
 			double scale = sequence.timeScale(duration);
 			for (AnimationDefinition.SoundCue cue : sequence.sounds()) {
-				SCHEDULED.add(new ScheduledSound(player.getUuid(), world.getTime() + Math.round(cue.tick() * scale), cue));
+				PlayerTasks.schedule(serverPlayer, Math.round(cue.tick() * scale), target ->
+						HandheldCombat.playSound(target, cue.sound(), target.getEyePos(), cue.volume(), cue.pitch(), 0.05f));
 			}
 		}
 		events.put(event, new Occurrence(world.getTime(), duration));

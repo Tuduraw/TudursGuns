@@ -14,6 +14,7 @@ import com.example.tudursguns.registry.ModScreenHandlers;
 import com.example.tudursguns.weapon.EquipmentActions;
 import com.example.tudursguns.weapon.HandheldCombat;
 import com.example.tudursguns.weapon.HeldMovementEffects;
+import com.example.tudursguns.weapon.PlayerTasks;
 import com.example.tudursguns.weapon.ThrowableCombat;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
@@ -42,13 +43,17 @@ public class TudursGuns implements ModInitializer {
 		ModItemGroups.register();
 		ModNetworking.register();
 
+		ResourceManagerHelper serverData = ResourceManagerHelper.get(ResourceType.SERVER_DATA);
 		for (DefinitionSet<?> set : ModDefinitions.ALL) {
-			ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(set.loader());
+			serverData.registerReloadListener(set.loader());
 		}
 		ServerTickEvents.END_WORLD_TICK.register(ArmorEffects::tickWorld);
 		ServerTickEvents.END_WORLD_TICK.register(HeldMovementEffects::tickWorld);
-		ServerTickEvents.END_SERVER_TICK.register(com.example.tudursguns.weapon.WeaponAnimationEvents::tick);
-		ServerTickEvents.END_SERVER_TICK.register(com.example.tudursguns.weapon.FiringEffects::tick);
+		ServerTickEvents.END_SERVER_TICK.register(PlayerTasks::tick);
+		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+			PlayerTasks.clear();
+			ThrowableCombat.clear();
+		});
 		// A thrown grenade's smoke/flash/fire happens where its projectile ends up - see ThrowableCombat.
 		ServerEntityEvents.ENTITY_UNLOAD.register(ThrowableCombat::onProjectileRemoved);
 

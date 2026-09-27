@@ -33,11 +33,16 @@ public record AmmoSupply(Predicate<ItemStack> matches, int roundsPerItem) {
 	}
 
 	public int countItems(PlayerEntity player) {
+		return countMatching(player, this.matches);
+	}
+
+	/** How many items in the player's inventory match. */
+	public static int countMatching(PlayerEntity player, Predicate<ItemStack> matches) {
 		int count = 0;
 		var inventory = player.getInventory();
 		for (int slot = 0; slot < inventory.size(); slot++) {
 			ItemStack candidate = inventory.getStack(slot);
-			if (this.matches.test(candidate)) {
+			if (matches.test(candidate)) {
 				count += candidate.getCount();
 			}
 		}

@@ -19,7 +19,6 @@ import net.minecraft.util.Hand;
 import net.minecraft.world.World;
 
 import java.util.Locale;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 /** The one item every piece of support equipment is; which one comes from its tudursguns:equipment
@@ -119,21 +118,15 @@ public class EquipmentItem extends DefinedItem<EquipmentDefinition> {
 
 	public static void applyComponents(ItemStack stack, EquipmentDefinition def) {
 		if (def.uses() > 0) {
-			if (!Objects.equals(stack.get(DataComponentTypes.MAX_STACK_SIZE), 1)) {
-				stack.set(DataComponentTypes.MAX_STACK_SIZE, 1);
-			}
-			if (!Objects.equals(stack.get(DataComponentTypes.MAX_DAMAGE), def.uses())) {
-				stack.set(DataComponentTypes.MAX_DAMAGE, def.uses());
-			}
+			setIfChanged(stack, DataComponentTypes.MAX_STACK_SIZE, 1);
+			setIfChanged(stack, DataComponentTypes.MAX_DAMAGE, def.uses());
 			if (!stack.contains(DataComponentTypes.DAMAGE)) {
 				stack.set(DataComponentTypes.DAMAGE, 0);
 			}
 		} else {
 			stack.remove(DataComponentTypes.MAX_DAMAGE);
 			stack.remove(DataComponentTypes.DAMAGE);
-			if (!Objects.equals(stack.get(DataComponentTypes.MAX_STACK_SIZE), def.maxStack())) {
-				stack.set(DataComponentTypes.MAX_STACK_SIZE, def.maxStack());
-			}
+			setIfChanged(stack, DataComponentTypes.MAX_STACK_SIZE, def.maxStack());
 		}
 	}
 

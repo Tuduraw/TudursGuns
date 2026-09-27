@@ -29,17 +29,9 @@ public final class GunCrafting {
 		return ids;
 	}
 
-	/** How many of an ingredient the player has (never more than needed matters). */
+	/** How many of an ingredient the player has. */
 	public static int count(PlayerEntity player, GunRecipeDefinition.ItemRef ref) {
-		int total = 0;
-		PlayerInventory inventory = player.getInventory();
-		for (int slot = 0; slot < inventory.size(); slot++) {
-			ItemStack stack = inventory.getStack(slot);
-			if (ref.matches(stack)) {
-				total += stack.getCount();
-			}
-		}
-		return total;
+		return AmmoSupply.countMatching(player, ref::matches);
 	}
 
 	/** Whether every ingredient can be taken (the same stack isn't counted twice for two ingredients). */

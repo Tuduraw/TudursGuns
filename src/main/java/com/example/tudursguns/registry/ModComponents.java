@@ -1,8 +1,8 @@
 package com.example.tudursguns.registry;
 
 import com.example.tudursguns.TudursGuns;
-import com.mojang.serialization.Codec;
 import com.example.tudursguns.weapon.WeaponAnimationEvents;
+import com.mojang.serialization.Codec;
 import net.minecraft.component.ComponentType;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.registry.Registries;
@@ -55,7 +55,7 @@ public final class ModComponents {
 	public static ComponentType<Map<String, Integer>> ANIM_COUNTERS;
 
 	public static void register() {
-		WEAPON = ModComponents.<Identifier>register("weapon", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
+		WEAPON = definitionId("weapon");
 		AMMO = ModComponents.<Integer>register("ammo", builder -> builder.codec(Codec.INT).packetCodec(PacketCodecs.VAR_INT).skipsHandAnimation());
 		RELOAD_UNTIL = ModComponents.<Long>register("reload_until", builder -> builder.codec(Codec.LONG).packetCodec(PacketCodecs.VAR_LONG).skipsHandAnimation());
 		COOLDOWN_UNTIL = ModComponents.<Long>register("cooldown_until", builder -> builder.codec(Codec.LONG).packetCodec(PacketCodecs.VAR_LONG).skipsHandAnimation());
@@ -63,12 +63,12 @@ public final class ModComponents {
 		Codec<Map<String, Identifier>> attachmentsCodec = Codec.unboundedMap(Codec.STRING, Identifier.CODEC);
 		ATTACHMENTS = ModComponents.<Map<String, Identifier>>register("attachments",
 				builder -> builder.codec(attachmentsCodec).packetCodec(PacketCodecs.codec(attachmentsCodec)));
-		ATTACHMENT = ModComponents.<Identifier>register("attachment", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
-		THROWABLE = ModComponents.<Identifier>register("throwable", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
-		MINE = ModComponents.<Identifier>register("mine", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
-		ARMOR = ModComponents.<Identifier>register("armor", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
-		EQUIPMENT = ModComponents.<Identifier>register("equipment", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
-		AMMO_TYPE = ModComponents.<Identifier>register("ammo_type", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
+		ATTACHMENT = definitionId("attachment");
+		THROWABLE = definitionId("throwable");
+		MINE = definitionId("mine");
+		ARMOR = definitionId("armor");
+		EQUIPMENT = definitionId("equipment");
+		AMMO_TYPE = definitionId("ammo_type");
 		ALT_AMMO = ModComponents.<Integer>register("alt_ammo", builder -> builder.codec(Codec.INT).packetCodec(PacketCodecs.VAR_INT).skipsHandAnimation());
 		ALT_SELECTED = ModComponents.<Boolean>register("alt_selected", builder -> builder.codec(Codec.BOOL).packetCodec(PacketCodecs.BOOLEAN).skipsHandAnimation());
 		Codec<Map<String, WeaponAnimationEvents.Occurrence>> eventsCodec = Codec.unboundedMap(Codec.STRING, WeaponAnimationEvents.Occurrence.CODEC);
@@ -77,6 +77,11 @@ public final class ModComponents {
 		Codec<Map<String, Integer>> countersCodec = Codec.unboundedMap(Codec.STRING, Codec.INT);
 		ANIM_COUNTERS = ModComponents.<Map<String, Integer>>register("anim_counters",
 				builder -> builder.codec(countersCodec).packetCodec(PacketCodecs.codec(countersCodec)).skipsHandAnimation());
+	}
+
+	/** A stack's definition id (which weapon, mine, ... it is). */
+	private static ComponentType<Identifier> definitionId(String path) {
+		return register(path, builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
 	}
 
 	private static <T> ComponentType<T> register(String path, UnaryOperator<ComponentType.Builder<T>> builder) {

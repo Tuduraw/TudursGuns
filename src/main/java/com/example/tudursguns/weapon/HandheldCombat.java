@@ -1,9 +1,11 @@
 package com.example.tudursguns.weapon;
 
+import com.example.tudursguns.TudursGuns;
 import com.example.tudursguns.handheld.AnimationDefinition;
 import com.example.tudursguns.handheld.HandheldDefinition;
-import com.example.tudursguns.network.RecoilPayload;
+import com.example.tudursguns.item.HandheldWeaponItem;
 import com.example.tudursguns.network.LockStatePayload;
+import com.example.tudursguns.network.RecoilPayload;
 import com.example.tudursguns.registry.ModComponents;
 import com.example.tudursvehiclemod.asset.WeaponStats;
 import com.example.tudursvehiclemod.asset.WeaponType;
@@ -26,16 +28,13 @@ import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
-import net.minecraft.util.Arm;
 import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.RaycastContext;
 
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -113,7 +112,7 @@ public final class HandheldCombat {
 		WeaponModifiers modifiers = WeaponModifiers.of(stack, def);
 		int magazineSize = modifiers.magazineSize(stats.magazineSize());
 		if (magazineSize > 0 && stack.getOrDefault(Firing.ammoComponent(stack), 0) <= 0) {
-			WeaponAnimationEvents.trigger(player, stack, world, WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.EMPTY));
+			WeaponAnimationEvents.trigger(player, stack, WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.EMPTY));
 			startReload(player, stack, def, stats, true);
 			return false;
 		}
@@ -132,7 +131,7 @@ public final class HandheldCombat {
 		NEXT_FIRE_TIME.put(player.getUuid(), now + Math.max(1, stats.cooldownTicks()));
 		stack.set(ModComponents.COOLDOWN_UNTIL, now + Math.max(1, stats.cooldownTicks()));
 		LAST_FIRED.put(player.getUuid(), now);
-		WeaponAnimationEvents.trigger(player, stack, world, WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.FIRE));
+		WeaponAnimationEvents.trigger(player, stack, WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.FIRE));
 		float recoil = def.handling().recoilFor(player.isSneaking()) * modifiers.recoilMultiplier();
 		if (recoil > 0f) {
 			float yaw = (world.random.nextFloat() * 2f - 1f) * recoil * 0.25f;
@@ -163,12 +162,7 @@ public final class HandheldCombat {
 		}
 		velocity = WeaponTargeting.applyAccuracySpread(velocity, spreadDegrees, world.random);
 		projectile.setVelocity(velocity);
-		double speed = velocity.length();
-		if (speed > 1.0E-6) {
-			float pitch = (float) Math.toDegrees(-Math.asin(MathHelper.clamp(velocity.y / speed, -1.0, 1.0)));
-			float yaw = (float) Math.toDegrees(Math.atan2(-velocity.x, velocity.z));
-			projectile.setAngles(yaw, pitch);
-		}
+		ViewSpace.faceAlong(projectile, velocity);
 
 		// Guidance - the same per-type setup AbstractVehicleEntity.tryFireWeapon() does.
 		switch (stats.weaponType()) {
@@ -203,17 +197,7 @@ public final class HandheldCombat {
 	 * mirrored for a left-side hand. Pulled back to the eye if a block is in the way, so a weapon
 	 * held against a wall can't shoot through it. */
 	private static Vec3d muzzlePosition(PlayerEntity player, Hand hand, HandheldDefinition def) {
-		Vec3d eye = player.getEyePos();
-		Vec3d forward = player.getRotationVec(1.0f);
-		double yawRad = Math.toRadians(player.getYaw());
-		Vec3d right = new Vec3d(-Math.cos(yawRad), 0.0, -Math.sin(yawRad));
-		boolean rightSide = (hand == Hand.MAIN_HAND) == (player.getMainArm() == Arm.RIGHT);
-		double side = rightSide ? def.muzzleOffset().x() : -def.muzzleOffset().x();
-		Vec3d target = eye.add(right.multiply(side)).add(0.0, def.muzzleOffset().y(), 0.0)
-				.add(forward.multiply(def.muzzleOffset().z()));
-		BlockHitResult hit = player.getEntityWorld().raycast(new RaycastContext(eye, target,
-				RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, player));
-		return hit.getType() == HitResult.Type.MISS ? target : eye;
+		return ViewSpace.clearOfBlocks(player, ViewSpace.point(player, def.muzzleOffset(), ViewSpace.rightSide(player, hand)));
 	}
 
 	/** Same sound path as a vehicle weapon (WeaponFireSoundPayload, played by Tudur's Vehicle Mod's
@@ -272,8 +256,7 @@ public final class HandheldCombat {
 		int reloadTicks = modifiers.reloadTicks(stats.reloadTicks());
 		FiringEffects.onReload(player, stack, def, stats, magazineSize - stack.getOrDefault(Firing.ammoComponent(stack), 0));
 		stack.set(ModComponents.RELOAD_UNTIL, now + reloadTicks);
-		WeaponAnimationEvents.trigger(player, stack, player.getEntityWorld(),
-				WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.RELOAD), reloadTicks);
+		WeaponAnimationEvents.trigger(player, stack, WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.RELOAD), reloadTicks);
 		def.reloadSound().ifPresent(sound -> playSound(player, sound, player.getEyePos(), 1.0f, 1.0f, 0.05f));
 	}
 
@@ -287,8 +270,7 @@ public final class HandheldCombat {
 		int loaded = stack.getOrDefault(Firing.ammoComponent(stack), 0);
 		int wanted = Math.max(0, WeaponModifiers.of(stack, def).magazineSize(stats.magazineSize()) - loaded);
 		stack.set(Firing.ammoComponent(stack), loaded + takeRounds(player, def, wanted));
-		WeaponAnimationEvents.trigger(player, stack, player.getEntityWorld(),
-				WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.RELOAD_END));
+		WeaponAnimationEvents.trigger(player, stack, WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.RELOAD_END));
 	}
 
 	/** Rounds the player could load right now. Unlimited without ammo, or in creative mode. */
@@ -299,18 +281,6 @@ public final class HandheldCombat {
 		}
 		long rounds = (long) supply.countItems(player) * supply.roundsPerItem();
 		return (int) Math.min(Integer.MAX_VALUE, rounds);
-	}
-
-	public static int countItems(PlayerEntity player, Item item) {
-		int count = 0;
-		var inventory = player.getInventory();
-		for (int slot = 0; slot < inventory.size(); slot++) {
-			ItemStack candidate = inventory.getStack(slot);
-			if (candidate.isOf(item)) {
-				count += candidate.getCount();
-			}
-		}
-		return count;
 	}
 
 	/** Consumes ammo items for up to wanted rounds; returns the rounds actually loaded. One ammo item
@@ -341,8 +311,7 @@ public final class HandheldCombat {
 
 	// ---------------------------------------------------------------- attachments
 
-	private static final net.minecraft.util.Identifier MELEE_BONUS_MODIFIER_ID =
-			net.minecraft.util.Identifier.of(com.example.tudursguns.TudursGuns.MOD_ID, "attachment_melee_bonus");
+	private static final Identifier MELEE_BONUS_MODIFIER_ID = Identifier.of(TudursGuns.MOD_ID, "attachment_melee_bonus");
 
 	/** Re-applies everything that follows from the fitted attachments after they change: loaded
 	 * rounds beyond the new magazine size are removed (taking off an extended magazine takes its
@@ -382,8 +351,8 @@ public final class HandheldCombat {
 
 	// ---------------------------------------------------------------- burst fire
 
-	/** A burst in progress: the rest of its shots, fired at the weapon's own Delay. */
-	private record Burst(Hand hand, int remaining) {
+	/** A burst in progress: the rest of its shots, fired at the weapon's own Delay from the same stack. */
+	private record Burst(Hand hand, ItemStack stack, int remaining) {
 	}
 
 	private static final Map<UUID, Burst> BURSTS = new ConcurrentHashMap<>();
@@ -391,7 +360,7 @@ public final class HandheldCombat {
 	/** After a burst weapon's first shot: queue the rest (burst_count - 1). */
 	public static void startBurst(ServerPlayerEntity player, Hand hand, HandheldDefinition def) {
 		if (def.fireMode() == HandheldDefinition.FireMode.BURST && def.handling().burstCount() > 1) {
-			BURSTS.put(player.getUuid(), new Burst(hand, def.handling().burstCount() - 1));
+			BURSTS.put(player.getUuid(), new Burst(hand, player.getStackInHand(hand), def.handling().burstCount() - 1));
 		}
 	}
 
@@ -399,17 +368,21 @@ public final class HandheldCombat {
 	 * dry or the weapon leaves the hand. */
 	public static void tickBurst(ServerPlayerEntity player, ItemStack stack, HandheldDefinition def, WeaponStats stats) {
 		Burst burst = BURSTS.get(player.getUuid());
-		if (burst == null || player.getStackInHand(burst.hand()) != stack) {
-			if (burst != null && !(player.getStackInHand(burst.hand()).getItem() instanceof com.example.tudursguns.item.HandheldWeaponItem)) {
-				BURSTS.remove(player.getUuid());
-			}
+		if (burst == null) {
+			return;
+		}
+		if (player.getStackInHand(burst.hand()) != burst.stack()) {
+			BURSTS.remove(player.getUuid());
+			return;
+		}
+		if (burst.stack() != stack) {
 			return;
 		}
 		if (player.getEntityWorld().getTime() < NEXT_FIRE_TIME.getOrDefault(player.getUuid(), Long.MIN_VALUE)) {
 			return;
 		}
 		if (tryFire(player, stack, burst.hand(), def, stats, null) && burst.remaining() > 1) {
-			BURSTS.put(player.getUuid(), new Burst(burst.hand(), burst.remaining() - 1));
+			BURSTS.put(player.getUuid(), new Burst(burst.hand(), stack, burst.remaining() - 1));
 		} else {
 			BURSTS.remove(player.getUuid());
 		}
@@ -437,8 +410,8 @@ public final class HandheldCombat {
 	/** World time the player started raising their weapon (aim key or use), while it's up. */
 	private static final Map<UUID, Long> RAISE_START = new ConcurrentHashMap<>();
 
-	/** A shot asked for with use from the hip, waiting for the weapon to be fully up. */
-	private record PendingShot(Hand hand, long requestedAt) {
+	/** A shot asked for with use from the hip, waiting for the weapon (this stack) to be fully up. */
+	private record PendingShot(Hand hand, ItemStack stack, long requestedAt) {
 	}
 
 	private static final Map<UUID, PendingShot> PENDING_SHOTS = new ConcurrentHashMap<>();
@@ -484,7 +457,7 @@ public final class HandheldCombat {
 	}
 
 	public static void requestShot(ServerPlayerEntity player, Hand hand) {
-		PENDING_SHOTS.put(player.getUuid(), new PendingShot(hand, player.getEntityWorld().getTime()));
+		PENDING_SHOTS.put(player.getUuid(), new PendingShot(hand, player.getStackInHand(hand), player.getEntityWorld().getTime()));
 	}
 
 	/** Fires a waiting shot once the weapon is up (even if use was already released - a quick click
@@ -492,7 +465,7 @@ public final class HandheldCombat {
 	 * inventory. */
 	public static void tickPendingShot(ServerPlayerEntity player, ItemStack stack, HandheldDefinition base, Firing firing) {
 		PendingShot pending = PENDING_SHOTS.get(player.getUuid());
-		if (pending == null || player.getStackInHand(pending.hand()) != stack) {
+		if (pending == null || pending.stack() != stack) {
 			return;
 		}
 		if (isRaised(player, base)) {
@@ -512,10 +485,10 @@ public final class HandheldCombat {
 		PendingShot pending = PENDING_SHOTS.get(player.getUuid());
 		if (pending != null && (player.getEntityWorld().getTime() - pending.requestedAt() > PENDING_SHOT_TIMEOUT_TICKS
 				|| player.getVehicle() != null
-				|| !(player.getStackInHand(pending.hand()).getItem() instanceof com.example.tudursguns.item.HandheldWeaponItem))) {
+				|| player.getStackInHand(pending.hand()) != pending.stack())) {
 			PENDING_SHOTS.remove(player.getUuid());
 		}
-		boolean usingWeapon = player.isUsingItem() && player.getActiveItem().getItem() instanceof com.example.tudursguns.item.HandheldWeaponItem;
+		boolean usingWeapon = player.isUsingItem() && player.getActiveItem().getItem() instanceof HandheldWeaponItem;
 		if (!usingWeapon) {
 			stopRaisingUnlessAiming(player);
 		}
@@ -553,7 +526,7 @@ public final class HandheldCombat {
 		}
 		stack.remove(ModComponents.RELOAD_UNTIL);
 		clearLock(player);
-		WeaponAnimationEvents.trigger(player, stack, player.getEntityWorld(), AnimationDefinition.Event.UNDERBARREL_SWITCH);
+		WeaponAnimationEvents.trigger(player, stack, AnimationDefinition.Event.UNDERBARREL_SWITCH);
 		player.sendMessage(Text.translatable(selected ? "message.tudursguns.underbarrel.on" : "message.tudursguns.underbarrel.off"), true);
 		return true;
 	}
@@ -567,7 +540,7 @@ public final class HandheldCombat {
 		}
 		int next = (stack.getOrDefault(ModComponents.MODE, 0) + 1) % modes;
 		stack.set(ModComponents.MODE, next);
-		WeaponAnimationEvents.trigger(player, stack, player.getEntityWorld(), AnimationDefinition.Event.MODE);
+		WeaponAnimationEvents.trigger(player, stack, AnimationDefinition.Event.MODE);
 		player.sendMessage(Text.translatable("message.tudursguns.mode", next + 1, modes), true);
 		return true;
 	}
@@ -608,7 +581,7 @@ public final class HandheldCombat {
 
 	private static void setLock(ServerPlayerEntity player, LockState next) {
 		LockState previous = next == null ? LOCKS.remove(player.getUuid()) : LOCKS.put(player.getUuid(), next);
-		if (java.util.Objects.equals(previous, next)) {
+		if (Objects.equals(previous, next)) {
 			return;
 		}
 		ServerPlayNetworking.send(player, next == null ? LockStatePayload.NONE

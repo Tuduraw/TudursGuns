@@ -53,7 +53,7 @@ public record EquipmentDefinition(
 			Codec.STRING.optionalFieldOf("display_name").forGetter(EquipmentDefinition::displayName),
 			Identifier.CODEC.optionalFieldOf("model").forGetter(EquipmentDefinition::model),
 			Identifier.CODEC.optionalFieldOf("texture").forGetter(EquipmentDefinition::texture),
-			Codec.unboundedMap(ItemDisplayContext.CODEC, HandheldDefinition.DisplayTransform.CODEC).optionalFieldOf("display", Map.of()).forGetter(EquipmentDefinition::display),
+			DefinitionCodecs.DISPLAY.forGetter(EquipmentDefinition::display),
 			Codec.intRange(1, 99).optionalFieldOf("max_stack", 1).forGetter(EquipmentDefinition::maxStack),
 			Codec.intRange(0, 100000).optionalFieldOf("uses", 0).forGetter(EquipmentDefinition::uses),
 			Codec.intRange(1, 72000).optionalFieldOf("use_ticks", 40).forGetter(EquipmentDefinition::useTicks),

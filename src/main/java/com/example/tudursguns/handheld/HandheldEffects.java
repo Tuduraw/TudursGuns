@@ -77,9 +77,7 @@ public record HandheldEffects(Optional<MuzzleFlash> muzzleFlash, Optional<Ejecti
 		/** When a reload starts. */
 		RELOAD;
 
-		public static final Codec<Trigger> CODEC = Codec.STRING.xmap(
-				s -> "reload".equalsIgnoreCase(s) ? RELOAD : FIRE,
-				trigger -> trigger.name().toLowerCase(Locale.ROOT));
+		public static final Codec<Trigger> CODEC = DefinitionCodecs.lenientEnum(Trigger.class, FIRE);
 	}
 
 	/** Something thrown out of the weapon - a spent cartridge or an empty magazine. It's a small model

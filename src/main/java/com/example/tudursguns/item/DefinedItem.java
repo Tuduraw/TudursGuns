@@ -10,6 +10,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /** An item type whose stacks each name a definition through a component (see ModItems): the stack
@@ -42,6 +43,14 @@ public abstract class DefinedItem<T> extends Item {
 		appendDetails(stack, def, textConsumer);
 		if (type.isAdvanced()) {
 			textConsumer.accept(Text.literal(id.toString()).formatted(Formatting.DARK_GRAY));
+		}
+	}
+
+	/** Sets a component only when it differs - item components filled in from a definition are
+	 * re-applied every inventory tick, and an unchanged stack shouldn't be marked dirty. */
+	public static <C> void setIfChanged(ItemStack stack, ComponentType<C> type, C value) {
+		if (!Objects.equals(stack.get(type), value)) {
+			stack.set(type, value);
 		}
 	}
 

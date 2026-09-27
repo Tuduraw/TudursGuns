@@ -40,7 +40,7 @@ public record ThrowableDefinition(
 			Codec.STRING.optionalFieldOf("display_name").forGetter(ThrowableDefinition::displayName),
 			Identifier.CODEC.optionalFieldOf("model").forGetter(ThrowableDefinition::model),
 			Identifier.CODEC.optionalFieldOf("texture").forGetter(ThrowableDefinition::texture),
-			Codec.unboundedMap(ItemDisplayContext.CODEC, HandheldDefinition.DisplayTransform.CODEC).optionalFieldOf("display", Map.of()).forGetter(ThrowableDefinition::display),
+			DefinitionCodecs.DISPLAY.forGetter(ThrowableDefinition::display),
 			Codec.floatRange(0f, 10f).optionalFieldOf("throw_velocity", 1.2f).forGetter(ThrowableDefinition::throwVelocity),
 			Codec.floatRange(0f, 10f).optionalFieldOf("underhand_velocity", 0.5f).forGetter(ThrowableDefinition::underhandVelocity),
 			Codec.intRange(0, 72000).optionalFieldOf("fuse_ticks", 80).forGetter(ThrowableDefinition::fuseTicks),
@@ -89,15 +89,6 @@ public record ThrowableDefinition(
 	public enum Type {
 		NONE, SMOKE, SIGNAL, FLASH, INCENDIARY, GAS;
 
-		public static final Codec<Type> CODEC = Codec.STRING.xmap(
-				s -> switch (s.toLowerCase(java.util.Locale.ROOT)) {
-					case "smoke" -> SMOKE;
-					case "signal" -> SIGNAL;
-					case "flash" -> FLASH;
-					case "incendiary" -> INCENDIARY;
-	case "gas" -> GAS;
-					default -> NONE;
-				},
-				type -> type.name().toLowerCase(java.util.Locale.ROOT));
+		public static final Codec<Type> CODEC = DefinitionCodecs.lenientEnum(Type.class, NONE);
 	}
 }

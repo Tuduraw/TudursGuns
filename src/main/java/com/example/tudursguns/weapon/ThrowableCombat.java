@@ -51,6 +51,12 @@ public final class ThrowableCombat {
 	/** Thrown projectiles that still owe an effect, by projectile UUID. */
 	private static final Map<UUID, ThrowableDefinition.Effect> PENDING_EFFECTS = new ConcurrentHashMap<>();
 
+	/** Forgets thrown projectiles' pending effects (the server is stopping). */
+	public static void clear() {
+		PIN_PULLED_AT.clear();
+		PENDING_EFFECTS.clear();
+	}
+
 	public static void forget(UUID playerId) {
 		PIN_PULLED_AT.remove(playerId);
 	}
@@ -99,12 +105,8 @@ public final class ThrowableCombat {
 	}
 
 	/** Slightly in front of and below the eyes - pulled back to the eyes if a block is in the way. */
-	public static Vec3d throwOrigin(ServerPlayerEntity player) {
-		Vec3d eye = player.getEyePos();
-		Vec3d target = eye.add(player.getRotationVec(1.0f).multiply(0.4)).add(0, -0.1, 0);
-		HitResult hit = player.getEntityWorld().raycast(new RaycastContext(eye, target,
-				RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, player));
-		return hit.getType() == HitResult.Type.MISS ? target : eye;
+	private static Vec3d throwOrigin(ServerPlayerEntity player) {
+		return ViewSpace.clearOfBlocks(player, player.getEyePos().add(player.getRotationVec(1.0f).multiply(0.4)).add(0, -0.1, 0));
 	}
 
 	/** Spawns the thrown projectile and takes one throwable from the stack (not in creative). */
@@ -127,11 +129,7 @@ public final class ThrowableCombat {
 		projectile.tudursvehiclemod$setFuseTicks(delayFuse, timeFuse);
 		projectile.setPosition(origin.x, origin.y, origin.z);
 		projectile.setVelocity(velocity);
-		double speed = velocity.length();
-		if (speed > 1.0E-6) {
-			projectile.setAngles((float) Math.toDegrees(Math.atan2(-velocity.x, velocity.z)),
-					(float) Math.toDegrees(-Math.asin(MathHelper.clamp(velocity.y / speed, -1.0, 1.0))));
-		}
+		ViewSpace.faceAlong(projectile, velocity);
 		world.spawnEntity(projectile);
 		projectile.tudursvehiclemod$forceLoadSpawnChunk();
 		if (def.effect().type() != ThrowableDefinition.Type.NONE) {
@@ -144,23 +142,22 @@ public final class ThrowableCombat {
 		}
 	}
 
-	/** A thrown projectile left the world. Its effect happens if it was used up (fuse or impact),
-	 * not if it was merely unloaded with its chunk. */
+	/** A thrown projectile left the world. Its effect happens if it was used up (fuse or impact); one
+	 * merely unloaded with its chunk keeps it for when it's loaded again. */
 	public static void onProjectileRemoved(Entity entity, ServerWorld world) {
-		ThrowableDefinition.Effect effect = PENDING_EFFECTS.remove(entity.getUuid());
-		if (effect == null) {
+		Entity.RemovalReason reason = entity.getRemovalReason();
+		if (reason == Entity.RemovalReason.UNLOADED_TO_CHUNK) {
 			return;
 		}
-		Entity.RemovalReason reason = entity.getRemovalReason();
-		if (reason != Entity.RemovalReason.DISCARDED && reason != Entity.RemovalReason.KILLED) {
+		ThrowableDefinition.Effect effect = PENDING_EFFECTS.remove(entity.getUuid());
+		if (effect == null || (reason != Entity.RemovalReason.DISCARDED && reason != Entity.RemovalReason.KILLED)) {
 			return;
 		}
 		Vec3d pos = entity.getEntityPos();
 		effect.sound().ifPresent(sound -> HandheldCombat.playSoundAt(world, sound, pos, 1.5f, 1.0f, 0.1f));
 		switch (effect.type()) {
-			case SMOKE -> SmokeCloudEntity.create(world, pos, effect.radius(), effect.durationTicks(), effect.rgb(), SmokeCloudEntity.Kind.SMOKE);
-			case SIGNAL -> SmokeCloudEntity.create(world, pos, effect.radius(), effect.durationTicks(), effect.rgb(), SmokeCloudEntity.Kind.SIGNAL);
-			case GAS -> SmokeCloudEntity.create(world, pos, effect.radius(), effect.durationTicks(), effect.rgb(), SmokeCloudEntity.Kind.GAS);
+			case SMOKE, SIGNAL, GAS -> SmokeCloudEntity.create(world, pos, effect.radius(), effect.durationTicks(), effect.rgb(),
+					SmokeCloudEntity.Kind.valueOf(effect.type().name()));
 			case FLASH -> flash(world, pos, effect);
 			case INCENDIARY -> ignite(world, pos, effect);
 			default -> {

@@ -59,7 +59,7 @@ public record ArmorDefinition(
 			Identifier.CODEC.optionalFieldOf("item_model").forGetter(ArmorDefinition::itemModel),
 			Identifier.CODEC.optionalFieldOf("model").forGetter(ArmorDefinition::model),
 			Identifier.CODEC.optionalFieldOf("texture").forGetter(ArmorDefinition::texture),
-			Codec.unboundedMap(ItemDisplayContext.CODEC, HandheldDefinition.DisplayTransform.CODEC).optionalFieldOf("display", Map.of()).forGetter(ArmorDefinition::display),
+			DefinitionCodecs.DISPLAY.forGetter(ArmorDefinition::display),
 			HandheldDefinition.DisplayTransform.CODEC.optionalFieldOf("worn", HandheldDefinition.DisplayTransform.IDENTITY).forGetter(ArmorDefinition::worn),
 			Effects.CODEC.optionalFieldOf("effects", Effects.NONE).forGetter(ArmorDefinition::effects)
 	).apply(instance, ArmorDefinition::new));

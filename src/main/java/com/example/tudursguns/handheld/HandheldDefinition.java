@@ -53,7 +53,7 @@ public record HandheldDefinition(
 			VECTOR_3F.optionalFieldOf("muzzle_offset", new Vector3f(0.25f, -0.2f, 0.8f)).forGetter(HandheldDefinition::muzzleOffset),
 			Codec.BOOL.optionalFieldOf("inherit_shooter_velocity", false).forGetter(HandheldDefinition::inheritShooterVelocity),
 			Presentation.MAP_CODEC.forGetter(HandheldDefinition::presentation),
-			Codec.unboundedMap(ItemDisplayContext.CODEC, DisplayTransform.CODEC).optionalFieldOf("display", Map.of()).forGetter(HandheldDefinition::display),
+			DefinitionCodecs.DISPLAY.forGetter(HandheldDefinition::display),
 			AimSettings.CODEC.optionalFieldOf("aim").forGetter(HandheldDefinition::aim),
 			Codec.unboundedMap(Codec.STRING, AttachmentSlot.CODEC).optionalFieldOf("attachments", Map.of()).forGetter(HandheldDefinition::attachments),
 			Handling.MAP_CODEC.forGetter(HandheldDefinition::handling),
@@ -267,9 +267,7 @@ public record HandheldDefinition(
 	public enum FireMode {
 		SEMI, AUTO, BURST;
 
-		public static final Codec<FireMode> CODEC = Codec.STRING.xmap(
-				s -> "auto".equalsIgnoreCase(s) ? AUTO : "burst".equalsIgnoreCase(s) ? BURST : SEMI,
-				mode -> mode.name().toLowerCase(java.util.Locale.ROOT));
+		public static final Codec<FireMode> CODEC = DefinitionCodecs.lenientEnum(FireMode.class, SEMI);
 	}
 
 	/** Extra model transform for one ItemDisplayContext, applied on top of the base item model's own

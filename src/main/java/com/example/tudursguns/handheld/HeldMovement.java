@@ -15,8 +15,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
  * go below -1 (standing still). Leave them out for no change. */
 public record HeldMovement(float speed, float aimingSpeed) {
 
-	public static final HeldMovement NONE = new HeldMovement(0f, 0f);
-
 	public static final MapCodec<HeldMovement> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
 			Codec.floatRange(-1f, 10f).optionalFieldOf("movement_speed", 0f).forGetter(HeldMovement::speed),
 			Codec.floatRange(-1f, 10f).optionalFieldOf("aiming_movement_speed", 0f).forGetter(HeldMovement::aimingSpeed)

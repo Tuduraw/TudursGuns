@@ -1,10 +1,11 @@
 package com.example.tudursguns.block;
 
-import com.example.tudursguns.screen.GunCraftingScreenHandler;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.NamedScreenHandlerFactory;
+import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerContext;
 import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -14,14 +15,22 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-/** Gun crafting table: opens a screen listing the gun recipes (GunRecipeDefinition) and makes them
- * from the player's inventory. Keeps no inventory of its own. */
-public class GunCraftingTableBlock extends Block {
+/** A block that only opens a screen when used, and keeps no inventory of its own (like a crafting
+ * table): the weapon workbench and the gun crafting table. */
+public class ScreenBlock extends Block {
 
-	private static final Text TITLE = Text.translatable("container.tudursguns.gun_crafting_table");
+	/** Makes the block's screen handler. */
+	public interface HandlerFactory {
+		ScreenHandler create(int syncId, PlayerInventory playerInventory, ScreenHandlerContext context);
+	}
 
-	public GunCraftingTableBlock(Settings settings) {
+	private final Text title;
+	private final HandlerFactory factory;
+
+	public ScreenBlock(Settings settings, Text title, HandlerFactory factory) {
 		super(settings);
+		this.title = title;
+		this.factory = factory;
 	}
 
 	@Override
@@ -35,6 +44,6 @@ public class GunCraftingTableBlock extends Block {
 	@Override
 	protected NamedScreenHandlerFactory createScreenHandlerFactory(BlockState state, World world, BlockPos pos) {
 		return new SimpleNamedScreenHandlerFactory((syncId, playerInventory, player) ->
-				new GunCraftingScreenHandler(syncId, playerInventory, ScreenHandlerContext.create(world, pos)), TITLE);
+				this.factory.create(syncId, playerInventory, ScreenHandlerContext.create(world, pos)), this.title);
 	}
 }

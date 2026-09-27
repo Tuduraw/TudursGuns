@@ -6,7 +6,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.item.ItemDisplayContext;
 import net.minecraft.util.Identifier;
 
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -52,7 +51,7 @@ public record MineDefinition(
 			Codec.STRING.optionalFieldOf("display_name").forGetter(MineDefinition::displayName),
 			Identifier.CODEC.optionalFieldOf("model").forGetter(MineDefinition::model),
 			Identifier.CODEC.optionalFieldOf("texture").forGetter(MineDefinition::texture),
-			Codec.unboundedMap(ItemDisplayContext.CODEC, HandheldDefinition.DisplayTransform.CODEC).optionalFieldOf("display", Map.of()).forGetter(MineDefinition::display),
+			DefinitionCodecs.DISPLAY.forGetter(MineDefinition::display),
 			HandheldDefinition.DisplayTransform.CODEC.optionalFieldOf("placed", HandheldDefinition.DisplayTransform.IDENTITY).forGetter(MineDefinition::placed),
 			Trigger.CODEC.optionalFieldOf("trigger", Trigger.PROXIMITY).forGetter(MineDefinition::trigger),
 			Codec.floatRange(0f, 32f).optionalFieldOf("trigger_radius", 1.0f).forGetter(MineDefinition::triggerRadius),
@@ -107,24 +106,12 @@ public record MineDefinition(
 	public enum Trigger {
 		PROXIMITY, DIRECTIONAL, REMOTE;
 
-		public static final Codec<Trigger> CODEC = Codec.STRING.xmap(
-				s -> switch (s.toLowerCase(Locale.ROOT)) {
-					case "directional" -> DIRECTIONAL;
-					case "remote" -> REMOTE;
-					default -> PROXIMITY;
-				},
-				trigger -> trigger.name().toLowerCase(Locale.ROOT));
+		public static final Codec<Trigger> CODEC = DefinitionCodecs.lenientEnum(Trigger.class, PROXIMITY);
 	}
 
 	public enum Placement {
 		GROUND, SURFACE, ANYWHERE;
 
-		public static final Codec<Placement> CODEC = Codec.STRING.xmap(
-				s -> switch (s.toLowerCase(Locale.ROOT)) {
-					case "surface" -> SURFACE;
-					case "anywhere" -> ANYWHERE;
-					default -> GROUND;
-				},
-				placement -> placement.name().toLowerCase(Locale.ROOT));
+		public static final Codec<Placement> CODEC = DefinitionCodecs.lenientEnum(Placement.class, GROUND);
 	}
 }

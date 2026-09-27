@@ -20,7 +20,6 @@ import java.util.List;
 public class GunCraftingScreenHandler extends ScreenHandler {
 
 	private final ScreenHandlerContext context;
-	private final PlayerInventory playerInventory;
 
 	public GunCraftingScreenHandler(int syncId, PlayerInventory playerInventory) {
 		this(syncId, playerInventory, ScreenHandlerContext.EMPTY);
@@ -29,30 +28,21 @@ public class GunCraftingScreenHandler extends ScreenHandler {
 	public GunCraftingScreenHandler(int syncId, PlayerInventory playerInventory, ScreenHandlerContext context) {
 		super(ModScreenHandlers.GUN_CRAFTING, syncId);
 		this.context = context;
-		this.playerInventory = playerInventory;
-	}
-
-	public PlayerInventory playerInventory() {
-		return this.playerInventory;
 	}
 
 	/** id: the recipe's position in the list. */
 	@Override
 	public boolean onButtonClick(PlayerEntity player, int id) {
-		List<Identifier> ids = GunCrafting.recipeIds(player.getEntityWorld().isClient());
+		boolean client = player.getEntityWorld().isClient();
+		List<Identifier> ids = GunCrafting.recipeIds(client);
 		if (id < 0 || id >= ids.size()) {
 			return false;
 		}
-		GunRecipeDefinition recipe = player.getEntityWorld().isClient()
-				? ModDefinitions.GUN_RECIPES.client().get(ids.get(id))
-				: ModDefinitions.GUN_RECIPES.server().get(ids.get(id));
+		GunRecipeDefinition recipe = (client ? ModDefinitions.GUN_RECIPES.client() : ModDefinitions.GUN_RECIPES.server()).get(ids.get(id));
 		if (recipe == null) {
 			return false;
 		}
-		if (player.getEntityWorld().isClient()) {
-			return GunCrafting.canCraft(player, recipe);
-		}
-		return GunCrafting.craft(player, recipe);
+		return client ? GunCrafting.canCraft(player, recipe) : GunCrafting.craft(player, recipe);
 	}
 
 	@Override
