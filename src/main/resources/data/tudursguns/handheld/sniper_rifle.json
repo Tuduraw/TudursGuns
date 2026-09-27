@@ -213,5 +213,6 @@
         0.55
       ]
     }
-  }
+  },
+  "aiming_movement_speed": -0.25
 }

@@ -32,7 +32,8 @@ public record HandheldDefinition(
 		Map<ItemDisplayContext, DisplayTransform> display,
 		Optional<AimSettings> aim,
 		Map<String, AttachmentSlot> attachments,
-		Optional<String> reloadSound
+		Optional<String> reloadSound,
+		HeldMovement movement
 ) {
 
 	/** [x, y, z] as a JSON array of three numbers. */
@@ -55,7 +56,8 @@ public record HandheldDefinition(
 			Codec.unboundedMap(ItemDisplayContext.CODEC, DisplayTransform.CODEC).optionalFieldOf("display", Map.of()).forGetter(HandheldDefinition::display),
 			AimSettings.CODEC.optionalFieldOf("aim").forGetter(HandheldDefinition::aim),
 			Codec.unboundedMap(Codec.STRING, AttachmentSlot.CODEC).optionalFieldOf("attachments", Map.of()).forGetter(HandheldDefinition::attachments),
-			Codec.STRING.optionalFieldOf("reload_sound").forGetter(HandheldDefinition::reloadSound)
+			Codec.STRING.optionalFieldOf("reload_sound").forGetter(HandheldDefinition::reloadSound),
+			HeldMovement.MAP_CODEC.forGetter(HandheldDefinition::movement)
 	).apply(instance, HandheldDefinition::new));
 
 	/** Attachment slot names in a stable order (the workbench lists them in this order). */

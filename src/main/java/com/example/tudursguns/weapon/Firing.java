@@ -25,7 +25,7 @@ public record Firing(HandheldDefinition definition, WeaponStats stats, boolean u
 				HandheldDefinition def = new HandheldDefinition(launcher.weapon(), base.displayName(), base.model(), base.texture(),
 						launcher.projectileItem(), launcher.ammoItem(), launcher.roundsPerAmmoItem(), HandheldDefinition.FireMode.SEMI,
 						launcher.muzzleOffset().orElse(base.muzzleOffset()), base.inheritShooterVelocity(), base.hud(),
-						base.display(), base.aim(), Map.of(), launcher.reloadSound());
+						base.display(), base.aim(), Map.of(), launcher.reloadSound(), base.movement());
 				return new Firing(def, WeaponStatsLoader.get(launcher.weapon()), true);
 			}
 		}

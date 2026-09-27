@@ -31,7 +31,8 @@ public record ThrowableDefinition(
 		boolean cookable,
 		boolean impact,
 		Effect effect,
-		Optional<String> pinSound
+		Optional<String> pinSound,
+		HeldMovement movement
 ) {
 
 	public static final Codec<ThrowableDefinition> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -46,7 +47,8 @@ public record ThrowableDefinition(
 			Codec.BOOL.optionalFieldOf("cookable", true).forGetter(ThrowableDefinition::cookable),
 	Codec.BOOL.optionalFieldOf("impact", false).forGetter(ThrowableDefinition::impact),
 			Effect.CODEC.optionalFieldOf("effect", Effect.NONE).forGetter(ThrowableDefinition::effect),
-			Codec.STRING.optionalFieldOf("pin_sound").forGetter(ThrowableDefinition::pinSound)
+			Codec.STRING.optionalFieldOf("pin_sound").forGetter(ThrowableDefinition::pinSound),
+			HeldMovement.MAP_CODEC.forGetter(ThrowableDefinition::movement)
 	).apply(instance, ThrowableDefinition::new));
 
 	/** True if the fuse burns while the throwable is still held. An impact-triggered throwable (a

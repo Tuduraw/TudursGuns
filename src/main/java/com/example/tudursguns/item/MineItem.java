@@ -153,6 +153,7 @@ public class MineItem extends Item {
 			String key = def.triggerLiving() && def.triggerVehicles() ? "both" : def.triggerVehicles() ? "vehicles" : "living";
 			textConsumer.accept(Text.translatable("tooltip.tudursguns.mine.set_off_by." + key).formatted(Formatting.GRAY));
 		}
+		def.movement().appendTooltip(textConsumer);
 		textConsumer.accept(Text.translatable("tooltip.tudursguns.mine.placement." + def.placement().name().toLowerCase(Locale.ROOT))
 				.formatted(Formatting.DARK_GRAY));
 		if (type.isAdvanced()) {

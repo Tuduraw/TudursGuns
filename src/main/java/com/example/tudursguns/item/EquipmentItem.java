@@ -157,6 +157,7 @@ public class EquipmentItem extends Item {
 		}
 		textConsumer.accept(Text.translatable("tooltip.tudursguns.equipment." + def.type().name().toLowerCase(Locale.ROOT))
 				.formatted(Formatting.GRAY));
+		def.movement().appendTooltip(textConsumer);
 		if (type.isAdvanced()) {
 			textConsumer.accept(Text.literal(id.toString()).formatted(Formatting.DARK_GRAY));
 		}

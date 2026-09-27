@@ -22,6 +22,8 @@ import java.util.Optional;
  *   textures under textures/entity/equipment/), exactly like vanilla armor.
  * - model/texture: an OBJ model drawn on the wearer's head, body or legs (the model part the slot
  *   belongs to), placed by worn (in model-part space: 1 = one block, +Y up, origin at the part's pivot).
+ * An OBJ-only helmet is drawn by vanilla on the head (like a carved pumpkin), placed by display.head;
+ *   OBJ armor faces +Z in both cases (the renderer turns it for vanilla's head context).
  * item_model: the item's own model (e.g. a flat sprite); by default the OBJ model is drawn as the item.
  *
  * effects: night_vision (a helmet with goggles), gas_protection (a gas mask - see gas grenades),

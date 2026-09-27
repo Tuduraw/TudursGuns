@@ -44,7 +44,8 @@ public record EquipmentDefinition(
 		float heal,
 		int regenerationTicks,
 		int repairSteps,
-		Optional<String> sound
+		Optional<String> sound,
+		HeldMovement movement
 ) {
 
 	public static final Codec<EquipmentDefinition> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -62,7 +63,8 @@ public record EquipmentDefinition(
 			Codec.floatRange(0f, 1000f).optionalFieldOf("heal", 8f).forGetter(EquipmentDefinition::heal),
 			Codec.intRange(0, 72000).optionalFieldOf("regeneration_ticks", 0).forGetter(EquipmentDefinition::regenerationTicks),
 			Codec.intRange(1, 50).optionalFieldOf("repair_steps", 1).forGetter(EquipmentDefinition::repairSteps),
-			Codec.STRING.optionalFieldOf("sound").forGetter(EquipmentDefinition::sound)
+			Codec.STRING.optionalFieldOf("sound").forGetter(EquipmentDefinition::sound),
+			HeldMovement.MAP_CODEC.forGetter(EquipmentDefinition::movement)
 	).apply(instance, EquipmentDefinition::new));
 
 	/** range, or the type's own default when not set. */

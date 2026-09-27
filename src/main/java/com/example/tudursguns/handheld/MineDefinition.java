@@ -1,6 +1,7 @@
 package com.example.tudursguns.handheld;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.item.ItemDisplayContext;
 import net.minecraft.util.Identifier;
@@ -36,14 +37,14 @@ public record MineDefinition(
 		HandheldDefinition.DisplayTransform placed,
 		Trigger trigger,
 		float triggerRadius,
-		boolean triggerLiving,
-		boolean triggerVehicles,
+		SetOffBy setOffBy,
 		int armingTicks,
 		int triggerDelayTicks,
 		Placement placement,
 		Optional<Fragments> fragments,
 		int defuseTicks,
-		Sounds sounds
+		Sounds sounds,
+		HeldMovement movement
 ) {
 
 	public static final Codec<MineDefinition> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -55,15 +56,32 @@ public record MineDefinition(
 			HandheldDefinition.DisplayTransform.CODEC.optionalFieldOf("placed", HandheldDefinition.DisplayTransform.IDENTITY).forGetter(MineDefinition::placed),
 			Trigger.CODEC.optionalFieldOf("trigger", Trigger.PROXIMITY).forGetter(MineDefinition::trigger),
 			Codec.floatRange(0f, 32f).optionalFieldOf("trigger_radius", 1.0f).forGetter(MineDefinition::triggerRadius),
-			Codec.BOOL.optionalFieldOf("trigger_living", true).forGetter(MineDefinition::triggerLiving),
-			Codec.BOOL.optionalFieldOf("trigger_vehicles", true).forGetter(MineDefinition::triggerVehicles),
+			SetOffBy.MAP_CODEC.forGetter(MineDefinition::setOffBy),
 			Codec.intRange(0, 72000).optionalFieldOf("arming_ticks", 60).forGetter(MineDefinition::armingTicks),
 			Codec.intRange(0, 200).optionalFieldOf("trigger_delay_ticks", 0).forGetter(MineDefinition::triggerDelayTicks),
 			Placement.CODEC.optionalFieldOf("placement", Placement.GROUND).forGetter(MineDefinition::placement),
 			Fragments.CODEC.optionalFieldOf("fragments").forGetter(MineDefinition::fragments),
 			Codec.intRange(0, 72000).optionalFieldOf("defuse_ticks", 60).forGetter(MineDefinition::defuseTicks),
-			Sounds.CODEC.optionalFieldOf("sounds", Sounds.NONE).forGetter(MineDefinition::sounds)
+			Sounds.CODEC.optionalFieldOf("sounds", Sounds.NONE).forGetter(MineDefinition::sounds),
+			HeldMovement.MAP_CODEC.forGetter(MineDefinition::movement)
 	).apply(instance, MineDefinition::new));
+
+	public boolean triggerLiving() {
+		return this.setOffBy.living();
+	}
+
+	public boolean triggerVehicles() {
+		return this.setOffBy.vehicles();
+	}
+
+	/** trigger_living / trigger_vehicles (read from the definition's own JSON object). */
+	public record SetOffBy(boolean living, boolean vehicles) {
+
+		public static final MapCodec<SetOffBy> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+				Codec.BOOL.optionalFieldOf("trigger_living", true).forGetter(SetOffBy::living),
+				Codec.BOOL.optionalFieldOf("trigger_vehicles", true).forGetter(SetOffBy::vehicles)
+		).apply(instance, SetOffBy::new));
+	}
 
 	public record Fragments(String weapon, int count, float spreadDegrees) {
 

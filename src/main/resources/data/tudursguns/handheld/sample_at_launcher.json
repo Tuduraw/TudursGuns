@@ -158,5 +158,7 @@
       ]
     }
   },
-  "reload_sound": "tg_reload_launcher"
+  "reload_sound": "tg_reload_launcher",
+  "movement_speed": -0.1,
+  "aiming_movement_speed": -0.2
 }

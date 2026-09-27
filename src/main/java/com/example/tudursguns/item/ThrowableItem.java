@@ -117,6 +117,7 @@ public class ThrowableItem extends Item {
 			textConsumer.accept(Text.translatable("tooltip.tudursguns.throwable.fuse",
 					String.format(java.util.Locale.ROOT, "%.1f", def.fuseTicks() / 20f)).formatted(Formatting.GRAY));
 		}
+		def.movement().appendTooltip(textConsumer);
 		if (def.cooks()) {
 			textConsumer.accept(Text.translatable("tooltip.tudursguns.throwable.cookable").formatted(Formatting.GRAY));
 		}

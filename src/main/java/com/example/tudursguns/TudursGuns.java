@@ -14,6 +14,7 @@ import com.example.tudursguns.registry.ModItems;
 import com.example.tudursguns.registry.ModScreenHandlers;
 import com.example.tudursguns.weapon.EquipmentActions;
 import com.example.tudursguns.weapon.HandheldCombat;
+import com.example.tudursguns.weapon.HeldMovementEffects;
 import com.example.tudursguns.weapon.ThrowableCombat;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
@@ -49,6 +50,7 @@ public class TudursGuns implements ModInitializer {
 			ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(set.loader());
 		}
 		ServerTickEvents.END_WORLD_TICK.register(ArmorEffects::tickWorld);
+		ServerTickEvents.END_WORLD_TICK.register(HeldMovementEffects::tickWorld);
 		// A thrown grenade's smoke/flash/fire happens where its projectile ends up - see ThrowableCombat.
 		ServerEntityEvents.ENTITY_UNLOAD.register(ThrowableCombat::onProjectileRemoved);
 

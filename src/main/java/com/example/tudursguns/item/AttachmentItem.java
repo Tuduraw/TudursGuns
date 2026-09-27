@@ -35,6 +35,7 @@ public class AttachmentItem extends Item {
 		if (def == null) {
 			return;
 		}
+		def.movement().appendTooltip(textConsumer);
 		def.zoom().ifPresent(zoom -> textConsumer.accept(Text.translatable("tooltip.tudursguns.attachment.zoom",
 				format(zoom.min()), format(zoom.max())).formatted(Formatting.BLUE)));
 		if (def.magazineSizeMultiplier() != 1f) {

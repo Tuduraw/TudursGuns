@@ -83,5 +83,7 @@
   "tooltip.tudursguns.mine.placement.surface": "Place on any surface",
   "tooltip.tudursguns.mine.placement.anywhere": "Place on any surface, or sneak + use on a vehicle",
   "tooltip.tudursguns.throwable.impact": "Goes off on impact",
-  "tooltip.tudursguns.underbarrel_ammo": "Launcher: %s"
+  "tooltip.tudursguns.underbarrel_ammo": "Launcher: %s",
+  "tooltip.tudursguns.movement_speed": "Movement speed %s",
+  "tooltip.tudursguns.aiming_movement_speed": "While aiming %s"
 }

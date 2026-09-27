@@ -177,6 +177,10 @@ public class HandheldWeaponItem extends Item {
 						stack.getOrDefault(ModComponents.AMMO, 0), magazineSize).formatted(Formatting.GRAY));
 			}
 		}
+		HandheldDefinition movementDef = HandheldDefinitions.getAny(id);
+		if (movementDef != null) {
+			movementDef.movement().appendTooltip(textConsumer);
+		}
 		for (Identifier attachmentId : WeaponModifiers.fitted(stack).values()) {
 			AttachmentDefinition attachment = HandheldDefinitions.getAnyAttachment(attachmentId);
 			textConsumer.accept(Text.literal("+ " + (attachment != null ? attachment.displayName() : attachmentId.toString()))

@@ -14,6 +14,7 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemDisplayContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.RotationAxis;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -23,7 +24,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 /** Draws a mine, armor or equipment item from its definition's own OBJ model/texture/display (one
- * item model type per kind: tudursguns:obj_mine, obj_armor, obj_equipment). */
+ * item model type per kind: tudursguns:obj_mine, obj_armor, obj_equipment).
+ *
+ * OBJ armor is modelled facing +Z everywhere. In the "head" context (an OBJ-only helmet, drawn by
+ * vanilla on the head like a carved pumpkin) vanilla's front is -Z, so the model is turned 180
+ * degrees about the item's centre before display.head is applied. */
 public class ObjDefinedItemRenderer implements SpecialModelRenderer<Identifier> {
 
 	/** What a definition says about its item model. */
@@ -89,6 +94,13 @@ public class ObjDefinedItemRenderer implements SpecialModelRenderer<Identifier> 
 			return;
 		}
 		matrices.push();
+		if (this.kind == Kind.ARMOR && displayContext == ItemDisplayContext.HEAD) {
+			// Vanilla draws a head-slot item with its front towards -Z (like a carved pumpkin's face);
+			// OBJ armor is modelled with +Z forward (as for "worn"), so turn it round the item's centre.
+			matrices.translate(0.5, 0.0, 0.5);
+			matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180f));
+			matrices.translate(-0.5, 0.0, -0.5);
+		}
 		WeaponModelDrawer.applyTransform(matrices, look.display().getOrDefault(displayContext, HandheldDefinition.DisplayTransform.IDENTITY));
 		WeaponModelDrawer.drawObj(queue, matrices, look.model().get(), look.texture().get(), Set.of(), light, overlay);
 		matrices.pop();

@@ -83,5 +83,7 @@
   "tooltip.tudursguns.mine.placement.surface": "どの面にも設置できる",
   "tooltip.tudursguns.mine.placement.anywhere": "どの面にも設置でき、しゃがみ+使用で車両に貼り付けられる",
   "tooltip.tudursguns.throwable.impact": "着弾で発動",
-  "tooltip.tudursguns.underbarrel_ammo": "擲弾: %s"
+  "tooltip.tudursguns.underbarrel_ammo": "擲弾: %s",
+  "tooltip.tudursguns.movement_speed": "移動速度 %s",
+  "tooltip.tudursguns.aiming_movement_speed": "構え中の移動速度 %s"
 }
