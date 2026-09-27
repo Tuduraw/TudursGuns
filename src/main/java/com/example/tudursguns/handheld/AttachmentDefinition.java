@@ -29,7 +29,8 @@ public record AttachmentDefinition(
 		float meleeDamageBonus,
 		Optional<Zoom> zoom,
 		Optional<Underbarrel> underbarrel,
-		HeldMovement movement
+		HeldMovement movement,
+		float recoilMultiplier
 ) {
 
 	public static final Codec<AttachmentDefinition> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -47,7 +48,8 @@ public record AttachmentDefinition(
 			Codec.FLOAT.optionalFieldOf("melee_damage_bonus", 0.0f).forGetter(AttachmentDefinition::meleeDamageBonus),
 			Zoom.CODEC.optionalFieldOf("zoom").forGetter(AttachmentDefinition::zoom),
 			Underbarrel.CODEC.optionalFieldOf("underbarrel").forGetter(AttachmentDefinition::underbarrel),
-			HeldMovement.MAP_CODEC.forGetter(AttachmentDefinition::movement)
+			HeldMovement.MAP_CODEC.forGetter(AttachmentDefinition::movement),
+			Codec.floatRange(0f, 100f).optionalFieldOf("recoil_multiplier", 1f).forGetter(AttachmentDefinition::recoilMultiplier)
 	).apply(instance, AttachmentDefinition::new));
 
 	/** A second weapon under the barrel (a grenade launcher): the weapon it's fitted to can switch

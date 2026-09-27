@@ -24,7 +24,11 @@ public final class ModDefinitions {
 	public static final DefinitionSet<EquipmentDefinition> EQUIPMENT = new DefinitionSet<>("equipment", EquipmentDefinition.CODEC,
 			(id, def) -> def.displayName().orElse(id.getPath()));
 
-	public static final List<DefinitionSet<?>> ALL = List.of(MINES, ARMOR, EQUIPMENT);
+	/** data/<namespace>/ammo/*.json */
+	public static final DefinitionSet<AmmoDefinition> AMMO = new DefinitionSet<>("ammo", AmmoDefinition.CODEC,
+			(id, def) -> def.displayName().orElse(id.getPath()));
+
+	public static final List<DefinitionSet<?>> ALL = List.of(MINES, ARMOR, EQUIPMENT, AMMO);
 
 	public static DefinitionSet<?> byKind(String kind) {
 		for (DefinitionSet<?> set : ALL) {

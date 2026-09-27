@@ -85,5 +85,7 @@
   "tooltip.tudursguns.throwable.impact": "Goes off on impact",
   "tooltip.tudursguns.underbarrel_ammo": "Launcher: %s",
   "tooltip.tudursguns.movement_speed": "Movement speed %s",
-  "tooltip.tudursguns.aiming_movement_speed": "While aiming %s"
+  "tooltip.tudursguns.aiming_movement_speed": "While aiming %s",
+  "item.tudursguns.ammo": "Ammunition",
+  "tooltip.tudursguns.ammo_rounds": "%s rounds"
 }

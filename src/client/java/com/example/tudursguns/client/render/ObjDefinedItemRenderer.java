@@ -1,6 +1,7 @@
 package com.example.tudursguns.client.render;
 
 import com.example.tudursguns.TudursGuns;
+import com.example.tudursguns.handheld.AmmoDefinition;
 import com.example.tudursguns.handheld.ArmorDefinition;
 import com.example.tudursguns.handheld.EquipmentDefinition;
 import com.example.tudursguns.handheld.HandheldDefinition;
@@ -33,13 +34,18 @@ public class ObjDefinedItemRenderer implements SpecialModelRenderer<Identifier> 
 
 	/** What a definition says about its item model. */
 	private record Look(Optional<Identifier> model, Optional<Identifier> texture,
-			Map<ItemDisplayContext, HandheldDefinition.DisplayTransform> display) {
+			Map<ItemDisplayContext, HandheldDefinition.DisplayTransform> display, Optional<Identifier> icon) {
+
+		Look(Optional<Identifier> model, Optional<Identifier> texture, Map<ItemDisplayContext, HandheldDefinition.DisplayTransform> display) {
+			this(model, texture, display, Optional.empty());
+		}
 	}
 
 	public enum Kind {
 		MINE("obj_mine"),
 		ARMOR("obj_armor"),
-		EQUIPMENT("obj_equipment");
+		EQUIPMENT("obj_equipment"),
+		AMMO("obj_ammo");
 
 		public final Identifier typeId;
 		public final MapCodec<Unbaked> codec;
@@ -54,6 +60,7 @@ public class ObjDefinedItemRenderer implements SpecialModelRenderer<Identifier> 
 				case MINE -> stack.get(ModComponents.MINE);
 				case ARMOR -> stack.get(ModComponents.ARMOR);
 				case EQUIPMENT -> stack.get(ModComponents.EQUIPMENT);
+				case AMMO -> stack.get(ModComponents.AMMO_TYPE);
 			};
 		}
 
@@ -70,6 +77,10 @@ public class ObjDefinedItemRenderer implements SpecialModelRenderer<Identifier> 
 				case EQUIPMENT -> {
 					EquipmentDefinition def = ModDefinitions.EQUIPMENT.getAny(id);
 					yield def == null ? null : new Look(def.model(), def.texture(), def.display());
+				}
+				case AMMO -> {
+					AmmoDefinition def = ModDefinitions.AMMO.getAny(id);
+					yield def == null ? null : new Look(def.model(), def.texture(), def.display(), def.icon());
 				}
 			};
 		}
@@ -90,7 +101,21 @@ public class ObjDefinedItemRenderer implements SpecialModelRenderer<Identifier> 
 	public void render(Identifier id, ItemDisplayContext displayContext, MatrixStack matrices,
 			OrderedRenderCommandQueue queue, int light, int overlay, boolean glint, int outlineColor) {
 		Look look = id == null ? null : this.kind.look(id);
-		if (look == null || look.model().isEmpty() || look.texture().isEmpty()) {
+		if (look == null) {
+			return;
+		}
+		// A flat icon in inventories - or everywhere, when there's no model.
+		boolean noModel = look.model().isEmpty() || look.texture().isEmpty();
+		if (look.icon().isPresent() && (displayContext == ItemDisplayContext.GUI || noModel)) {
+			matrices.push();
+			if (displayContext != ItemDisplayContext.GUI) {
+				WeaponModelDrawer.applyTransform(matrices, look.display().getOrDefault(displayContext, HandheldDefinition.DisplayTransform.IDENTITY));
+			}
+			WeaponModelDrawer.drawIcon(queue, matrices, look.icon().get(), light, overlay);
+			matrices.pop();
+			return;
+		}
+		if (noModel) {
 			return;
 		}
 		matrices.push();

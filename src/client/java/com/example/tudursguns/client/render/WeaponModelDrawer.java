@@ -100,6 +100,30 @@ public final class WeaponModelDrawer {
 				triangles, light, overlay, 0xFFFFFFFF);
 	}
 
+	/** A unit square in the z = 0.5 plane facing +Z (towards the viewer in inventories), for icons. */
+	private static ObjModel iconQuad;
+
+	private static ObjModel iconQuad() {
+		if (iconQuad == null) {
+			String obj = "v 0 0 0.5\nv 1 0 0.5\nv 1 1 0.5\nv 0 1 0.5\n"
+					+ "vt 0 0\nvt 1 0\nvt 1 1\nvt 0 1\nvn 0 0 1\n"
+					+ "f 1/1/1 2/2/1 3/3/1 4/4/1\n";
+			try {
+				iconQuad = ObjModel.parse(new java.io.BufferedReader(new java.io.StringReader(obj)));
+			} catch (java.io.IOException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+		return iconQuad;
+	}
+
+	/** A flat picture filling the item's unit square (an item icon), textured with texture - a PNG
+	 * found the same way as model textures (resource packs, or textures/vehicle/ in an addon folder). */
+	public static void drawIcon(OrderedRenderCommandQueue queue, MatrixStack matrices, Identifier texture, int light, int overlay) {
+		VehicleEntityRenderer.renderTriangles(queue, matrices, DitherCutoutLayers.entityDitherCutout(texture),
+				iconQuad().getTriangles(), light, overlay, 0xFFFFFFFF);
+	}
+
 	/** Only the named groups of a model (skipping hidden ones), one after another. */
 	public static void drawGroups(OrderedRenderCommandQueue queue, MatrixStack matrices, Identifier modelId, Identifier texture,
 			java.util.List<String> groups, Set<String> hiddenGroups, int light, int overlay) {

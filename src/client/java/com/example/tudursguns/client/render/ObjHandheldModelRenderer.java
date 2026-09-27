@@ -44,7 +44,9 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 	/** What the renderer needs from the stack. raised: the entity holding it is in the aiming pose
 	 * (only meaningful for third-person contexts - see AimRenderState.ENTITY_BEING_UPDATED_AIMS). */
 	public record Data(Identifier weaponId, Map<String, Identifier> fitted, boolean raised, boolean sprintCarry,
-			Map<String, WeaponAnimationEvents.Occurrence> events, Map<String, Integer> counters) {
+			Map<String, WeaponAnimationEvents.Occurrence> events, Map<String, Integer> counters, int ammo) {
+
+
 	}
 
 	@Override
@@ -53,7 +55,8 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 		return weaponId == null ? null
 				: new Data(weaponId, WeaponModifiers.fitted(stack), AimRenderState.entityBeingUpdatedAims(),
 						AimRenderState.entityBeingUpdatedSprintCarries(),
-						stack.getOrDefault(ModComponents.ANIM_EVENTS, Map.of()), stack.getOrDefault(ModComponents.ANIM_COUNTERS, Map.of()));
+						stack.getOrDefault(ModComponents.ANIM_EVENTS, Map.of()), stack.getOrDefault(ModComponents.ANIM_COUNTERS, Map.of()),
+						stack.getOrDefault(ModComponents.AMMO, 0));
 	}
 
 	@Override
@@ -67,8 +70,18 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 			return;
 		}
 		HandheldDefinition def = entry.definition();
-		WeaponPose pose = pose(def, data, isHand(displayContext));
-		if (def.aim().isPresent() && isLocalMainHand(displayContext)) {
+		if (displayContext == ItemDisplayContext.GUI && def.handling().icon().isPresent()) {
+			WeaponModelDrawer.drawIcon(queue, matrices, def.handling().icon().get(), light, overlay);
+			return;
+		}
+		boolean firstPerson = def.aim().isPresent() && isLocalMainHand(displayContext);
+		// How far the weapon is raised: the local player's own smooth progress in first person, the
+		// holder's aiming pose (all or nothing) otherwise.
+		float aimProgress = firstPerson
+				? AimController.progress(MinecraftClient.getInstance().getRenderTickCounter().getTickProgress(true))
+				: (data.raised() && isThirdPersonHand(displayContext) ? 1f : 0f);
+		WeaponPose pose = pose(def, data, isHand(displayContext), aimProgress);
+		if (firstPerson) {
 			renderFirstPerson(def, data.fitted(), pose, matrices, queue, light, overlay);
 			return;
 		}
@@ -92,14 +105,15 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 
 	/** The definition's animated pose right now, or null if it has no animation. Motions (sequences)
 	 * only play in hand; elsewhere just the counters' resting positions show. */
-	private static WeaponPose pose(HandheldDefinition def, Data data, boolean inHand) {
+	private static WeaponPose pose(HandheldDefinition def, Data data, boolean inHand, float aimProgress) {
 		if (def.animation().isEmpty()) {
 			return null;
 		}
 		MinecraftClient client = MinecraftClient.getInstance();
 		double now = client.world == null ? 0.0
 				: client.world.getTime() + client.getRenderTickCounter().getTickProgress(true);
-		return WeaponPose.compute(def.animation().get(), data.events(), data.counters(), now, inHand && client.world != null);
+		return WeaponPose.compute(def.animation().get(), data.events(), data.counters(), now, inHand && client.world != null,
+				aimProgress, data.ammo());
 	}
 
 	private static boolean isHand(ItemDisplayContext displayContext) {

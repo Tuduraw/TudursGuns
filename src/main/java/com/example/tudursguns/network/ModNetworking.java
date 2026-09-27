@@ -43,6 +43,7 @@ public final class ModNetworking {
 		PayloadTypeRegistry.playS2C().register(SyncThrowableDefinitionsPayload.ID, SyncThrowableDefinitionsPayload.CODEC);
 		PayloadTypeRegistry.playS2C().register(FlashPayload.ID, FlashPayload.CODEC);
 		PayloadTypeRegistry.playS2C().register(SyncDefinitionsPayload.ID, SyncDefinitionsPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(RecoilPayload.ID, RecoilPayload.CODEC);
 		PayloadTypeRegistry.playC2S().register(SwitchUnderbarrelRequestPayload.ID, SwitchUnderbarrelRequestPayload.CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(AimKeyPayload.ID, (payload, context) ->

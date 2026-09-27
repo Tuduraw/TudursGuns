@@ -128,19 +128,11 @@ public final class HandheldHud {
 
 	/** Rounds the player could still load, or -1 when unlimited (no ammo_item, or creative mode). */
 	private static int reserveRounds(PlayerEntity player, HandheldDefinition def) {
-		if (def.ammoItem().isEmpty() || player.isCreative()) {
+		com.example.tudursguns.weapon.AmmoSupply supply = com.example.tudursguns.weapon.AmmoSupply.of(def);
+		if (supply == null || player.isCreative()) {
 			return -1;
 		}
-		var ammo = Registries.ITEM.get(def.ammoItem().get());
-		int count = 0;
-		var inventory = player.getInventory();
-		for (int slot = 0; slot < inventory.size(); slot++) {
-			ItemStack candidate = inventory.getStack(slot);
-			if (candidate.isOf(ammo)) {
-				count += candidate.getCount();
-			}
-		}
-		return count * def.roundsPerAmmoItem();
+		return supply.countItems(player) * supply.roundsPerItem();
 	}
 
 	private static void drawDefault(DrawContext context, MinecraftClient client, ItemStack stack,

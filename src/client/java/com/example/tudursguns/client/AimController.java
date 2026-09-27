@@ -51,6 +51,7 @@ public final class AimController {
 	private static AttachmentDefinition.Zoom scopeZoom;
 	private static float magnification = 1f;
 	private static boolean binoculars;
+	private static float ironSightZoom = 1f;
 	private static boolean rangefinder;
 
 	/** Entity ids of OTHER players currently holding their aim key (from PlayerAimPayload). */
@@ -91,6 +92,16 @@ public final class AimController {
 
 	public static float magnification() {
 		return magnification;
+	}
+
+	/** Magnification while aimed down the iron sights, eased in with the raise (1 = none; never while
+	 * looking through a scope, which has its own). */
+	public static float ironSightMagnification(float tickProgress) {
+		if (scoped || ironSightZoom <= 1f) {
+			return 1f;
+		}
+		float t = progress(tickProgress);
+		return 1f + (ironSightZoom - 1f) * t * t * (3f - 2f * t);
 	}
 
 	/** Looking through binoculars (rather than a weapon's scope). */
@@ -184,6 +195,7 @@ public final class AimController {
 			holdRaisedTicks = 0;
 		}
 		aiming = aimKeyDown || usingWeapon || holdRaisedTicks > 0;
+		ironSightZoom = heldDef != null && heldDef.aim().isPresent() ? heldDef.aim().get().zoom() : 1f;
 		// Raising the weapon ends a sprint (ClientPlayerEntityMixin also stops a new one starting while
 		// aiming); the sprint state is sent to the server by vanilla as usual.
 		if (aiming && player.isSprinting()) {
@@ -198,9 +210,14 @@ public final class AimController {
 				&& player.getVehicle() == null;
 		Identifier zoomId = null;
 		AttachmentDefinition.Zoom zoom = null;
+		HandheldDefinition zoomDef = weapon ? HandheldDefinitions.getAny(main.get(ModComponents.WEAPON)) : null;
 		if (modifiers.hasZoom()) {
 			zoomId = modifiers.zoomAttachment();
 			zoom = modifiers.zoom();
+		} else if (zoomDef != null && zoomDef.aim().flatMap(HandheldDefinition.AimSettings::scope).isPresent()) {
+			// The weapon's own built-in scope.
+			zoomId = main.get(ModComponents.WEAPON);
+			zoom = zoomDef.aim().get().scope().get();
 		} else if (holdingBinoculars) {
 			zoomId = main.get(ModComponents.EQUIPMENT);
 			zoom = gear.zoom().get();

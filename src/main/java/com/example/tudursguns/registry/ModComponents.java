@@ -44,6 +44,8 @@ public final class ModComponents {
 	public static ComponentType<Identifier> ARMOR;
 	/** Which EquipmentDefinition an equipment item is (data/<namespace>/equipment/<path>.json). */
 	public static ComponentType<Identifier> EQUIPMENT;
+	/** Which AmmoDefinition an ammo item is (data/<namespace>/ammo/<path>.json). */
+	public static ComponentType<Identifier> AMMO_TYPE;
 	/** Underbarrel launcher: rounds loaded in it, and whether it's the one selected to fire. */
 	public static ComponentType<Integer> ALT_AMMO;
 	public static ComponentType<Boolean> ALT_SELECTED;
@@ -66,6 +68,7 @@ public final class ModComponents {
 		MINE = ModComponents.<Identifier>register("mine", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
 		ARMOR = ModComponents.<Identifier>register("armor", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
 		EQUIPMENT = ModComponents.<Identifier>register("equipment", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
+		AMMO_TYPE = ModComponents.<Identifier>register("ammo_type", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
 		ALT_AMMO = ModComponents.<Integer>register("alt_ammo", builder -> builder.codec(Codec.INT).packetCodec(PacketCodecs.VAR_INT).skipsHandAnimation());
 		ALT_SELECTED = ModComponents.<Boolean>register("alt_selected", builder -> builder.codec(Codec.BOOL).packetCodec(PacketCodecs.BOOLEAN).skipsHandAnimation());
 		Codec<Map<String, WeaponAnimationEvents.Occurrence>> eventsCodec = Codec.unboundedMap(Codec.STRING, WeaponAnimationEvents.Occurrence.CODEC);

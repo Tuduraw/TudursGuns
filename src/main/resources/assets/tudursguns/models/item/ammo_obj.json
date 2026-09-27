@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "particle": "tudursguns:item/ammo"
+  },
+  "gui_light": "front"
+}

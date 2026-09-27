@@ -109,6 +109,8 @@ public class TudursGunsClient implements ClientModInitializer {
 						set.receive(payload);
 					}
 				}));
+		ClientPlayNetworking.registerGlobalReceiver(com.example.tudursguns.network.RecoilPayload.ID, (payload, context) ->
+				context.client().execute(() -> RecoilController.kick(payload.pitch(), payload.yaw())));
 		ClientPlayNetworking.registerGlobalReceiver(FlashPayload.ID, (payload, context) ->
 				context.client().execute(() -> VisionOverlay.flash(payload.intensity(), payload.durationTicks())));
 		ClientPlayNetworking.registerGlobalReceiver(PlayerAimPayload.ID, (payload, context) ->
@@ -127,6 +129,7 @@ public class TudursGunsClient implements ClientModInitializer {
 			}
 			ClientLockState.set(LockStatePayload.NONE);
 			AimController.reset();
+			RecoilController.reset();
 		});
 
 		// Defaults chosen to stay clear of both vanilla and Tudur's Vehicle Mod bindings
@@ -164,6 +167,7 @@ public class TudursGunsClient implements ClientModInitializer {
 		ThrowGuide.tick(client);
 		VisionOverlay.tick();
 		GearClient.tick(client);
+		RecoilController.tick(client);
 		boolean reload = false;
 		while (reloadKey.wasPressed()) {
 			reload = true;

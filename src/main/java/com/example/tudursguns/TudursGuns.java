@@ -51,6 +51,7 @@ public class TudursGuns implements ModInitializer {
 		}
 		ServerTickEvents.END_WORLD_TICK.register(ArmorEffects::tickWorld);
 		ServerTickEvents.END_WORLD_TICK.register(HeldMovementEffects::tickWorld);
+		ServerTickEvents.END_SERVER_TICK.register(com.example.tudursguns.weapon.WeaponAnimationEvents::tick);
 		// A thrown grenade's smoke/flash/fire happens where its projectile ends up - see ThrowableCombat.
 		ServerEntityEvents.ENTITY_UNLOAD.register(ThrowableCombat::onProjectileRemoved);
 

@@ -38,7 +38,27 @@ public final class WeaponPose {
 	 * resting state (items in an inventory, on the ground, in a frame). */
 	public static WeaponPose compute(AnimationDefinition animation, Map<String, WeaponAnimationEvents.Occurrence> events,
 			Map<String, Integer> counters, double now, boolean sequences) {
+		return compute(animation, events, counters, now, sequences, 0f, -1);
+	}
+
+	/** aimProgress: 0-1, how far the weapon is raised (parts' aiming offsets); ammo: rounds loaded, for
+	 * ammo_poses (-1 to skip them). */
+	public static WeaponPose compute(AnimationDefinition animation, Map<String, WeaponAnimationEvents.Occurrence> events,
+			Map<String, Integer> counters, double now, boolean sequences, float aimProgress, int ammo) {
 		WeaponPose pose = new WeaponPose(animation);
+		for (Map.Entry<String, AnimationDefinition.Part> entry : animation.parts().entrySet()) {
+			AnimationDefinition.Part part = entry.getValue();
+			pose.add(entry.getKey(), part.translation(), part.rotation());
+			if (aimProgress > 0f) {
+				pose.add(entry.getKey(), new Vector3f(part.aimingTranslation()).mul(aimProgress),
+						new Vector3f(part.aimingRotation()).mul(aimProgress));
+			}
+		}
+		if (ammo >= 0) {
+			for (AnimationDefinition.Track track : animation.ammoPoses()) {
+				pose.evaluateClamped(track, ammo);
+			}
+		}
 		for (Map.Entry<String, AnimationDefinition.Counter> entry : animation.counters().entrySet()) {
 			pose.addCounter(entry.getValue(), counters.getOrDefault(entry.getKey(), 0), events.get(entry.getValue().on()), now);
 		}
@@ -76,7 +96,7 @@ public final class WeaponPose {
 			return;
 		}
 		elapsed = Math.max(0.0, elapsed);
-		double scale = sequence.fitToEvent() && occurrence.duration() > 0 && length > 0f ? occurrence.duration() / (double) length : 1.0;
+		double scale = sequence.timeScale(occurrence.duration());
 		float t = (float) (elapsed / scale);
 		if (t > length) {
 			return;
@@ -114,10 +134,44 @@ public final class WeaponPose {
 		}
 	}
 
-	private void add(String part, Vector3f translation, Vector3f rotationDegrees) {
+	/** Like evaluate, but at x (rounds loaded): interpolated between keyframes, holding the nearest one
+	 * outside them. */
+	private void evaluateClamped(AnimationDefinition.Track track, float x) {
+		List<AnimationDefinition.Keyframe> keyframes = new ArrayList<>(track.keyframes());
+		if (keyframes.isEmpty()) {
+			return;
+		}
+		keyframes.sort(Comparator.comparingDouble(AnimationDefinition.Keyframe::tick));
+		AnimationDefinition.Keyframe first = keyframes.get(0);
+		AnimationDefinition.Keyframe last = keyframes.get(keyframes.size() - 1);
+		if (x <= first.tick()) {
+			add(track.part(), first.translation(), first.rotation());
+			return;
+		}
+		if (x >= last.tick()) {
+			add(track.part(), last.translation(), last.rotation());
+			return;
+		}
+		for (int i = 1; i < keyframes.size(); i++) {
+			AnimationDefinition.Keyframe previous = keyframes.get(i - 1);
+			AnimationDefinition.Keyframe next = keyframes.get(i);
+			if (x <= next.tick()) {
+				float span = next.tick() - previous.tick();
+				float t = span <= 0f ? 1f : next.easing().apply((x - previous.tick()) / span);
+				add(track.part(), previous.translation().lerp(next.translation(), t, new Vector3f()),
+						previous.rotation().lerp(next.rotation(), t, new Vector3f()));
+				return;
+			}
+		}
+	}
+
+	private void add(String part, Vector3fc translation, Vector3fc rotationDegrees) {
 		this.translations.computeIfAbsent(part, key -> new Vector3f()).add(translation);
-		Quaternionf rotation = new Quaternionf().rotationXYZ((float) Math.toRadians(rotationDegrees.x),
-				(float) Math.toRadians(rotationDegrees.y), (float) Math.toRadians(rotationDegrees.z));
+		if (rotationDegrees.x() == 0f && rotationDegrees.y() == 0f && rotationDegrees.z() == 0f) {
+			return;
+		}
+		Quaternionf rotation = new Quaternionf().rotationXYZ((float) Math.toRadians(rotationDegrees.x()),
+				(float) Math.toRadians(rotationDegrees.y()), (float) Math.toRadians(rotationDegrees.z()));
 		this.rotations.computeIfAbsent(part, key -> new Quaternionf()).mul(rotation);
 	}
 

@@ -74,7 +74,9 @@ public class HandheldWeaponItem extends Item {
 				if (!HandheldCombat.requiresLock(firing.stats().weaponType())) {
 					// From the hip the shot waits for the weapon to be fully up (see tickPendingShot).
 					if (HandheldCombat.isRaised(player, base)) {
-						HandheldCombat.tryFire(player, stack, hand, firing.definition(), firing.stats(), null);
+						if (HandheldCombat.tryFire(player, stack, hand, firing.definition(), firing.stats(), null)) {
+							HandheldCombat.startBurst(player, hand, firing.definition());
+						}
 					} else {
 						HandheldCombat.requestShot(player, hand);
 					}
@@ -144,6 +146,8 @@ public class HandheldWeaponItem extends Item {
 		HandheldCombat.tickReload(player, stack, firing.definition(), firing.stats());
 		HandheldCombat.tickRaiseState(player);
 		HandheldCombat.tickPendingShot(player, stack, base, firing);
+		HandheldCombat.tickBurst(player, stack, firing.definition(), firing.stats());
+		HandheldCombat.syncMeleeDamage(stack, base);
 		// A lock only lasts while this weapon is actually being held down.
 		if (HandheldCombat.hasLockState(player) && !(player.isUsingItem() && player.getActiveItem().getItem() instanceof HandheldWeaponItem)) {
 			HandheldCombat.clearLock(player);

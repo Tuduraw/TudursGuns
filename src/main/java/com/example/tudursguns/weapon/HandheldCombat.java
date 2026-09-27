@@ -2,6 +2,7 @@ package com.example.tudursguns.weapon;
 
 import com.example.tudursguns.handheld.AnimationDefinition;
 import com.example.tudursguns.handheld.HandheldDefinition;
+import com.example.tudursguns.network.RecoilPayload;
 import com.example.tudursguns.network.LockStatePayload;
 import com.example.tudursguns.registry.ModComponents;
 import com.example.tudursvehiclemod.asset.WeaponStats;
@@ -83,6 +84,7 @@ public final class HandheldCombat {
 		LAST_FIRED.remove(playerId);
 		RAISE_START.remove(playerId);
 		PENDING_SHOTS.remove(playerId);
+		BURSTS.remove(playerId);
 		LOCKS.remove(playerId);
 		AIM_KEY_HELD.remove(playerId);
 	}
@@ -111,23 +113,54 @@ public final class HandheldCombat {
 		WeaponModifiers modifiers = WeaponModifiers.of(stack, def);
 		int magazineSize = modifiers.magazineSize(stats.magazineSize());
 		if (magazineSize > 0 && stack.getOrDefault(Firing.ammoComponent(stack), 0) <= 0) {
-			WeaponAnimationEvents.trigger(stack, world, WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.EMPTY));
+			WeaponAnimationEvents.trigger(player, stack, world, WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.EMPTY));
 			startReload(player, stack, def, stats, true);
 			return false;
 		}
 
 		int mode = stack.getOrDefault(ModComponents.MODE, 0);
+		Vec3d spawnPos = muzzlePosition(player, hand, def);
+		// Aiming with the aim key is a deliberate aim: ads_spread_multiplier applies. A quick shot with
+		// use alone doesn't get it.
+		float spreadDegrees = stats.accuracyDegrees() * modifiers.accuracyMultiplier()
+				* (isAimKeyHeld(player) ? def.handling().adsSpreadMultiplier() : 1f);
+		for (int pellet = 0; pellet < def.handling().pellets(); pellet++) {
+			spawnProjectile(world, player, def, stats, mode, spawnPos, spreadDegrees, lockTarget);
+		}
+
+		NEXT_FIRE_TIME.put(player.getUuid(), now + Math.max(1, stats.cooldownTicks()));
+		stack.set(ModComponents.COOLDOWN_UNTIL, now + Math.max(1, stats.cooldownTicks()));
+		LAST_FIRED.put(player.getUuid(), now);
+		WeaponAnimationEvents.trigger(player, stack, world, WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.FIRE));
+		float recoil = def.handling().recoilFor(player.isSneaking()) * modifiers.recoilMultiplier();
+		if (recoil > 0f) {
+			float yaw = (world.random.nextFloat() * 2f - 1f) * recoil * 0.25f;
+			ServerPlayNetworking.send(player, new RecoilPayload(recoil, yaw));
+		}
+		if (magazineSize > 0) {
+			int remaining = stack.getOrDefault(Firing.ammoComponent(stack), 0) - 1;
+			stack.set(Firing.ammoComponent(stack), Math.max(0, remaining));
+			if (remaining <= 0) {
+				startReload(player, stack, def, stats, false);
+			}
+		}
+		playFireSound(player, stats, modifiers, spawnPos);
+		return true;
+	}
+
+	/** One projectile (one pellet of a shotgun shot): position, spread, guidance, spawn. */
+	private static void spawnProjectile(ServerWorld world, ServerPlayerEntity player, HandheldDefinition def, WeaponStats stats,
+			int mode, Vec3d spawnPos, float spreadDegrees, Entity lockTarget) {
 		Item projectileItem = Registries.ITEM.get(def.projectileItem());
 		VehicleProjectileEntity projectile = WeaponProjectileFactory.create(world, player, projectileItem.getDefaultStack(), stats, mode);
 
-		Vec3d spawnPos = muzzlePosition(player, hand, def);
 		projectile.setPosition(spawnPos.x, spawnPos.y, spawnPos.z);
 
 		Vec3d velocity = player.getRotationVec(1.0f).multiply(stats.velocity());
 		if (def.inheritShooterVelocity()) {
 			velocity = velocity.add(player.getVelocity());
 		}
-		velocity = WeaponTargeting.applyAccuracySpread(velocity, stats.accuracyDegrees() * modifiers.accuracyMultiplier(), world.random);
+		velocity = WeaponTargeting.applyAccuracySpread(velocity, spreadDegrees, world.random);
 		projectile.setVelocity(velocity);
 		double speed = velocity.length();
 		if (speed > 1.0E-6) {
@@ -163,20 +196,6 @@ public final class HandheldCombat {
 
 		world.spawnEntity(projectile);
 		projectile.tudursvehiclemod$forceLoadSpawnChunk();
-
-		NEXT_FIRE_TIME.put(player.getUuid(), now + Math.max(1, stats.cooldownTicks()));
-		stack.set(ModComponents.COOLDOWN_UNTIL, now + Math.max(1, stats.cooldownTicks()));
-		LAST_FIRED.put(player.getUuid(), now);
-		WeaponAnimationEvents.trigger(stack, world, WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.FIRE));
-		if (magazineSize > 0) {
-			int remaining = stack.getOrDefault(Firing.ammoComponent(stack), 0) - 1;
-			stack.set(Firing.ammoComponent(stack), Math.max(0, remaining));
-			if (remaining <= 0) {
-				startReload(player, stack, def, stats, false);
-			}
-		}
-		playFireSound(player, stats, modifiers, spawnPos);
-		return true;
 	}
 
 	/** Eye position plus the definition's muzzle_offset (right, up, forward in the player's own view),
@@ -251,7 +270,7 @@ public final class HandheldCombat {
 		long now = player.getEntityWorld().getTime();
 		int reloadTicks = modifiers.reloadTicks(stats.reloadTicks());
 		stack.set(ModComponents.RELOAD_UNTIL, now + reloadTicks);
-		WeaponAnimationEvents.trigger(stack, player.getEntityWorld(),
+		WeaponAnimationEvents.trigger(player, stack, player.getEntityWorld(),
 				WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.RELOAD), reloadTicks);
 		def.reloadSound().ifPresent(sound -> playSound(player, sound, player.getEyePos(), 1.0f, 1.0f, 0.05f));
 	}
@@ -266,17 +285,17 @@ public final class HandheldCombat {
 		int loaded = stack.getOrDefault(Firing.ammoComponent(stack), 0);
 		int wanted = Math.max(0, WeaponModifiers.of(stack, def).magazineSize(stats.magazineSize()) - loaded);
 		stack.set(Firing.ammoComponent(stack), loaded + takeRounds(player, def, wanted));
-		WeaponAnimationEvents.trigger(stack, player.getEntityWorld(),
+		WeaponAnimationEvents.trigger(player, stack, player.getEntityWorld(),
 				WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.RELOAD_END));
 	}
 
-	/** Rounds the player could load right now. Unlimited without an ammo_item, or in creative mode. */
+	/** Rounds the player could load right now. Unlimited without ammo, or in creative mode. */
 	public static int availableRounds(PlayerEntity player, HandheldDefinition def) {
-		if (def.ammoItem().isEmpty() || player.isCreative()) {
+		AmmoSupply supply = AmmoSupply.of(def);
+		if (supply == null || player.isCreative()) {
 			return Integer.MAX_VALUE;
 		}
-		Item ammo = Registries.ITEM.get(def.ammoItem().get());
-		long rounds = (long) countItems(player, ammo) * def.roundsPerAmmoItem();
+		long rounds = (long) supply.countItems(player) * supply.roundsPerItem();
 		return (int) Math.min(Integer.MAX_VALUE, rounds);
 	}
 
@@ -299,17 +318,17 @@ public final class HandheldCombat {
 		if (wanted <= 0) {
 			return 0;
 		}
-		if (def.ammoItem().isEmpty() || player.isCreative()) {
+		AmmoSupply supply = AmmoSupply.of(def);
+		if (supply == null || player.isCreative()) {
 			return wanted;
 		}
-		Item ammo = Registries.ITEM.get(def.ammoItem().get());
-		int perItem = def.roundsPerAmmoItem();
+		int perItem = supply.roundsPerItem();
 		int itemsWanted = (wanted + perItem - 1) / perItem;
 		int itemsTaken = 0;
 		var inventory = player.getInventory();
 		for (int slot = 0; slot < inventory.size() && itemsTaken < itemsWanted; slot++) {
 			ItemStack candidate = inventory.getStack(slot);
-			if (candidate.isOf(ammo)) {
+			if (supply.matches().test(candidate)) {
 				int take = Math.min(candidate.getCount(), itemsWanted - itemsTaken);
 				candidate.decrement(take);
 				itemsTaken += take;
@@ -337,15 +356,60 @@ public final class HandheldCombat {
 		if (magazineSize > 0 && stack.getOrDefault(ModComponents.AMMO, 0) > magazineSize) {
 			stack.set(ModComponents.AMMO, magazineSize);
 		}
-		if (modifiers.meleeDamageBonus() > 0f) {
-			stack.set(DataComponentTypes.ATTRIBUTE_MODIFIERS, AttributeModifiersComponent.builder()
+		syncMeleeDamage(stack, def);
+	}
+
+	/** Sets the stack's attack damage modifier to the definition's melee_damage plus the attachments'
+	 * bonuses (a bayonet), or removes it when that's 0. Unchanged stacks aren't touched, so it's cheap
+	 * enough to call every inventory tick - which is how a weapon made by a recipe or command gets it. */
+	public static void syncMeleeDamage(ItemStack stack, HandheldDefinition def) {
+		float damage = def.handling().meleeDamage() + WeaponModifiers.of(stack, def).meleeDamageBonus();
+		if (damage > 0f) {
+			AttributeModifiersComponent wanted = AttributeModifiersComponent.builder()
 					.add(EntityAttributes.ATTACK_DAMAGE,
-							new EntityAttributeModifier(MELEE_BONUS_MODIFIER_ID, modifiers.meleeDamageBonus(),
-									EntityAttributeModifier.Operation.ADD_VALUE),
+							new EntityAttributeModifier(MELEE_BONUS_MODIFIER_ID, damage, EntityAttributeModifier.Operation.ADD_VALUE),
 							AttributeModifierSlot.MAINHAND)
-					.build());
-		} else {
+					.build();
+			if (!wanted.equals(stack.get(DataComponentTypes.ATTRIBUTE_MODIFIERS))) {
+				stack.set(DataComponentTypes.ATTRIBUTE_MODIFIERS, wanted);
+			}
+		} else if (stack.contains(DataComponentTypes.ATTRIBUTE_MODIFIERS)) {
 			stack.remove(DataComponentTypes.ATTRIBUTE_MODIFIERS);
+		}
+	}
+
+	// ---------------------------------------------------------------- burst fire
+
+	/** A burst in progress: the rest of its shots, fired at the weapon's own Delay. */
+	private record Burst(Hand hand, int remaining) {
+	}
+
+	private static final Map<UUID, Burst> BURSTS = new ConcurrentHashMap<>();
+
+	/** After a burst weapon's first shot: queue the rest (burst_count - 1). */
+	public static void startBurst(ServerPlayerEntity player, Hand hand, HandheldDefinition def) {
+		if (def.fireMode() == HandheldDefinition.FireMode.BURST && def.handling().burstCount() > 1) {
+			BURSTS.put(player.getUuid(), new Burst(hand, def.handling().burstCount() - 1));
+		}
+	}
+
+	/** Fires the next shot of a burst when the Delay allows. A burst ends early when the magazine runs
+	 * dry or the weapon leaves the hand. */
+	public static void tickBurst(ServerPlayerEntity player, ItemStack stack, HandheldDefinition def, WeaponStats stats) {
+		Burst burst = BURSTS.get(player.getUuid());
+		if (burst == null || player.getStackInHand(burst.hand()) != stack) {
+			if (burst != null && !(player.getStackInHand(burst.hand()).getItem() instanceof com.example.tudursguns.item.HandheldWeaponItem)) {
+				BURSTS.remove(player.getUuid());
+			}
+			return;
+		}
+		if (player.getEntityWorld().getTime() < NEXT_FIRE_TIME.getOrDefault(player.getUuid(), Long.MIN_VALUE)) {
+			return;
+		}
+		if (tryFire(player, stack, burst.hand(), def, stats, null) && burst.remaining() > 1) {
+			BURSTS.put(player.getUuid(), new Burst(burst.hand(), burst.remaining() - 1));
+		} else {
+			BURSTS.remove(player.getUuid());
 		}
 	}
 
@@ -431,7 +495,9 @@ public final class HandheldCombat {
 		}
 		if (isRaised(player, base)) {
 			PENDING_SHOTS.remove(player.getUuid());
-			tryFire(player, stack, pending.hand(), firing.definition(), firing.stats(), null);
+			if (tryFire(player, stack, pending.hand(), firing.definition(), firing.stats(), null)) {
+				startBurst(player, pending.hand(), firing.definition());
+			}
 			if (!(player.isUsingItem() && player.getActiveItem() == stack)) {
 				stopRaisingUnlessAiming(player);
 			}
@@ -485,7 +551,7 @@ public final class HandheldCombat {
 		}
 		stack.remove(ModComponents.RELOAD_UNTIL);
 		clearLock(player);
-		WeaponAnimationEvents.trigger(stack, player.getEntityWorld(), AnimationDefinition.Event.UNDERBARREL_SWITCH);
+		WeaponAnimationEvents.trigger(player, stack, player.getEntityWorld(), AnimationDefinition.Event.UNDERBARREL_SWITCH);
 		player.sendMessage(Text.translatable(selected ? "message.tudursguns.underbarrel.on" : "message.tudursguns.underbarrel.off"), true);
 		return true;
 	}
@@ -499,7 +565,7 @@ public final class HandheldCombat {
 		}
 		int next = (stack.getOrDefault(ModComponents.MODE, 0) + 1) % modes;
 		stack.set(ModComponents.MODE, next);
-		WeaponAnimationEvents.trigger(stack, player.getEntityWorld(), AnimationDefinition.Event.MODE);
+		WeaponAnimationEvents.trigger(player, stack, player.getEntityWorld(), AnimationDefinition.Event.MODE);
 		player.sendMessage(Text.translatable("message.tudursguns.mode", next + 1, modes), true);
 		return true;
 	}

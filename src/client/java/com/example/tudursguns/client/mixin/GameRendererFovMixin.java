@@ -16,11 +16,15 @@ public abstract class GameRendererFovMixin {
 
 	@Inject(method = "getFov(Lnet/minecraft/client/render/Camera;FZ)F", at = @At("RETURN"), cancellable = true)
 	private void tudursguns$applyScopeZoom(Camera camera, float tickProgress, boolean changingFov, CallbackInfoReturnable<Float> cir) {
-		if (!changingFov || !AimController.isScoped()) {
+		if (!changingFov) {
+			return;
+		}
+		float magnification = AimController.isScoped() ? AimController.magnification() : AimController.ironSightMagnification(tickProgress);
+		if (magnification <= 1f) {
 			return;
 		}
 		double halfFov = Math.toRadians(cir.getReturnValueF() / 2.0);
-		double zoomed = 2.0 * Math.toDegrees(Math.atan(Math.tan(halfFov) / Math.max(1f, AimController.magnification())));
+		double zoomed = 2.0 * Math.toDegrees(Math.atan(Math.tan(halfFov) / magnification));
 		cir.setReturnValue((float) zoomed);
 	}
 }

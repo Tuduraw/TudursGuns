@@ -32,12 +32,23 @@ import java.util.Optional;
  *   reset_on events put it back to 0. The count is kept on the weapon itself, so it survives saving
  *   and is the same for everyone looking.
  *
+ * ammo_poses: tracks whose keyframe "tick" is instead the number of rounds loaded - a magazine
+ *   follower rising, a belt shortening. Between keyframes the pose is interpolated; outside them it
+ *   holds the nearest one.
+ *
+ * A part can also have a fixed offset (translation/rotation - always applied) and an aimed offset
+ * (aiming_translation/aiming_rotation - blended in as the weapon is raised).
+ *
+ * A sequence can play sounds: "sounds": [{"tick": 2, "sound": "tg_reload_bolt"}] - played by the
+ * server at those ticks after the event (stretched with fit_to_event), heard by everyone near.
+ *
  * Only the model poses change; nothing here affects firing. Sequences play in hand (first and third
  * person); counters show everywhere, the inventory included. */
 public record AnimationDefinition(
 		Map<String, Part> parts,
 		Map<String, Sequence> sequences,
-		Map<String, Counter> counters
+		Map<String, Counter> counters,
+		List<Track> ammoPoses
 ) {
 
 	public static final String ROOT = "root";
@@ -47,7 +58,8 @@ public record AnimationDefinition(
 	public static final Codec<AnimationDefinition> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 			Codec.unboundedMap(Codec.STRING, Part.CODEC).optionalFieldOf("parts", Map.of()).forGetter(AnimationDefinition::parts),
 			Codec.unboundedMap(Codec.STRING, Sequence.CODEC).optionalFieldOf("sequences", Map.of()).forGetter(AnimationDefinition::sequences),
-			Codec.unboundedMap(Codec.STRING, Counter.CODEC).optionalFieldOf("counters", Map.of()).forGetter(AnimationDefinition::counters)
+			Codec.unboundedMap(Codec.STRING, Counter.CODEC).optionalFieldOf("counters", Map.of()).forGetter(AnimationDefinition::counters),
+			Track.CODEC.listOf().optionalFieldOf("ammo_poses", List.of()).forGetter(AnimationDefinition::ammoPoses)
 	).apply(instance, AnimationDefinition::new));
 
 	/** A part's parent ("root" by default; root itself has none). */
@@ -64,24 +76,31 @@ public record AnimationDefinition(
 		return def == null ? new Vector3f() : def.pivot();
 	}
 
-	/** groups: OBJ group names; parent: another part (default root); pivot: model-space point. */
-	public record Part(List<String> groups, Optional<String> parent, Vector3f pivot) {
+	/** groups: OBJ group names; parent: another part (default root); pivot: model-space point;
+	 * translation/rotation: always applied; aiming_translation/aiming_rotation: applied as it's raised. */
+	public record Part(List<String> groups, Optional<String> parent, Vector3f pivot, Vector3f translation, Vector3f rotation,
+			Vector3f aimingTranslation, Vector3f aimingRotation) {
 
 		public static final Codec<Part> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 				Codec.STRING.listOf().optionalFieldOf("groups", List.of()).forGetter(Part::groups),
 				Codec.STRING.optionalFieldOf("parent").forGetter(Part::parent),
-				HandheldDefinition.VECTOR_3F.optionalFieldOf("pivot", new Vector3f()).forGetter(Part::pivot)
+				HandheldDefinition.VECTOR_3F.optionalFieldOf("pivot", new Vector3f()).forGetter(Part::pivot),
+				HandheldDefinition.VECTOR_3F.optionalFieldOf("translation", new Vector3f()).forGetter(Part::translation),
+				HandheldDefinition.VECTOR_3F.optionalFieldOf("rotation", new Vector3f()).forGetter(Part::rotation),
+				HandheldDefinition.VECTOR_3F.optionalFieldOf("aiming_translation", new Vector3f()).forGetter(Part::aimingTranslation),
+				HandheldDefinition.VECTOR_3F.optionalFieldOf("aiming_rotation", new Vector3f()).forGetter(Part::aimingRotation)
 		).apply(instance, Part::new));
 	}
 
-	public record Sequence(boolean fitToEvent, List<Track> tracks) {
+	public record Sequence(boolean fitToEvent, List<Track> tracks, List<SoundCue> sounds) {
 
 		public static final Codec<Sequence> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 				Codec.BOOL.optionalFieldOf("fit_to_event", false).forGetter(Sequence::fitToEvent),
-				Track.CODEC.listOf().fieldOf("tracks").forGetter(Sequence::tracks)
+				Track.CODEC.listOf().optionalFieldOf("tracks", List.of()).forGetter(Sequence::tracks),
+				SoundCue.CODEC.listOf().optionalFieldOf("sounds", List.of()).forGetter(Sequence::sounds)
 		).apply(instance, Sequence::new));
 
-		/** Tick of the last keyframe of any track (the sequence's own length). */
+		/** Tick of the last keyframe or sound (the sequence's own length). */
 		public float length() {
 			float length = 0f;
 			for (Track track : this.tracks) {
@@ -89,8 +108,28 @@ public record AnimationDefinition(
 					length = Math.max(length, keyframe.tick());
 				}
 			}
+			for (SoundCue sound : this.sounds) {
+				length = Math.max(length, sound.tick());
+			}
 			return length;
 		}
+
+		/** How much fit_to_event stretches this sequence for an event lasting duration ticks (1 = none). */
+		public double timeScale(int duration) {
+			float length = length();
+			return this.fitToEvent && duration > 0 && length > 0f ? duration / (double) length : 1.0;
+		}
+	}
+
+	/** A named sound (like a weapon file's Sound) at a tick of a sequence. */
+	public record SoundCue(float tick, String sound, float volume, float pitch) {
+
+		public static final Codec<SoundCue> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+				Codec.floatRange(0f, 72000f).optionalFieldOf("tick", 0f).forGetter(SoundCue::tick),
+				Codec.STRING.fieldOf("sound").forGetter(SoundCue::sound),
+				Codec.floatRange(0f, 100f).optionalFieldOf("volume", 1f).forGetter(SoundCue::volume),
+				Codec.floatRange(0f, 10f).optionalFieldOf("pitch", 1f).forGetter(SoundCue::pitch)
+		).apply(instance, SoundCue::new));
 	}
 
 	public record Track(String part, List<Keyframe> keyframes) {

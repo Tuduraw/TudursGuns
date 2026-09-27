@@ -32,7 +32,7 @@ public record HandheldDefinition(
 		Map<ItemDisplayContext, DisplayTransform> display,
 		Optional<AimSettings> aim,
 		Map<String, AttachmentSlot> attachments,
-		HeldMovement movement,
+		Handling handling,
 		Optional<AnimationDefinition> animation
 ) {
 
@@ -56,9 +56,52 @@ public record HandheldDefinition(
 			Codec.unboundedMap(ItemDisplayContext.CODEC, DisplayTransform.CODEC).optionalFieldOf("display", Map.of()).forGetter(HandheldDefinition::display),
 			AimSettings.CODEC.optionalFieldOf("aim").forGetter(HandheldDefinition::aim),
 			Codec.unboundedMap(Codec.STRING, AttachmentSlot.CODEC).optionalFieldOf("attachments", Map.of()).forGetter(HandheldDefinition::attachments),
-			HeldMovement.MAP_CODEC.forGetter(HandheldDefinition::movement),
+			Handling.MAP_CODEC.forGetter(HandheldDefinition::handling),
 			AnimationDefinition.CODEC.optionalFieldOf("animation").forGetter(HandheldDefinition::animation)
 	).apply(instance, HandheldDefinition::new));
+
+	/** movement_speed / aiming_movement_speed (see HeldMovement). */
+	public HeldMovement movement() {
+		return this.handling.movement();
+	}
+
+	/** How the weapon handles, beyond its weapon file - read from the definition's own JSON object:
+	 * recoil: degrees the view kicks up per shot (and up to a quarter of that sideways, at random);
+	 *   recoil_sneaking: the same while sneaking (default: half of recoil). Attachments scale it.
+	 * ads_spread_multiplier: spread (the weapon file's Accuracy) is multiplied by this while aiming
+	 *   with the aim key (a deliberate aim, as opposed to a quick shot with use).
+	 * pellets: projectiles per shot (a shotgun) - one round, one sound, each pellet spread separately.
+	 * burst_count: shots per trigger press for fire_mode "burst" (at the weapon file's Delay apart).
+	 * melee_damage: added to the holder's attack damage while it's in the main hand (a rifle butt).
+	 * icon: a flat picture shown in inventories instead of the model (a PNG, e.g.
+	 *   "ns:textures/vehicle/icons/rifle.png").
+	 * ammo: an ammo definition (data/<ns>/ammo/) to reload from - a magazine item giving its own
+	 *   number of rounds. Takes the place of ammo_item / rounds_per_ammo_item. */
+	public record Handling(HeldMovement movement, float recoil, Optional<Float> recoilSneaking, float adsSpreadMultiplier,
+			int pellets, int burstCount, float meleeDamage, Optional<Identifier> icon, Optional<Identifier> ammo) {
+
+		public static final com.mojang.serialization.MapCodec<Handling> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+				HeldMovement.MAP_CODEC.forGetter(Handling::movement),
+				Codec.floatRange(0f, 90f).optionalFieldOf("recoil", 0f).forGetter(Handling::recoil),
+				Codec.floatRange(0f, 90f).optionalFieldOf("recoil_sneaking").forGetter(Handling::recoilSneaking),
+				Codec.floatRange(0f, 100f).optionalFieldOf("ads_spread_multiplier", 1f).forGetter(Handling::adsSpreadMultiplier),
+				Codec.intRange(1, 64).optionalFieldOf("pellets", 1).forGetter(Handling::pellets),
+				Codec.intRange(1, 100).optionalFieldOf("burst_count", 3).forGetter(Handling::burstCount),
+				Codec.floatRange(0f, 10000f).optionalFieldOf("melee_damage", 0f).forGetter(Handling::meleeDamage),
+				Identifier.CODEC.optionalFieldOf("icon").forGetter(Handling::icon),
+				Identifier.CODEC.optionalFieldOf("ammo").forGetter(Handling::ammo)
+		).apply(instance, Handling::new));
+
+		/** The same, reloading from something else (an underbarrel launcher has its own ammo). */
+		public Handling withoutAmmo() {
+			return new Handling(this.movement, this.recoil, this.recoilSneaking, this.adsSpreadMultiplier, this.pellets,
+					this.burstCount, this.meleeDamage, this.icon, Optional.empty());
+		}
+
+		public float recoilFor(boolean sneaking) {
+			return sneaking ? this.recoilSneaking.orElse(this.recoil / 2f) : this.recoil;
+		}
+	}
 
 	/** HUD script name (the "hud" key). */
 	public Optional<String> hud() {
@@ -133,6 +176,9 @@ public record HandheldDefinition(
 	 * hip_translation/hip_rotation) - by default carried across the body, muzzle to the left and down.
 	 * third_person_sprinting, if set, replaces the third-person display transform while sprinting
 	 * (the arms are put in a cross-body carry either way).
+	 * zoom: magnification while aimed down the iron sights (1 = none).
+	 * scope: a built-in scope (same form as a scope attachment's zoom), looked through with the aim
+	 *   key when no scope attachment is fitted.
 	 * raise_ticks: how long raising (and lowering) takes. A shot fired with use from the hip goes off
 	 * once the weapon is fully up - the server waits this long too. */
 	public record AimSettings(
@@ -147,7 +193,9 @@ public record HandheldDefinition(
 		Vector3f sprintTranslation,
 		Vector3f sprintRotation,
 		Optional<DisplayTransform> thirdPersonSprinting,
-		int raiseTicks
+		int raiseTicks,
+		float zoom,
+		Optional<AttachmentDefinition.Zoom> scope
 	) {
 
 		public static final Codec<AimSettings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -162,7 +210,9 @@ public record HandheldDefinition(
 				VECTOR_3F.optionalFieldOf("sprint_translation", new Vector3f(0.1f, -0.36f, -0.42f)).forGetter(AimSettings::sprintTranslation),
 				VECTOR_3F.optionalFieldOf("sprint_rotation", new Vector3f(-20f, 60f, 20f)).forGetter(AimSettings::sprintRotation),
 				DisplayTransform.CODEC.optionalFieldOf("third_person_sprinting").forGetter(AimSettings::thirdPersonSprinting),
-				Codec.intRange(0, 200).optionalFieldOf("raise_ticks", 4).forGetter(AimSettings::raiseTicks)
+				Codec.intRange(0, 200).optionalFieldOf("raise_ticks", 4).forGetter(AimSettings::raiseTicks),
+				Codec.floatRange(1f, 100f).optionalFieldOf("zoom", 1f).forGetter(AimSettings::zoom),
+				AttachmentDefinition.Zoom.CODEC.optionalFieldOf("scope").forGetter(AimSettings::scope)
 		).apply(instance, AimSettings::new));
 	}
 
@@ -202,12 +252,13 @@ public record HandheldDefinition(
 		).apply(instance, AttachmentMount::new));
 	}
 
-	/** SEMI fires once per press of the use key, AUTO keeps firing while it's held (at the weapon file's own Delay). */
+	/** SEMI fires once per press of the use key, AUTO keeps firing while it's held (at the weapon file's
+	 * own Delay), BURST fires burst_count shots per press. */
 	public enum FireMode {
-		SEMI, AUTO;
+		SEMI, AUTO, BURST;
 
 		public static final Codec<FireMode> CODEC = Codec.STRING.xmap(
-				s -> "auto".equalsIgnoreCase(s) ? AUTO : SEMI,
+				s -> "auto".equalsIgnoreCase(s) ? AUTO : "burst".equalsIgnoreCase(s) ? BURST : SEMI,
 				mode -> mode.name().toLowerCase(java.util.Locale.ROOT));
 	}
 

@@ -1,6 +1,7 @@
 package com.example.tudursguns.registry;
 
 import com.example.tudursguns.TudursGuns;
+import com.example.tudursguns.item.AmmoItem;
 import com.example.tudursguns.item.ArmorItem;
 import com.example.tudursguns.item.AttachmentItem;
 import com.example.tudursguns.item.EquipmentItem;
@@ -28,6 +29,7 @@ public final class ModItems {
 	public static Item MINE;
 	public static Item ARMOR;
 	public static Item EQUIPMENT;
+	public static Item AMMO;
 
 	/** Holding use (right click) fires, so the item is "in use" while the trigger is held. By default
 	 * that slows the player to 20% speed and stops sprinting, like drawing a bow - this keeps full
@@ -58,6 +60,9 @@ public final class ModItems {
 		RegistryKey<Item> equipmentKey = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(TudursGuns.MOD_ID, "equipment"));
 		EQUIPMENT = Registry.register(Registries.ITEM, equipmentKey,
 				new EquipmentItem(new Item.Settings().registryKey(equipmentKey).maxCount(1)));
+
+		RegistryKey<Item> ammoKey = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(TudursGuns.MOD_ID, "ammo"));
+		AMMO = Registry.register(Registries.ITEM, ammoKey, new AmmoItem(new Item.Settings().registryKey(ammoKey).maxCount(16)));
 	}
 
 	/** Looked up by id and built through its own codec rather than by class: the component is new in

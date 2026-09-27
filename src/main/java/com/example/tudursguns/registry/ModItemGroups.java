@@ -67,6 +67,11 @@ public final class ModItemGroups {
 					for (Identifier equipmentId : sortedIds(ModDefinitions.EQUIPMENT.client().keySet())) {
 						entries.add(createEquipmentStack(equipmentId));
 					}
+					for (Identifier ammoId : sortedIds(ModDefinitions.AMMO.client().keySet())) {
+						ItemStack ammo = new ItemStack(ModItems.AMMO);
+						ammo.set(ModComponents.AMMO_TYPE, ammoId);
+						entries.add(ammo);
+					}
 					entries.add(ModBlocks.WEAPON_WORKBENCH_ITEM);
 					entries.add(ModBlocks.AMMO_BOX_ITEM);
 				})
