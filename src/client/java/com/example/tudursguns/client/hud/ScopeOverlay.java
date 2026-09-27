@@ -59,6 +59,9 @@ public final class ScopeOverlay {
 		int size = Math.min(width, height);
 		int x = (width - size) / 2;
 		int y = (height - size) / 2;
+		// An overlay shipped in an addon folder (textures/vehicle/...) is loaded by Tudur's Vehicle Mod on
+		// request; resource-pack textures are unaffected.
+		com.example.tudursvehiclemod.client.render.AddonTextureLoader.requestLoad(AimController.scopeOverlay());
 		context.drawTexture(RenderPipelines.GUI_TEXTURED, AimController.scopeOverlay(), x, y, 0.0f, 0.0f, size, size, size, size);
 		int black = 0xFF000000;
 		context.fill(0, 0, width, y, black);

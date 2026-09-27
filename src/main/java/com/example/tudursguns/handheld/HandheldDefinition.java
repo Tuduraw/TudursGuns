@@ -230,7 +230,9 @@ public record HandheldDefinition(
 	 * attachment fitted (an alternative to a separate model). hide_groups: weapon groups hidden while
 	 * it's fitted (e.g. the iron sights under a scope, or the standard magazine). sight_position: if
 	 * set, replaces the weapon's aim.sight_position while fitted. part: the animated part (see
- * AnimationDefinition) a separate model moves with - "root" (the whole weapon) by default. */
+ * AnimationDefinition) a separate model moves with - "root" (the whole weapon) by default.
+ * sound_override: this weapon's own firing sound with the attachment (a suppressed shot) - takes
+ * precedence over the attachment's general sound_override. */
 	public record AttachmentMount(
 			Optional<Identifier> model,
 			Optional<Identifier> texture,
@@ -238,7 +240,8 @@ public record HandheldDefinition(
 			List<String> showGroups,
 			List<String> hideGroups,
 			Optional<Vector3f> sightPosition,
-		Optional<String> part
+		Optional<String> part,
+		Optional<String> soundOverride
 	) {
 
 		public static final Codec<AttachmentMount> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -248,7 +251,8 @@ public record HandheldDefinition(
 				Codec.STRING.listOf().optionalFieldOf("show_groups", List.of()).forGetter(AttachmentMount::showGroups),
 				Codec.STRING.listOf().optionalFieldOf("hide_groups", List.of()).forGetter(AttachmentMount::hideGroups),
 				VECTOR_3F.optionalFieldOf("sight_position").forGetter(AttachmentMount::sightPosition),
-				Codec.STRING.optionalFieldOf("part").forGetter(AttachmentMount::part)
+				Codec.STRING.optionalFieldOf("part").forGetter(AttachmentMount::part),
+				Codec.STRING.optionalFieldOf("sound_override").forGetter(AttachmentMount::soundOverride)
 		).apply(instance, AttachmentMount::new));
 	}
 

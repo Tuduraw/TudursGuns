@@ -62,7 +62,9 @@ public record WeaponModifiers(
 			magazineMultiplier *= attachment.magazineSizeMultiplier();
 			magazineBonus += attachment.magazineSizeBonus();
 			reloadMultiplier *= attachment.reloadTimeMultiplier();
-			if (attachment.soundOverride().isPresent()) {
+			if (mount.soundOverride().isPresent()) {
+				soundOverride = mount.soundOverride();
+			} else if (attachment.soundOverride().isPresent()) {
 				soundOverride = attachment.soundOverride();
 			}
 			volumeMultiplier *= attachment.soundVolumeMultiplier();
