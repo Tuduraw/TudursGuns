@@ -27,6 +27,9 @@ public final class ModComponents {
 	public static ComponentType<Integer> AMMO;
 	/** World time at which the reload in progress completes; absent when not reloading. */
 	public static ComponentType<Long> RELOAD_UNTIL;
+	/** World time until which the weapon can't fire again (its Delay after a shot) - lets the client
+	 * know not to raise it on use meanwhile. */
+	public static ComponentType<Long> COOLDOWN_UNTIL;
 	/** Selected ModeNum mode index (0-based). */
 	public static ComponentType<Integer> MODE;
 	/** Attachments fitted to a weapon: slot name -> attachment definition id. */
@@ -53,6 +56,7 @@ public final class ModComponents {
 		WEAPON = ModComponents.<Identifier>register("weapon", builder -> builder.codec(Identifier.CODEC).packetCodec(Identifier.PACKET_CODEC));
 		AMMO = ModComponents.<Integer>register("ammo", builder -> builder.codec(Codec.INT).packetCodec(PacketCodecs.VAR_INT).skipsHandAnimation());
 		RELOAD_UNTIL = ModComponents.<Long>register("reload_until", builder -> builder.codec(Codec.LONG).packetCodec(PacketCodecs.VAR_LONG).skipsHandAnimation());
+		COOLDOWN_UNTIL = ModComponents.<Long>register("cooldown_until", builder -> builder.codec(Codec.LONG).packetCodec(PacketCodecs.VAR_LONG).skipsHandAnimation());
 		MODE = ModComponents.<Integer>register("mode", builder -> builder.codec(Codec.INT).packetCodec(PacketCodecs.VAR_INT).skipsHandAnimation());
 		Codec<Map<String, Identifier>> attachmentsCodec = Codec.unboundedMap(Codec.STRING, Identifier.CODEC);
 		ATTACHMENTS = ModComponents.<Map<String, Identifier>>register("attachments",

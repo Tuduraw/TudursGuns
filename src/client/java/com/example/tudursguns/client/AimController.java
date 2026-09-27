@@ -2,6 +2,7 @@ package com.example.tudursguns.client;
 
 import com.example.tudursguns.handheld.AttachmentDefinition;
 import com.example.tudursguns.handheld.EquipmentDefinition;
+import com.example.tudursguns.handheld.HandheldDefinition;
 import com.example.tudursguns.handheld.HandheldDefinitions;
 import com.example.tudursguns.item.EquipmentItem;
 import com.example.tudursguns.item.HandheldWeaponItem;
@@ -40,6 +41,10 @@ public final class AimController {
 	private static float progress;
 	private static float previousProgress;
 	private static float sprintProgress;
+	private static boolean wasUsingWeapon;
+	/** Ticks the weapon stays up after a quick click from the hip, so its shot (which the server fires
+	 * once the weapon is fully up) isn't fired while it's coming back down. */
+	private static int holdRaisedTicks;
 	private static float previousSprintProgress;
 	private static boolean lastSentAimKey;
 	private static Identifier scopeId;
@@ -71,6 +76,8 @@ public final class AimController {
 		previousProgress = 0f;
 		sprintProgress = 0f;
 		previousSprintProgress = 0f;
+		wasUsingWeapon = false;
+		holdRaisedTicks = 0;
 		lastSentAimKey = false;
 	}
 
@@ -165,7 +172,18 @@ public final class AimController {
 				&& com.example.tudursvehiclemod.client.TvMissileControlState.controlledEntityId == null;
 		boolean aimKeyDown = available && client.currentScreen == null && isAimKeyDown(client);
 		boolean usingWeapon = available && player.isUsingItem() && player.getActiveHand() == Hand.MAIN_HAND;
-		aiming = aimKeyDown || usingWeapon;
+		HandheldDefinition heldDef = weapon ? HandheldDefinitions.getAny(main.get(ModComponents.WEAPON)) : null;
+		int raiseTicks = heldDef != null && heldDef.aim().isPresent() ? heldDef.raiseTicks() : TudursGunsClientConfig.aimTransitionTicks();
+		if (usingWeapon && !wasUsingWeapon && progress < 1f) {
+			holdRaisedTicks = (int) Math.ceil((1f - progress) * raiseTicks) + 2;
+		} else if (holdRaisedTicks > 0) {
+			holdRaisedTicks--;
+		}
+		wasUsingWeapon = usingWeapon;
+		if (!available) {
+			holdRaisedTicks = 0;
+		}
+		aiming = aimKeyDown || usingWeapon || holdRaisedTicks > 0;
 		// Raising the weapon ends a sprint (ClientPlayerEntityMixin also stops a new one starting while
 		// aiming); the sprint state is sent to the server by vanilla as usual.
 		if (aiming && player.isSprinting()) {
@@ -209,7 +227,7 @@ public final class AimController {
 			scoped = aiming && aimKeyDown && scopeZoom != null && firstPerson;
 		}
 
-		float step = 1f / TudursGunsClientConfig.aimTransitionTicks();
+		float step = raiseTicks <= 0 ? 1f : 1f / raiseTicks;
 		progress = Math.max(0f, Math.min(1f, progress + (aiming ? step : -step)));
 		boolean sprintCarry = available && !aiming && player.isSprinting();
 		sprintProgress = Math.max(0f, Math.min(1f, sprintProgress + (sprintCarry ? step : -step)));

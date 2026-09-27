@@ -57,6 +57,11 @@ public class HandheldWeaponItem extends Item {
 		if (!stack.contains(ModComponents.WEAPON)) {
 			return ActionResult.PASS;
 		}
+		// In its fire delay (a bolt being worked, a launcher between shots) use doesn't raise the weapon:
+		// it couldn't fire anyway. Both sides see the delay on the stack, so they agree.
+		if (HandheldCombat.isCoolingDown(stack, world.getTime())) {
+			return ActionResult.PASS;
+		}
 		// Every mode keeps the item "in use" while the key is held: AUTO fires from usageTick(),
 		// lock-on weapons track from usageTick() and fire from onStoppedUsing(), and SEMI simply
 		// doesn't fire again until the key is released and pressed again.
@@ -64,9 +69,15 @@ public class HandheldWeaponItem extends Item {
 		if (user instanceof ServerPlayerEntity player) {
 			HandheldDefinition base = serverDefinition(stack);
 			if (base != null) {
+				HandheldCombat.startRaisingForUse(player);
 				Firing firing = Firing.of(stack, base);
 				if (!HandheldCombat.requiresLock(firing.stats().weaponType())) {
-					HandheldCombat.tryFire(player, stack, hand, firing.definition(), firing.stats(), null);
+					// From the hip the shot waits for the weapon to be fully up (see tickPendingShot).
+					if (HandheldCombat.isRaised(player, base)) {
+						HandheldCombat.tryFire(player, stack, hand, firing.definition(), firing.stats(), null);
+					} else {
+						HandheldCombat.requestShot(player, hand);
+					}
 				}
 			}
 		}
@@ -91,7 +102,7 @@ public class HandheldWeaponItem extends Item {
 		WeaponStats stats = firing.stats();
 		if (HandheldCombat.requiresLock(stats.weaponType())) {
 			HandheldCombat.updateLock(player, stats);
-		} else if (def.fireMode() == HandheldDefinition.FireMode.AUTO) {
+		} else if (def.fireMode() == HandheldDefinition.FireMode.AUTO && HandheldCombat.isRaised(player, base)) {
 			HandheldCombat.tryFire(player, stack, player.getActiveHand(), def, stats, null);
 		}
 	}
@@ -104,12 +115,13 @@ public class HandheldWeaponItem extends Item {
 				Firing firing = Firing.of(stack, base);
 				if (HandheldCombat.requiresLock(firing.stats().weaponType())) {
 					var target = HandheldCombat.completedLockTarget(player);
-					if (target != null) {
+					if (target != null && HandheldCombat.isRaised(player, base)) {
 						HandheldCombat.tryFire(player, stack, player.getActiveHand(), firing.definition(), firing.stats(), target);
 					}
 				}
 			}
 			HandheldCombat.clearLock(player);
+			HandheldCombat.stopRaisingUnlessAiming(player);
 		}
 		return false;
 	}
@@ -130,6 +142,8 @@ public class HandheldWeaponItem extends Item {
 		}
 		Firing firing = Firing.of(stack, base);
 		HandheldCombat.tickReload(player, stack, firing.definition(), firing.stats());
+		HandheldCombat.tickRaiseState(player);
+		HandheldCombat.tickPendingShot(player, stack, base, firing);
 		// A lock only lasts while this weapon is actually being held down.
 		if (HandheldCombat.hasLockState(player) && !(player.isUsingItem() && player.getActiveItem().getItem() instanceof HandheldWeaponItem)) {
 			HandheldCombat.clearLock(player);

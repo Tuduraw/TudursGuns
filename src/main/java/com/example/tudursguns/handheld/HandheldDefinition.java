@@ -80,6 +80,11 @@ public record HandheldDefinition(
 		).apply(instance, Presentation::new));
 	}
 
+	/** Ticks to raise the weapon (0 for a weapon without an aim section - it fires at once). */
+	public int raiseTicks() {
+		return this.aim.map(AimSettings::raiseTicks).orElse(0);
+	}
+
 	/** Attachment slot names in a stable order (the workbench lists them in this order). */
 	public List<String> attachmentSlotNames() {
 		List<String> names = new java.util.ArrayList<>(this.attachments.keySet());
@@ -127,7 +132,9 @@ public record HandheldDefinition(
 	 * sprint_translation/sprint_rotation: the first-person pose while sprinting (camera space, like
 	 * hip_translation/hip_rotation) - by default carried across the body, muzzle to the left and down.
 	 * third_person_sprinting, if set, replaces the third-person display transform while sprinting
-	 * (the arms are put in a cross-body carry either way). */
+	 * (the arms are put in a cross-body carry either way).
+	 * raise_ticks: how long raising (and lowering) takes. A shot fired with use from the hip goes off
+	 * once the weapon is fully up - the server waits this long too. */
 	public record AimSettings(
 			Vector3f sightPosition,
 			float eyeDistance,
@@ -139,7 +146,8 @@ public record HandheldDefinition(
 			Optional<DisplayTransform> thirdPersonAiming,
 		Vector3f sprintTranslation,
 		Vector3f sprintRotation,
-		Optional<DisplayTransform> thirdPersonSprinting
+		Optional<DisplayTransform> thirdPersonSprinting,
+		int raiseTicks
 	) {
 
 		public static final Codec<AimSettings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -153,7 +161,8 @@ public record HandheldDefinition(
 				DisplayTransform.CODEC.optionalFieldOf("third_person_aiming").forGetter(AimSettings::thirdPersonAiming),
 				VECTOR_3F.optionalFieldOf("sprint_translation", new Vector3f(0.1f, -0.36f, -0.42f)).forGetter(AimSettings::sprintTranslation),
 				VECTOR_3F.optionalFieldOf("sprint_rotation", new Vector3f(-20f, 60f, 20f)).forGetter(AimSettings::sprintRotation),
-				DisplayTransform.CODEC.optionalFieldOf("third_person_sprinting").forGetter(AimSettings::thirdPersonSprinting)
+				DisplayTransform.CODEC.optionalFieldOf("third_person_sprinting").forGetter(AimSettings::thirdPersonSprinting),
+				Codec.intRange(0, 200).optionalFieldOf("raise_ticks", 4).forGetter(AimSettings::raiseTicks)
 		).apply(instance, AimSettings::new));
 	}
 

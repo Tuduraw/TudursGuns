@@ -81,6 +81,8 @@ public final class HandheldCombat {
 	public static void forget(UUID playerId) {
 		NEXT_FIRE_TIME.remove(playerId);
 		LAST_FIRED.remove(playerId);
+		RAISE_START.remove(playerId);
+		PENDING_SHOTS.remove(playerId);
 		LOCKS.remove(playerId);
 		AIM_KEY_HELD.remove(playerId);
 	}
@@ -163,6 +165,7 @@ public final class HandheldCombat {
 		projectile.tudursvehiclemod$forceLoadSpawnChunk();
 
 		NEXT_FIRE_TIME.put(player.getUuid(), now + Math.max(1, stats.cooldownTicks()));
+		stack.set(ModComponents.COOLDOWN_UNTIL, now + Math.max(1, stats.cooldownTicks()));
 		LAST_FIRED.put(player.getUuid(), now);
 		WeaponAnimationEvents.trigger(stack, world, WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.FIRE));
 		if (magazineSize > 0) {
@@ -354,7 +357,100 @@ public final class HandheldCombat {
 
 	/** Records the player's aim key state; returns true if it changed. */
 	public static boolean setAimKeyHeld(ServerPlayerEntity player, boolean held) {
-		return held ? AIM_KEY_HELD.add(player.getUuid()) : AIM_KEY_HELD.remove(player.getUuid());
+		boolean changed = held ? AIM_KEY_HELD.add(player.getUuid()) : AIM_KEY_HELD.remove(player.getUuid());
+		if (held) {
+			startRaising(player);
+		} else {
+			stopRaisingUnlessAiming(player);
+		}
+		return changed;
+	}
+
+	// ---------------------------------------------------------------- raising
+
+	/** World time the player started raising their weapon (aim key or use), while it's up. */
+	private static final Map<UUID, Long> RAISE_START = new ConcurrentHashMap<>();
+
+	/** A shot asked for with use from the hip, waiting for the weapon to be fully up. */
+	private record PendingShot(Hand hand, long requestedAt) {
+	}
+
+	private static final Map<UUID, PendingShot> PENDING_SHOTS = new ConcurrentHashMap<>();
+
+	/** A pending shot not fired within this long after it was asked for is dropped. */
+	private static final int PENDING_SHOT_TIMEOUT_TICKS = 40;
+
+	public static void startRaising(ServerPlayerEntity player) {
+		RAISE_START.putIfAbsent(player.getUuid(), player.getEntityWorld().getTime());
+	}
+
+	/** Use pressed: raising starts now - unless the weapon is already up (aim key) or on its way up
+	 * for a shot already waiting. */
+	public static void startRaisingForUse(ServerPlayerEntity player) {
+		if (isAimKeyHeld(player) || PENDING_SHOTS.containsKey(player.getUuid())) {
+			startRaising(player);
+		} else {
+			RAISE_START.put(player.getUuid(), player.getEntityWorld().getTime());
+		}
+	}
+
+	/** The weapon comes down unless the aim key still holds it up, or a shot is still waiting to go. */
+	public static void stopRaisingUnlessAiming(ServerPlayerEntity player) {
+		if (!isAimKeyHeld(player) && !PENDING_SHOTS.containsKey(player.getUuid())) {
+			RAISE_START.remove(player.getUuid());
+		}
+	}
+
+	/** Whether the weapon is fully up: raising began at least raise_ticks ago. */
+	public static boolean isRaised(ServerPlayerEntity player, HandheldDefinition def) {
+		int raiseTicks = def.raiseTicks();
+		if (raiseTicks <= 0) {
+			return true;
+		}
+		Long start = RAISE_START.get(player.getUuid());
+		return start != null && player.getEntityWorld().getTime() - start >= raiseTicks;
+	}
+
+	/** Whether the weapon is in its fire delay (as recorded on the stack - the client can see it too). */
+	public static boolean isCoolingDown(ItemStack stack, long now) {
+		Long until = stack.get(ModComponents.COOLDOWN_UNTIL);
+		return until != null && now < until;
+	}
+
+	public static void requestShot(ServerPlayerEntity player, Hand hand) {
+		PENDING_SHOTS.put(player.getUuid(), new PendingShot(hand, player.getEntityWorld().getTime()));
+	}
+
+	/** Fires a waiting shot once the weapon is up (even if use was already released - a quick click
+	 * from the hip still fires, after the raise). Called every tick for the weapon in the player's
+	 * inventory. */
+	public static void tickPendingShot(ServerPlayerEntity player, ItemStack stack, HandheldDefinition base, Firing firing) {
+		PendingShot pending = PENDING_SHOTS.get(player.getUuid());
+		if (pending == null || player.getStackInHand(pending.hand()) != stack) {
+			return;
+		}
+		if (isRaised(player, base)) {
+			PENDING_SHOTS.remove(player.getUuid());
+			tryFire(player, stack, pending.hand(), firing.definition(), firing.stats(), null);
+			if (!(player.isUsingItem() && player.getActiveItem() == stack)) {
+				stopRaisingUnlessAiming(player);
+			}
+		}
+	}
+
+	/** Housekeeping every tick: drops a waiting shot that timed out or whose weapon left the hand, and
+	 * forgets the raise once nothing holds the weapon up (the item was switched while in use). */
+	public static void tickRaiseState(ServerPlayerEntity player) {
+		PendingShot pending = PENDING_SHOTS.get(player.getUuid());
+		if (pending != null && (player.getEntityWorld().getTime() - pending.requestedAt() > PENDING_SHOT_TIMEOUT_TICKS
+				|| player.getVehicle() != null
+				|| !(player.getStackInHand(pending.hand()).getItem() instanceof com.example.tudursguns.item.HandheldWeaponItem))) {
+			PENDING_SHOTS.remove(player.getUuid());
+		}
+		boolean usingWeapon = player.isUsingItem() && player.getActiveItem().getItem() instanceof com.example.tudursguns.item.HandheldWeaponItem;
+		if (!usingWeapon) {
+			stopRaisingUnlessAiming(player);
+		}
 	}
 
 	public static boolean isAimKeyHeld(ServerPlayerEntity player) {
