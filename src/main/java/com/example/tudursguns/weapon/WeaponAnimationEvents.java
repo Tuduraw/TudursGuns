@@ -6,6 +6,7 @@ import com.example.tudursguns.handheld.HandheldDefinitions;
 import com.example.tudursguns.registry.ModComponents;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -73,12 +74,12 @@ public final class WeaponAnimationEvents {
 		trigger(null, stack, world, event, duration);
 	}
 
-	public static void trigger(ServerPlayerEntity player, ItemStack stack, World world, String event) {
+	public static void trigger(PlayerEntity player, ItemStack stack, World world, String event) {
 		trigger(player, stack, world, event, 0);
 	}
 
 	/** With a player, the event's sequence sounds are played (from that player) at their ticks. */
-	public static void trigger(ServerPlayerEntity player, ItemStack stack, World world, String event, int duration) {
+	public static void trigger(PlayerEntity player, ItemStack stack, World world, String event, int duration) {
 		HandheldDefinition def = HandheldDefinitions.getServer(stack.get(ModComponents.WEAPON));
 		if (def == null || def.animation().isEmpty()) {
 			return;
