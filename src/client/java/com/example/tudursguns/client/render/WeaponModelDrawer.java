@@ -134,7 +134,7 @@ public final class WeaponModelDrawer {
 	}
 
 	/** Only the named groups of a model (skipping hidden ones), one after another. */
-	private static void drawGroups(OrderedRenderCommandQueue queue, MatrixStack matrices, Identifier modelId, Identifier texture,
+	public static void drawGroups(OrderedRenderCommandQueue queue, MatrixStack matrices, Identifier modelId, Identifier texture,
 			List<String> groups, Set<String> hiddenGroups, int light, int overlay) {
 		ObjModel model = ObjModelLoader.get(modelId).orElse(null);
 		if (model == null) {

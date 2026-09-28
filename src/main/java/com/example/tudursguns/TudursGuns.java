@@ -11,6 +11,7 @@ import com.example.tudursguns.registry.ModEntityTypes;
 import com.example.tudursguns.registry.ModItemGroups;
 import com.example.tudursguns.registry.ModItems;
 import com.example.tudursguns.registry.ModScreenHandlers;
+import com.example.tudursguns.soldier.SoldierEnemies;
 import com.example.tudursguns.weapon.DelayedTasks;
 import com.example.tudursguns.weapon.EquipmentActions;
 import com.example.tudursguns.weapon.HandheldCombat;
@@ -56,6 +57,7 @@ public class TudursGuns implements ModInitializer {
 		});
 		// A thrown grenade's smoke/flash/fire happens where its projectile ends up - see ThrowableCombat.
 		ServerEntityEvents.ENTITY_UNLOAD.register(ThrowableCombat::onProjectileRemoved);
+		ServerEntityEvents.ENTITY_LOAD.register(SoldierEnemies::onEntityLoad);
 
 		// Clients get every definition on join and again after /reload (definitions and weapon files
 		// both reload with data packs).

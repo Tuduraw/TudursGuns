@@ -43,6 +43,13 @@ public final class TudursGunsConfig {
 		public float enemy_soldier_drop_chance = 0.05f;
 		/** Distance enemy soldiers engage at. */
 		public float enemy_soldier_engage_range = 32f;
+		/** Enemy soldiers despawn like other monsters (false: they stay, like named mobs). */
+		public boolean enemy_soldier_despawn = false;
+		/** No natural spawn where this many enemy soldiers are already within enemy_soldier_density_radius. */
+		public int enemy_soldier_density_max = 4;
+		public int enemy_soldier_density_radius = 64;
+		/** Monsters that hunt players hunt posted soldiers too. */
+		public boolean monsters_target_soldiers = true;
 
 		/** Food (hunger points) a post's soldier eats per minute: waiting, patrolling, fighting. */
 		public float soldier_food_idle = 1f;
@@ -70,6 +77,8 @@ public final class TudursGunsConfig {
 			data.enemy_soldier_no_armor_weight = Math.max(0, data.enemy_soldier_no_armor_weight);
 			data.enemy_soldier_drop_chance = Math.max(0f, Math.min(1f, data.enemy_soldier_drop_chance));
 			data.enemy_soldier_engage_range = Math.max(4f, Math.min(128f, data.enemy_soldier_engage_range));
+			data.enemy_soldier_density_max = Math.max(0, data.enemy_soldier_density_max);
+			data.enemy_soldier_density_radius = Math.max(8, Math.min(256, data.enemy_soldier_density_radius));
 			data.soldier_food_idle = Math.max(0f, data.soldier_food_idle);
 			data.soldier_food_patrol = Math.max(0f, data.soldier_food_patrol);
 			data.soldier_food_combat = Math.max(0f, data.soldier_food_combat);

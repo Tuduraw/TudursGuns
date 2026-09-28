@@ -10,6 +10,7 @@
     "blast": 0.1,
     "headshot": 0.6
   },
-  "equipment_asset": "tudursguns:combat_helmet",
-  "item_model": "tudursguns:combat_helmet"
+  "item_model": "tudursguns:combat_helmet",
+  "model": "tudursguns:models/obj/combat_helmet.obj",
+  "texture": "tudursguns:textures/armor/tg_armor.png"
 }

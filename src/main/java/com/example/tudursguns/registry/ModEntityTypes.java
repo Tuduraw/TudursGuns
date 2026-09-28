@@ -16,7 +16,6 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.SpawnLocationTypes;
 import net.minecraft.entity.SpawnRestriction;
-import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.SpawnEggItem;
 import net.minecraft.registry.Registries;
@@ -60,7 +59,7 @@ public final class ModEntityTypes {
 		ENEMY_SOLDIER = register("enemy_soldier", EntityType.Builder.<EnemySoldierEntity>create(EnemySoldierEntity::new, SpawnGroup.MONSTER)
 				.dimensions(0.6f, 1.8f).eyeHeight(1.62f).maxTrackingRange(10));
 		FabricDefaultAttributeRegistry.register(ENEMY_SOLDIER, EnemySoldierEntity.createAttributes());
-		SpawnRestriction.register(ENEMY_SOLDIER, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, HostileEntity::canSpawnInDark);
+		SpawnRestriction.register(ENEMY_SOLDIER, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, EnemySoldierEntity::canSpawn);
 		TudursGunsConfig.Data config = TudursGunsConfig.get();
 		if (config.enemy_soldier_natural_spawn && config.enemy_soldier_spawn_weight > 0) {
 			BiomeModifications.addSpawn(BiomeSelectors.foundInOverworld(), SpawnGroup.MONSTER, ENEMY_SOLDIER,

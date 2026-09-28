@@ -63,7 +63,7 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 	public static final float MAX_FOOD = 40f;
 	public static final int MAX_WAYPOINTS = 64;
 	public static final int MIN_ENGAGE_RANGE = 8;
-	public static final int MAX_ENGAGE_RANGE = 64;
+	public static final int MAX_ENGAGE_RANGE = 128;
 	public static final int DEFAULT_ENGAGE_RANGE = 24;
 	/** Share of its durability each armor piece loses when the soldier is killed. */
 	private static final float DEATH_WEAR = 0.1f;

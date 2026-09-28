@@ -18,6 +18,9 @@ import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.random.Random;
 import net.minecraft.world.LocalDifficulty;
 import net.minecraft.world.ServerWorldAccess;
 import net.minecraft.world.World;
@@ -66,6 +69,28 @@ public class EnemySoldierEntity extends HostileEntity implements Soldier {
 		EntityData data = super.initialize(world, difficulty, spawnReason, entityData);
 		EnemySoldierGear.equip(this, world.getRandom());
 		return data;
+	}
+
+	/** Staying put unless the server config lets them despawn. (Mobs that can't despawn don't count
+	 * against the monster cap, so natural spawns are limited by canSpawn's density check instead.) */
+	@Override
+	public boolean cannotDespawn() {
+		return !TudursGunsConfig.get().enemy_soldier_despawn || super.cannotDespawn();
+	}
+
+	/** Spawn rule: where monsters spawn (in the dark), and - for natural spawns - not where
+	 * enemy_soldier_density_max enemy soldiers are already within enemy_soldier_density_radius. */
+	public static boolean canSpawn(EntityType<EnemySoldierEntity> type, ServerWorldAccess world, SpawnReason reason, BlockPos pos, Random random) {
+		if (!HostileEntity.canSpawnInDark(type, world, reason, pos, random)) {
+			return false;
+		}
+		if (reason != SpawnReason.NATURAL && reason != SpawnReason.CHUNK_GENERATION) {
+			return true;
+		}
+		TudursGunsConfig.Data config = TudursGunsConfig.get();
+		int nearby = world.getEntitiesByClass(EnemySoldierEntity.class, new Box(pos).expand(config.enemy_soldier_density_radius),
+				EnemySoldierEntity::isAlive).size();
+		return nearby < config.enemy_soldier_density_max;
 	}
 
 	@Override

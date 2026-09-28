@@ -9,6 +9,7 @@
     "ballistic": 0.35,
     "blast": 0.2
   },
-  "equipment_asset": "tudursguns:plate_carrier",
-  "item_model": "tudursguns:plate_carrier"
+  "item_model": "tudursguns:plate_carrier",
+  "model": "tudursguns:models/obj/plate_carrier.obj",
+  "texture": "tudursguns:textures/armor/tg_armor.png"
 }

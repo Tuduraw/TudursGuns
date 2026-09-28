@@ -46,6 +46,9 @@ public final class ArmorEffects {
 	public static final List<EquipmentSlot> ARMOR_SLOTS =
 			List.of(EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET);
 
+	/** assets/tudursguns/equipment/none.json: an equipment asset with no layers. */
+	private static final Identifier NO_EQUIPMENT_ASSET = Identifier.of("tudursguns", "none");
+
 	/** The definition of the armor worn in slot, or null. */
 	public static ArmorDefinition worn(LivingEntity entity, EquipmentSlot slot) {
 		ItemStack stack = entity.getEquippedStack(slot);
@@ -64,7 +67,9 @@ public final class ArmorEffects {
 	public static void applyComponents(ItemStack stack, ArmorDefinition def) {
 		Identifier id = stack.get(ModComponents.ARMOR);
 		EquippableComponent.Builder equippable = EquippableComponent.builder(def.slot());
-		def.equipmentAsset().ifPresent(asset -> equippable.model(RegistryKey.of(EquipmentAssetKeys.REGISTRY_KEY, asset)));
+		// Without a 2D look of its own, the empty asset: vanilla then draws nothing (not even a helmet
+		// as an item on the head), leaving it to the OBJ (ObjArmorFeatureRenderer).
+		equippable.model(RegistryKey.of(EquipmentAssetKeys.REGISTRY_KEY, def.equipmentAsset().orElse(NO_EQUIPMENT_ASSET)));
 		Registries.SOUND_EVENT.getEntry(Identifier.ofVanilla("item.armor.equip_iron")).ifPresent(equippable::equipSound);
 		DefinedItem.setIfChanged(stack, DataComponentTypes.EQUIPPABLE, equippable.build());
 

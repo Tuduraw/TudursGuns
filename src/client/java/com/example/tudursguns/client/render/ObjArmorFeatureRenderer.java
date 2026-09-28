@@ -4,6 +4,8 @@ import com.example.tudursguns.handheld.ArmorDefinition;
 import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.item.ArmorItem;
 import com.example.tudursguns.registry.ModComponents;
+import com.example.tudursvehiclemod.client.render.ObjModel;
+import com.example.tudursvehiclemod.client.render.ObjModelLoader;
 import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.command.OrderedRenderCommandQueue;
@@ -16,19 +18,24 @@ import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.RotationAxis;
 
+import java.util.List;
 import java.util.Set;
 
 /** Draws OBJ armor (definitions with a model) on anything with a humanoid model - players, armor
- * stands, zombies... Each piece follows the model part of its slot: head, body, or both legs (legs
- * and feet). The definition's "worn" transform places it in that part's space: origin at the part's
- * pivot (neck for the head and body, hip for a leg), +Y up, +Z the way the wearer faces, 1 = a block.
- * 2D (equipment asset) armor is drawn by vanilla as usual.
+ * stands, zombies, soldiers...
  *
- * A helmet without an equipment asset is left to vanilla too: like a carved pumpkin, vanilla draws a
- * head-slot item with no equipment asset as its item model in the "head" display context - so an OBJ
- * helmet is placed by its definition's display.head. Only a helmet that has both (2D layer plus an
- * OBJ part, e.g. goggles) is drawn here, using worn. */
+ * Each piece is drawn in the space of a body part: origin at the part's pivot (neck for the head and
+ * body, shoulder for an arm, hip for a leg), +Y up, +Z the way the wearer faces, -X the wearer's
+ * right, 1 = a block (a skin pixel is 1/16) - then moved by the definition's "worn" transform.
+ * - A model with groups named after body parts (head, body, right_arm, left_arm, right_leg,
+ *   left_leg) has each of those groups drawn on its part, so it moves with it; other groups aren't drawn.
+ * - Any other model is drawn whole on its slot's part: the head, the body, or each leg (legs, feet).
+ *
+ * Vanilla draws nothing for these: ArmorEffects gives them an empty equipment asset, which also
+ * stops a helmet being drawn as a block-like item on the head. */
 public class ObjArmorFeatureRenderer<S extends BipedEntityRenderState, M extends BipedEntityModel<S>> extends FeatureRenderer<S, M> {
+
+	private static final List<String> PART_GROUPS = List.of("head", "body", "right_arm", "left_arm", "right_leg", "left_leg");
 
 	public ObjArmorFeatureRenderer(FeatureRendererContext<S, M> context) {
 		super(context);
@@ -37,23 +44,56 @@ public class ObjArmorFeatureRenderer<S extends BipedEntityRenderState, M extends
 	@Override
 	public void render(MatrixStack matrices, OrderedRenderCommandQueue queue, int light, S state, float limbAngle, float limbDistance) {
 		M model = this.getContextModel();
-		draw(matrices, queue, light, state.equippedHeadStack, EquipmentSlot.HEAD, model.head);
-		draw(matrices, queue, light, state.equippedChestStack, EquipmentSlot.CHEST, model.body);
-		draw(matrices, queue, light, state.equippedLegsStack, EquipmentSlot.LEGS, model.rightLeg);
-		draw(matrices, queue, light, state.equippedLegsStack, EquipmentSlot.LEGS, model.leftLeg);
-		draw(matrices, queue, light, state.equippedFeetStack, EquipmentSlot.FEET, model.rightLeg);
-		draw(matrices, queue, light, state.equippedFeetStack, EquipmentSlot.FEET, model.leftLeg);
+		draw(matrices, queue, light, model, state.equippedHeadStack, EquipmentSlot.HEAD);
+		draw(matrices, queue, light, model, state.equippedChestStack, EquipmentSlot.CHEST);
+		draw(matrices, queue, light, model, state.equippedLegsStack, EquipmentSlot.LEGS);
+		draw(matrices, queue, light, model, state.equippedFeetStack, EquipmentSlot.FEET);
 	}
 
-	private static void draw(MatrixStack matrices, OrderedRenderCommandQueue queue, int light, ItemStack stack, EquipmentSlot slot, ModelPart part) {
+	private static void draw(MatrixStack matrices, OrderedRenderCommandQueue queue, int light, BipedEntityModel<?> model, ItemStack stack,
+			EquipmentSlot slot) {
 		if (stack == null || !(stack.getItem() instanceof ArmorItem)) {
 			return;
 		}
 		ArmorDefinition def = ModDefinitions.ARMOR.getAny(stack.get(ModComponents.ARMOR));
-		if (def == null || def.slot() != slot || def.model().isEmpty() || def.texture().isEmpty() || !part.visible) {
+		if (def == null || def.slot() != slot || def.model().isEmpty() || def.texture().isEmpty()) {
 			return;
 		}
-		if (slot == EquipmentSlot.HEAD && def.equipmentAsset().isEmpty()) {
+		ObjModel obj = ObjModelLoader.get(def.model().get()).orElse(null);
+		Set<String> groups = obj != null ? obj.getGroupNames() : Set.of();
+		boolean split = PART_GROUPS.stream().anyMatch(groups::contains);
+		if (split) {
+			for (String group : PART_GROUPS) {
+				if (groups.contains(group)) {
+					drawOn(matrices, queue, light, def, part(model, group), group);
+				}
+			}
+			return;
+		}
+		switch (slot) {
+			case HEAD -> drawOn(matrices, queue, light, def, model.head, null);
+			case CHEST -> drawOn(matrices, queue, light, def, model.body, null);
+			default -> {
+				drawOn(matrices, queue, light, def, model.rightLeg, null);
+				drawOn(matrices, queue, light, def, model.leftLeg, null);
+			}
+		}
+	}
+
+	private static ModelPart part(BipedEntityModel<?> model, String group) {
+		return switch (group) {
+			case "head" -> model.head;
+			case "body" -> model.body;
+			case "right_arm" -> model.rightArm;
+			case "left_arm" -> model.leftArm;
+			case "right_leg" -> model.rightLeg;
+			default -> model.leftLeg;
+		};
+	}
+
+	/** The whole model (group null) or one group, in part's space. */
+	private static void drawOn(MatrixStack matrices, OrderedRenderCommandQueue queue, int light, ArmorDefinition def, ModelPart part, String group) {
+		if (!part.visible) {
 			return;
 		}
 		matrices.push();
@@ -61,7 +101,12 @@ public class ObjArmorFeatureRenderer<S extends BipedEntityRenderState, M extends
 		// Model space is upside down and facing -Z; turn it to +Y up, +Z forward.
 		matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(180f));
 		WeaponModelDrawer.applyTransform(matrices, def.worn());
-		WeaponModelDrawer.drawObj(queue, matrices, def.model().get(), def.texture().get(), Set.of(), light, OverlayTexture.DEFAULT_UV);
+		if (group == null) {
+			WeaponModelDrawer.drawObj(queue, matrices, def.model().get(), def.texture().get(), Set.of(), light, OverlayTexture.DEFAULT_UV);
+		} else {
+			WeaponModelDrawer.drawGroups(queue, matrices, def.model().get(), def.texture().get(), List.of(group), Set.of(), light,
+					OverlayTexture.DEFAULT_UV);
+		}
 		matrices.pop();
 	}
 }

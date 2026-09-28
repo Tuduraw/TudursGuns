@@ -10,10 +10,9 @@
     "blast": 0.1,
     "headshot": 0.6
   },
-  "equipment_asset": "tudursguns:combat_helmet",
   "item_model": "tudursguns:nvg_helmet",
-  "model": "tudursguns:models/obj/nvg_goggles.obj",
-  "texture": "tudursguns:textures/handheld/weapons.png",
+  "model": "tudursguns:models/obj/nvg_helmet.obj",
+  "texture": "tudursguns:textures/armor/tg_armor.png",
   "effects": {
     "night_vision": true
   }

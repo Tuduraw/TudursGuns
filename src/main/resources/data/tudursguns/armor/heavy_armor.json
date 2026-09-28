@@ -11,6 +11,7 @@
     "ballistic": 0.55,
     "blast": 0.35
   },
-  "equipment_asset": "tudursguns:heavy_armor",
-  "item_model": "tudursguns:heavy_armor"
+  "item_model": "tudursguns:heavy_armor",
+  "model": "tudursguns:models/obj/heavy_armor.obj",
+  "texture": "tudursguns:textures/armor/tg_armor.png"
 }
