@@ -1,5 +1,6 @@
 {
   "slot": "head",
+  "soldier_weight": 5,
   "display_name": "Gas Mask",
   "armor": 1,
   "durability": 200,

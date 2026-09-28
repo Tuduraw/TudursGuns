@@ -6,6 +6,7 @@ import com.example.tudursguns.item.HandheldWeaponItem;
 import com.example.tudursguns.mixin.AbstractVehicleEntityAccessor;
 import com.example.tudursguns.registry.ModBlockEntities;
 import com.example.tudursguns.registry.ModComponents;
+import com.example.tudursguns.soldier.FriendlySoldierEntity;
 import com.example.tudursguns.weapon.EquipmentActions;
 import com.example.tudursguns.weapon.Firing;
 import com.example.tudursguns.weapon.HandheldCombat;
@@ -28,7 +29,9 @@ import net.minecraft.world.World;
  *   lowered (HandheldCombat.isInAction).
  * - Stationary vehicles within VEHICLE_RADIUS get one step of Tudur's Vehicle Mod's own ammo supply
  *   (the same step its supply vehicles apply - magazine, then reserve, 10% at a time). Fuel and
- *   repairs are not an ammo box's job. */
+ *   repairs are not an ammo box's job.
+ * - Soldier posts' soldiers within VEHICLE_RADIUS that aren't fighting get their weapon filled (they
+ *   go back to their post when their magazine is empty - put a box beside the post). */
 public class AmmoBoxBlockEntity extends BlockEntity {
 
 	private static final int INTERVAL_TICKS = 20;
@@ -59,6 +62,10 @@ public class AmmoBoxBlockEntity extends BlockEntity {
 				new Box(this.getPos()).expand(VEHICLE_RADIUS),
 				vehicle -> EquipmentActions.isSuppliable(vehicle) && vehicle.squaredDistanceTo(center) <= VEHICLE_RADIUS * VEHICLE_RADIUS)) {
 			((AbstractVehicleEntityAccessor) vehicle).tudursguns$receiveAmmoSupply();
+		}
+		for (FriendlySoldierEntity soldier : world.getEntitiesByClass(FriendlySoldierEntity.class, new Box(this.getPos()).expand(VEHICLE_RADIUS),
+				soldier -> soldier.getTarget() == null && soldier.squaredDistanceTo(center) <= VEHICLE_RADIUS * VEHICLE_RADIUS)) {
+			refill(soldier.getMainHandStack());
 		}
 	}
 

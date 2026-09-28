@@ -1,5 +1,6 @@
 package com.example.tudursguns.network;
 
+import com.example.tudursguns.block.SoldierPostBlockEntity;
 import com.example.tudursguns.handheld.DefinitionSet;
 import com.example.tudursguns.handheld.HandheldDefinition;
 import com.example.tudursguns.handheld.ModDefinitions;
@@ -16,6 +17,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
+import net.minecraft.util.math.Vec3d;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +37,8 @@ public final class ModNetworking {
 		PayloadTypeRegistry.playS2C().register(SyncDefinitionsPayload.ID, SyncDefinitionsPayload.CODEC);
 		PayloadTypeRegistry.playS2C().register(RecoilPayload.ID, RecoilPayload.CODEC);
 		PayloadTypeRegistry.playC2S().register(SwitchUnderbarrelRequestPayload.ID, SwitchUnderbarrelRequestPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(SoldierRoutePayload.ID, SoldierRoutePayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(SoldierRoutePayload.ID, SoldierRoutePayload.CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(AimKeyPayload.ID, (payload, context) ->
 				context.server().execute(() -> {
@@ -79,7 +83,20 @@ public final class ModNetworking {
 						HandheldCombat.cycleMode(player, held.stack(), held.stats());
 					}
 				}));
+
+		ServerPlayNetworking.registerGlobalReceiver(SoldierRoutePayload.ID, (payload, context) ->
+				context.server().execute(() -> {
+					ServerPlayerEntity player = context.player();
+					if (player.squaredDistanceTo(Vec3d.ofCenter(payload.pos())) <= SOLDIER_POST_REACH * SOLDIER_POST_REACH
+							&& player.getEntityWorld().getBlockEntity(payload.pos()) instanceof SoldierPostBlockEntity post) {
+						post.setRoute(payload.route(), payload.engageRange());
+						player.openHandledScreen(post);
+					}
+				}));
 	}
+
+	/** How near a soldier post a player must be to save its route. */
+	private static final double SOLDIER_POST_REACH = 8.0;
 
 	/** base: the weapon's own definition; definition/stats: what it fires right now (see Firing). */
 	private record HeldWeapon(ItemStack stack, HandheldDefinition base, HandheldDefinition definition, WeaponStats stats) {

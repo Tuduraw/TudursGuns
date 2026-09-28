@@ -1,5 +1,6 @@
 {
   "slot": "head",
+  "soldier_weight": 3,
   "display_name": "Helmet with Night Vision Goggles",
   "armor": 2,
   "toughness": 1,

@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "tudursguns:block/soldier_post_top",
+    "bottom": "tudursguns:block/soldier_post_bottom",
+    "side": "tudursguns:block/soldier_post_side",
+    "particle": "tudursguns:block/soldier_post_side"
+  }
+}

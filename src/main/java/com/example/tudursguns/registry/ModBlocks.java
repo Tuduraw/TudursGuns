@@ -3,6 +3,7 @@ package com.example.tudursguns.registry;
 import com.example.tudursguns.TudursGuns;
 import com.example.tudursguns.block.AmmoBoxBlock;
 import com.example.tudursguns.block.ScreenBlock;
+import com.example.tudursguns.block.SoldierPostBlock;
 import com.example.tudursguns.screen.GunCraftingScreenHandler;
 import com.example.tudursguns.screen.WeaponWorkbenchScreenHandler;
 import net.minecraft.block.AbstractBlock;
@@ -30,6 +31,8 @@ public final class ModBlocks {
 	public static Item GUN_CRAFTING_TABLE_ITEM;
 	public static Block AMMO_BOX;
 	public static Item AMMO_BOX_ITEM;
+	public static Block SOLDIER_POST;
+	public static Item SOLDIER_POST_ITEM;
 
 	public static void register() {
 		WEAPON_WORKBENCH = block("weapon_workbench", settings -> new ScreenBlock(settings,
@@ -40,6 +43,8 @@ public final class ModBlocks {
 		GUN_CRAFTING_TABLE_ITEM = blockItem("gun_crafting_table", GUN_CRAFTING_TABLE);
 		AMMO_BOX = block("ammo_box", AmmoBoxBlock::new, AbstractBlock.Settings.create().mapColor(MapColor.OAK_TAN).strength(2.5f));
 		AMMO_BOX_ITEM = blockItem("ammo_box", AMMO_BOX);
+		SOLDIER_POST = block("soldier_post", SoldierPostBlock::new, metal());
+		SOLDIER_POST_ITEM = blockItem("soldier_post", SOLDIER_POST);
 	}
 
 	private static AbstractBlock.Settings metal() {

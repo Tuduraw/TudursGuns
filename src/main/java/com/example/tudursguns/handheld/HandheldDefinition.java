@@ -76,9 +76,10 @@ public record HandheldDefinition(
 	 * icon: a flat picture shown in inventories instead of the model (a PNG, e.g.
 	 *   "ns:textures/vehicle/icons/rifle.png").
 	 * ammo: an ammo definition (data/<ns>/ammo/) to reload from - a magazine item giving its own
-	 *   number of rounds. Takes the place of ammo_item / rounds_per_ammo_item. */
+	 *   number of rounds. Takes the place of ammo_item / rounds_per_ammo_item.
+	 * soldier_weight: how often enemy soldiers carry it, relative to other weapons (0 = never). */
 	public record Handling(HeldMovement movement, float recoil, Optional<Float> recoilSneaking, float adsSpreadMultiplier,
-			int pellets, int burstCount, float meleeDamage, Optional<Identifier> icon, Optional<Identifier> ammo) {
+			int pellets, int burstCount, float meleeDamage, Optional<Identifier> icon, Optional<Identifier> ammo, int soldierWeight) {
 
 		public static final MapCodec<Handling> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
 				HeldMovement.MAP_CODEC.forGetter(Handling::movement),
@@ -89,13 +90,14 @@ public record HandheldDefinition(
 				Codec.intRange(1, 100).optionalFieldOf("burst_count", 3).forGetter(Handling::burstCount),
 				Codec.floatRange(0f, 10000f).optionalFieldOf("melee_damage", 0f).forGetter(Handling::meleeDamage),
 				Identifier.CODEC.optionalFieldOf("icon").forGetter(Handling::icon),
-				Identifier.CODEC.optionalFieldOf("ammo").forGetter(Handling::ammo)
+				Identifier.CODEC.optionalFieldOf("ammo").forGetter(Handling::ammo),
+				Codec.intRange(0, 10000).optionalFieldOf("soldier_weight", 0).forGetter(Handling::soldierWeight)
 		).apply(instance, Handling::new));
 
 		/** The same, reloading from something else (an underbarrel launcher has its own ammo). */
 		public Handling withoutAmmo() {
 			return new Handling(this.movement, this.recoil, this.recoilSneaking, this.adsSpreadMultiplier, this.pellets,
-					this.burstCount, this.meleeDamage, this.icon, Optional.empty());
+					this.burstCount, this.meleeDamage, this.icon, Optional.empty(), 0);
 		}
 
 		public float recoilFor(boolean sneaking) {

@@ -9,7 +9,10 @@ import com.example.tudursguns.client.render.MineEntityRenderer;
 import com.example.tudursguns.client.render.ObjArmorFeatureRenderer;
 import com.example.tudursguns.client.render.ObjDefinedItemRenderer;
 import com.example.tudursguns.client.render.ObjHandheldModelRenderer;
+import com.example.tudursguns.client.render.SoldierRenderer;
 import com.example.tudursguns.client.screen.GunCraftingScreen;
+import com.example.tudursguns.client.screen.SoldierPostScreen;
+import com.example.tudursguns.client.screen.SoldierRouteScreen;
 import com.example.tudursguns.client.screen.WeaponWorkbenchScreen;
 import com.example.tudursguns.handheld.DefinitionSet;
 import com.example.tudursguns.handheld.ModDefinitions;
@@ -18,6 +21,7 @@ import com.example.tudursguns.network.LockStatePayload;
 import com.example.tudursguns.network.PlayerAimPayload;
 import com.example.tudursguns.network.RecoilPayload;
 import com.example.tudursguns.network.ReloadRequestPayload;
+import com.example.tudursguns.network.SoldierRoutePayload;
 import com.example.tudursguns.network.SwitchModeRequestPayload;
 import com.example.tudursguns.network.SwitchUnderbarrelRequestPayload;
 import com.example.tudursguns.network.SyncDefinitionsPayload;
@@ -72,6 +76,10 @@ public class TudursGunsClient implements ClientModInitializer {
 		EntityRendererRegistry.register(ModEntityTypes.SMOKE_DECOY, InvisibleEntityRenderer::new);
 		EntityRendererRegistry.register(ModEntityTypes.LASER_SPOT, InvisibleEntityRenderer::new);
 		EntityRendererRegistry.register(ModEntityTypes.MINE, MineEntityRenderer::new);
+		EntityRendererRegistry.register(ModEntityTypes.SOLDIER,
+				context -> new SoldierRenderer<>(context, Identifier.of(TudursGuns.MOD_ID, "textures/entity/soldier.png")));
+		EntityRendererRegistry.register(ModEntityTypes.ENEMY_SOLDIER,
+				context -> new SoldierRenderer<>(context, Identifier.of(TudursGuns.MOD_ID, "textures/entity/enemy_soldier.png")));
 		for (ObjDefinedItemRenderer.Kind kind : ObjDefinedItemRenderer.Kind.values()) {
 			SpecialModelTypes.ID_MAPPER.put(kind.typeId, kind.codec);
 		}
@@ -83,6 +91,9 @@ public class TudursGunsClient implements ClientModInitializer {
 		});
 		HandledScreens.register(ModScreenHandlers.WEAPON_WORKBENCH, WeaponWorkbenchScreen::new);
 		HandledScreens.register(ModScreenHandlers.GUN_CRAFTING, GunCraftingScreen::new);
+		HandledScreens.register(ModScreenHandlers.SOLDIER_POST, SoldierPostScreen::new);
+		ClientPlayNetworking.registerGlobalReceiver(SoldierRoutePayload.ID, (payload, context) ->
+				context.client().execute(() -> context.client().setScreen(new SoldierRouteScreen(payload))));
 
 		ClientPlayNetworking.registerGlobalReceiver(SyncDefinitionsPayload.ID, (payload, context) ->
 				context.client().execute(() -> {

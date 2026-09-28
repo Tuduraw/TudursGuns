@@ -61,6 +61,11 @@ public final class HandheldCombat {
 			WeaponType.AA_MISSILE, WeaponType.AT_MISSILE, WeaponType.MISSILE,
 			WeaponType.TV_MISSILE, WeaponType.DISPENSER);
 
+	/** Whether a handheld weapon can fire this weapon type at all. */
+	public static boolean isSupported(WeaponType type) {
+		return SUPPORTED_TYPES.contains(type);
+	}
+
 	/** Weapon types that must complete a lock before firing (same rule as on a vehicle). */
 	public static boolean requiresLock(WeaponType type) {
 		return type == WeaponType.AA_MISSILE || type == WeaponType.AT_MISSILE || type == WeaponType.MISSILE;

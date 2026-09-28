@@ -4,6 +4,7 @@
   "texture": "tudursguns:textures/handheld/sample_weapons.png",
   "ammo_item": "minecraft:tnt",
   "fire_mode": "semi",
+  "soldier_weight": 2,
   "muzzle_offset": [
     0.0,
     0.0,

@@ -6,6 +6,7 @@
   "ammo_item": "minecraft:iron_nugget",
   "rounds_per_ammo_item": 1,
   "fire_mode": "semi",
+  "soldier_weight": 5,
   "muzzle_offset": [
     0.0,
     -0.05,

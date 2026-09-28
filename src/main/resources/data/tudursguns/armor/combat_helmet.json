@@ -1,5 +1,6 @@
 {
   "slot": "head",
+  "soldier_weight": 20,
   "display_name": "Combat Helmet",
   "armor": 2,
   "toughness": 1,

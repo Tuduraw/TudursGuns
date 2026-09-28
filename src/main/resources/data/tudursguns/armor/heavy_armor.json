@@ -1,5 +1,6 @@
 {
   "slot": "chest",
+  "soldier_weight": 2,
   "display_name": "Heavy Armor",
   "armor": 8,
   "toughness": 3,

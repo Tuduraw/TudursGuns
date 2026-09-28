@@ -27,7 +27,8 @@ public record ArmorDefinition(
 		Optional<Identifier> texture,
 		Map<ItemDisplayContext, HandheldDefinition.DisplayTransform> display,
 		HandheldDefinition.DisplayTransform worn,
-		Effects effects
+		Effects effects,
+		int soldierWeight
 ) {
 
 	public static final Codec<ArmorDefinition> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -45,7 +46,8 @@ public record ArmorDefinition(
 			Identifier.CODEC.optionalFieldOf("texture").forGetter(ArmorDefinition::texture),
 			DefinitionCodecs.DISPLAY.forGetter(ArmorDefinition::display),
 			HandheldDefinition.DisplayTransform.CODEC.optionalFieldOf("worn", HandheldDefinition.DisplayTransform.IDENTITY).forGetter(ArmorDefinition::worn),
-			Effects.CODEC.optionalFieldOf("effects", Effects.NONE).forGetter(ArmorDefinition::effects)
+			Effects.CODEC.optionalFieldOf("effects", Effects.NONE).forGetter(ArmorDefinition::effects),
+			Codec.intRange(0, 10000).optionalFieldOf("soldier_weight", 0).forGetter(ArmorDefinition::soldierWeight)
 	).apply(instance, ArmorDefinition::new));
 
 	public record Protection(float ballistic, float blast, float headshot) {

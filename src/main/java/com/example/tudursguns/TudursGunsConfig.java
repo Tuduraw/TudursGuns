@@ -28,6 +28,29 @@ public final class TudursGunsConfig {
 		float headshot_multiplier = 1.5f;
 		/** Headshots only for players (true), or for every creature (false). */
 		boolean headshots_players_only = false;
+
+		/** Enemy soldiers spawn naturally (in the dark, where monsters do). */
+		public boolean enemy_soldier_natural_spawn = true;
+		/** Spawn weight among monsters (a zombie is 100). */
+		public int enemy_soldier_spawn_weight = 15;
+		/** Group size of a natural spawn. */
+		public int enemy_soldier_group_min = 1;
+		public int enemy_soldier_group_max = 3;
+		/** Weight of "nothing" when an enemy soldier's armor is picked, per slot (against the armor's
+		 * own soldier_weight values). */
+		public int enemy_soldier_no_armor_weight = 40;
+		/** Chance each piece of an enemy soldier's gear drops when it's killed by a player. */
+		public float enemy_soldier_drop_chance = 0.05f;
+		/** Distance enemy soldiers engage at. */
+		public float enemy_soldier_engage_range = 32f;
+
+		/** Food (hunger points) a post's soldier eats per minute: waiting, patrolling, fighting. */
+		public float soldier_food_idle = 1f;
+		public float soldier_food_patrol = 2f;
+		public float soldier_food_combat = 4f;
+		/** Ticks before a post sends a new soldier after one is killed, and the food that costs. */
+		public int soldier_respawn_ticks = 600;
+		public float soldier_respawn_food = 10f;
 	}
 
 	public static void load() {
@@ -41,6 +64,17 @@ public final class TudursGunsConfig {
 				}
 			}
 			data.headshot_multiplier = Math.max(1f, Math.min(10f, data.headshot_multiplier));
+			data.enemy_soldier_spawn_weight = Math.max(0, data.enemy_soldier_spawn_weight);
+			data.enemy_soldier_group_min = Math.max(1, data.enemy_soldier_group_min);
+			data.enemy_soldier_group_max = Math.max(data.enemy_soldier_group_min, data.enemy_soldier_group_max);
+			data.enemy_soldier_no_armor_weight = Math.max(0, data.enemy_soldier_no_armor_weight);
+			data.enemy_soldier_drop_chance = Math.max(0f, Math.min(1f, data.enemy_soldier_drop_chance));
+			data.enemy_soldier_engage_range = Math.max(4f, Math.min(128f, data.enemy_soldier_engage_range));
+			data.soldier_food_idle = Math.max(0f, data.soldier_food_idle);
+			data.soldier_food_patrol = Math.max(0f, data.soldier_food_patrol);
+			data.soldier_food_combat = Math.max(0f, data.soldier_food_combat);
+			data.soldier_respawn_ticks = Math.max(0, data.soldier_respawn_ticks);
+			data.soldier_respawn_food = Math.max(0f, data.soldier_respawn_food);
 			Files.createDirectories(PATH.getParent());
 			try (Writer writer = Files.newBufferedWriter(PATH, StandardCharsets.UTF_8)) {
 				GSON.toJson(data, writer);
@@ -56,5 +90,9 @@ public final class TudursGunsConfig {
 
 	public static boolean headshotsPlayersOnly() {
 		return data.headshots_players_only;
+	}
+
+	public static Data get() {
+		return data;
 	}
 }
