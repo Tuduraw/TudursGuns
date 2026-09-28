@@ -120,6 +120,7 @@
   "gui.tudursguns.soldier_post.respawn": "再出撃まで %s秒",
   "gui.tudursguns.soldier_post.food": "食料: %s / %s",
   "gui.tudursguns.soldier_post.route": "経路: %s 地点",
+  "gui.tudursguns.soldier_post.route_book": "経路: %s 地点 (経路手帳)",
   "gui.tudursguns.soldier_post.engage_range": "交戦距離: %s m",
   "gui.tudursguns.soldier_route.title": "巡回経路",
   "gui.tudursguns.soldier_route.empty": "地点なし - 詰所を警備",

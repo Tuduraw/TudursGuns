@@ -3,16 +3,18 @@ package com.example.tudursguns.client.screen;
 import com.example.tudursguns.block.SoldierPostBlockEntity;
 import com.example.tudursguns.screen.SoldierPostScreenHandler;
 import com.example.tudursguns.soldier.SoldierState;
+import com.example.tudursvehiclemod.item.ModItems;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 
 import java.util.Locale;
 
-/** Soldier post: armor down the left, the weapon beside it, food on the right; what the soldier is
+/** Soldier post: armor down the left, the weapon and a Drone Route Book beside it, food on the right; what the soldier is
  * doing in the middle; buttons to send it out / stand it down and to edit the route. Drawn with plain
  * rectangles like the other screens - no texture needed. */
 public class SoldierPostScreen extends HandledScreen<SoldierPostScreenHandler> {
@@ -64,6 +66,14 @@ public class SoldierPostScreen extends HandledScreen<SoldierPostScreenHandler> {
 		for (Slot slot : this.handler.slots) {
 			context.fill(this.x + slot.x - 1, this.y + slot.y - 1, this.x + slot.x + 17, this.y + slot.y + 17, SLOT_COLOR);
 		}
+		// A faded route book marks the book slot while it's empty.
+		Slot book = this.handler.slots.get(SoldierPostBlockEntity.BOOK_SLOT);
+		if (!book.hasStack()) {
+			int bookX = this.x + book.x;
+			int bookY = this.y + book.y;
+			context.drawItem(new ItemStack(ModItems.DRONE_ROUTE_BOOK), bookX, bookY);
+			context.fill(bookX, bookY, bookX + 16, bookY + 16, SLOT_COLOR & 0xB0FFFFFF);
+		}
 	}
 
 	@Override
@@ -88,7 +98,9 @@ public class SoldierPostScreen extends HandledScreen<SoldierPostScreenHandler> {
 		line(context, Text.translatable("gui.tudursguns.soldier_post.food", tenths(this.handler.property(SoldierPostBlockEntity.PROPERTY_FOOD_TENTHS)),
 				(int) SoldierPostBlockEntity.MAX_FOOD), y);
 		y += LINE_HEIGHT;
-		line(context, Text.translatable("gui.tudursguns.soldier_post.route", this.handler.property(SoldierPostBlockEntity.PROPERTY_ROUTE_SIZE)), y);
+		boolean fromBook = this.handler.property(SoldierPostBlockEntity.PROPERTY_ROUTE_FROM_BOOK) != 0;
+		line(context, Text.translatable(fromBook ? "gui.tudursguns.soldier_post.route_book" : "gui.tudursguns.soldier_post.route",
+				this.handler.property(SoldierPostBlockEntity.PROPERTY_ROUTE_SIZE)), y);
 		y += LINE_HEIGHT;
 		line(context, Text.translatable("gui.tudursguns.soldier_post.engage_range", this.handler.property(SoldierPostBlockEntity.PROPERTY_ENGAGE_RANGE)), y);
 	}

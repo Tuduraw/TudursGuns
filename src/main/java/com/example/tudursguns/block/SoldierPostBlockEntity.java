@@ -8,6 +8,9 @@ import com.example.tudursguns.screen.SoldierPostScreenHandler;
 import com.example.tudursguns.soldier.FriendlySoldierEntity;
 import com.example.tudursguns.soldier.SoldierState;
 import com.example.tudursguns.soldier.SoldierWaypoint;
+import com.example.tudursvehiclemod.block.DroneRouteBookWaypoint;
+import com.example.tudursvehiclemod.item.DroneRouteBookItem;
+import com.example.tudursvehiclemod.item.ModComponents;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.component.DataComponentTypes;
@@ -33,8 +36,10 @@ import net.minecraft.util.Uuids;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -48,14 +53,19 @@ import java.util.UUID;
  * - A soldier killed (or lost - missing from a loaded chunk it was last seen in) costs its armor
  *   DEATH_WEAR of its durability; the post sends another after soldier_respawn_ticks, for
  *   soldier_respawn_food.
- * - Stood down, the soldier walks back and goes into the post. */
+ * - Stood down, the soldier walks back and goes into the post.
+ * - Route: the post's own, or - while a Drone Route Book (Tudur's Vehicle Mod) is in BOOK_SLOT - the
+ *   book's, like a Drone Center: its absolute points (plus the book's offset) become points relative
+ *   to the post, and editing the route writes them back into the book. The book has no wait times;
+ *   those stay the post's, by point number. Taking the book out keeps its route as the post's own. */
 public class SoldierPostBlockEntity extends BlockEntity implements Inventory, NamedScreenHandlerFactory {
 
 	public static final int WEAPON_SLOT = 0;
 	public static final int ARMOR_SLOT_START = 1;
 	public static final int FOOD_SLOT_START = 5;
 	public static final int FOOD_SLOTS = 6;
-	public static final int SIZE = FOOD_SLOT_START + FOOD_SLOTS;
+	public static final int BOOK_SLOT = FOOD_SLOT_START + FOOD_SLOTS;
+	public static final int SIZE = BOOK_SLOT + 1;
 	/** The soldier's equipment slot for each of the post's weapon and armor slots. */
 	public static final EquipmentSlot[] EQUIPMENT_SLOTS = {EquipmentSlot.MAINHAND, EquipmentSlot.HEAD, EquipmentSlot.CHEST,
 			EquipmentSlot.LEGS, EquipmentSlot.FEET};
@@ -78,11 +88,17 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 	public static final int PROPERTY_HEALTH_TENTHS = 4;
 	public static final int PROPERTY_ENGAGE_RANGE = 5;
 	public static final int PROPERTY_ROUTE_SIZE = 6;
-	public static final int PROPERTY_COUNT = 7;
+	public static final int PROPERTY_ROUTE_FROM_BOOK = 7;
+	public static final int PROPERTY_COUNT = 8;
 
 	private final DefaultedList<ItemStack> items = DefaultedList.ofSize(SIZE, ItemStack.EMPTY);
 	private boolean active;
+	/** The post's own route; with a book in, only its wait times are used. */
 	private List<SoldierWaypoint> route = List.of();
+	/** The book's route as last read (see route()), and the book data it was read from. */
+	private List<SoldierWaypoint> bookRoute = List.of();
+	private String bookRouteData;
+	private BlockPos bookRoutePos;
 	private int engageRange = DEFAULT_ENGAGE_RANGE;
 	private float food;
 	private UUID soldier;
@@ -104,7 +120,8 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 				case PROPERTY_RESPAWN_SECONDS -> (SoldierPostBlockEntity.this.respawnTicks + 19) / 20;
 				case PROPERTY_HEALTH_TENTHS -> Math.round(SoldierPostBlockEntity.this.soldierHealth * 10f);
 				case PROPERTY_ENGAGE_RANGE -> SoldierPostBlockEntity.this.engageRange;
-				case PROPERTY_ROUTE_SIZE -> SoldierPostBlockEntity.this.route.size();
+				case PROPERTY_ROUTE_SIZE -> SoldierPostBlockEntity.this.route().size();
+				case PROPERTY_ROUTE_FROM_BOOK -> hasBook() ? 1 : 0;
 				default -> 0;
 			};
 		}
@@ -137,8 +154,38 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 		return this.food > 0f;
 	}
 
+	/** The route in use, relative to the post: the book's while one is in, else the post's own. */
 	public List<SoldierWaypoint> route() {
-		return this.route;
+		if (!hasBook()) {
+			return this.route;
+		}
+		ItemStack book = this.items.get(BOOK_SLOT);
+		String data = book.get(ModComponents.DRONE_ROUTE_WAYPOINTS) + "|" + book.get(ModComponents.DRONE_ROUTE_OFFSET);
+		if (!data.equals(this.bookRouteData) || !this.getPos().equals(this.bookRoutePos)) {
+			Vec3i offset = DroneRouteBookItem.tudursvehiclemod$getOffset(book);
+			List<SoldierWaypoint> relative = new ArrayList<>();
+			for (DroneRouteBookWaypoint point : DroneRouteBookItem.tudursvehiclemod$getWaypoints(book)) {
+				if (relative.size() >= MAX_WAYPOINTS) {
+					break;
+				}
+				relative.add(new SoldierWaypoint(point.x() + offset.getX() - this.getPos().getX(), point.y() + offset.getY() - this.getPos().getY(),
+						point.z() + offset.getZ() - this.getPos().getZ(), 0).clamped());
+			}
+			this.bookRoute = relative;
+			this.bookRouteData = data;
+			this.bookRoutePos = this.getPos();
+		}
+		List<SoldierWaypoint> withWaits = new ArrayList<>(this.bookRoute.size());
+		for (int i = 0; i < this.bookRoute.size(); i++) {
+			SoldierWaypoint point = this.bookRoute.get(i);
+			int wait = i < this.route.size() ? this.route.get(i).waitTicks() : 0;
+			withWaits.add(new SoldierWaypoint(point.x(), point.y(), point.z(), wait));
+		}
+		return withWaits;
+	}
+
+	private boolean hasBook() {
+		return this.items.get(BOOK_SLOT).getItem() instanceof DroneRouteBookItem;
 	}
 
 	public int engageRange() {
@@ -195,10 +242,28 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 		this.markDirty();
 	}
 
-	/** Route and engage range, brought into range (they come from a client, or a saved world). */
+	/** Route and engage range, brought into range (they come from a client). With a book in, the
+	 * points are written into it (as absolute positions, less its offset); the wait times stay here. */
 	public void setRoute(List<SoldierWaypoint> route, int engageRange) {
 		applyRoute(route, engageRange);
+		if (hasBook()) {
+			ItemStack book = this.items.get(BOOK_SLOT);
+			Vec3i offset = DroneRouteBookItem.tudursvehiclemod$getOffset(book);
+			List<DroneRouteBookWaypoint> absolute = new ArrayList<>();
+			for (SoldierWaypoint point : this.route) {
+				BlockPos at = point.absolute(this.getPos()).subtract(offset);
+				absolute.add(DroneRouteBookWaypoint.createDefault(at.getX(), at.getY(), at.getZ()));
+			}
+			DroneRouteBookItem.tudursvehiclemod$setWaypoints(book, absolute);
+		}
 		this.markDirty();
+	}
+
+	/** Before the book slot changes: the book's route (if any) becomes the post's own. */
+	private void keepBookRoute(int slot) {
+		if (slot == BOOK_SLOT && hasBook()) {
+			this.route = route();
+		}
 	}
 
 	private void applyRoute(List<SoldierWaypoint> route, int engageRange) {
@@ -232,7 +297,7 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 
 	/** Eats from the food slots while there's room in the store. */
 	private void eat() {
-		for (int i = FOOD_SLOT_START; i < SIZE; i++) {
+		for (int i = FOOD_SLOT_START; i < FOOD_SLOT_START + FOOD_SLOTS; i++) {
 			ItemStack stack = this.items.get(i);
 			FoodComponent food = stack.get(DataComponentTypes.FOOD);
 			while (food != null && !stack.isEmpty() && this.food + food.nutrition() <= MAX_FOOD) {
@@ -363,6 +428,7 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 
 	@Override
 	public ItemStack removeStack(int slot, int amount) {
+		keepBookRoute(slot);
 		ItemStack removed = Inventories.splitStack(this.items, slot, amount);
 		if (!removed.isEmpty()) {
 			this.markDirty();
@@ -373,6 +439,7 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 	/** Emptied through split rather than swapped out, so the soldier wearing it loses it too. */
 	@Override
 	public ItemStack removeStack(int slot) {
+		keepBookRoute(slot);
 		ItemStack stack = this.items.get(slot);
 		this.markDirty();
 		return stack.isEmpty() ? ItemStack.EMPTY : stack.split(stack.getCount());
@@ -381,6 +448,9 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 	@Override
 	public void setStack(int slot, ItemStack stack) {
 		// A swapped-out stack stays on the soldier only until its next tick puts the new one on (equip).
+		if (stack != this.items.get(slot)) {
+			keepBookRoute(slot);
+		}
 		this.items.set(slot, stack);
 		this.markDirty();
 	}

@@ -5,6 +5,7 @@ import com.example.tudursguns.item.HandheldWeaponItem;
 import com.example.tudursguns.network.SoldierRoutePayload;
 import com.example.tudursguns.registry.ModBlocks;
 import com.example.tudursguns.registry.ModScreenHandlers;
+import com.example.tudursvehiclemod.item.DroneRouteBookItem;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.EquippableComponent;
@@ -22,7 +23,8 @@ import net.minecraft.screen.slot.Slot;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 /** Soldier post: the weapon slot, four armor slots, the food slots, and (through the property
- * delegate) what the soldier is up to. Buttons: BUTTON_TOGGLE sends the soldier out / stands it
+ * delegate) what the soldier is up to, and a slot for a Drone Route Book (the route then comes
+ * from it - see SoldierPostBlockEntity). Buttons: BUTTON_TOGGLE sends the soldier out / stands it
  * down; BUTTON_ROUTE swaps this screen for the route editor (SoldierRoutePayload). */
 public class SoldierPostScreenHandler extends ScreenHandler {
 
@@ -32,6 +34,7 @@ public class SoldierPostScreenHandler extends ScreenHandler {
 	public static final int ARMOR_X = 8;
 	public static final int WEAPON_X = 30;
 	public static final int WEAPON_Y = 45;
+	public static final int BOOK_Y = 72;
 	public static final int FOOD_X = 140;
 	public static final int TOP_Y = 18;
 	public static final int PLAYER_INVENTORY_Y = 100;
@@ -82,6 +85,17 @@ public class SoldierPostScreenHandler extends ScreenHandler {
 				}
 			});
 		}
+		this.addSlot(new Slot(inventory, SoldierPostBlockEntity.BOOK_SLOT, WEAPON_X, BOOK_Y) {
+			@Override
+			public boolean canInsert(ItemStack stack) {
+				return stack.getItem() instanceof DroneRouteBookItem;
+			}
+
+			@Override
+			public int getMaxItemCount() {
+				return 1;
+			}
+		});
 		this.addPlayerSlots(playerInventory, 8, PLAYER_INVENTORY_Y);
 		this.addProperties(properties);
 	}

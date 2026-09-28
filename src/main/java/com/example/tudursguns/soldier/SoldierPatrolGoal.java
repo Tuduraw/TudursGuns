@@ -93,7 +93,8 @@ public class SoldierPatrolGoal extends Goal {
 		SoldierWaypoint point = route.get(this.index);
 		Vec3d target = Vec3d.ofBottomCenter(point.absolute(post.getPos()));
 		long now = this.soldier.getEntityWorld().getTime();
-		if (horizontalDistance(target) <= ARRIVE_DISTANCE && Math.abs(target.y - this.soldier.getY()) < 3.0) {
+		// Height is ignored: a point recorded in the air (a route book made for drones) is reached below it.
+		if (horizontalDistance(target) <= ARRIVE_DISTANCE) {
 			this.soldier.getNavigation().stop();
 			if (this.waitUntil < 0) {
 				this.waitUntil = now + point.waitTicks();
