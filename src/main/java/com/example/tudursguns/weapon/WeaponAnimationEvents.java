@@ -6,9 +6,8 @@ import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.registry.ModComponents;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.world.World;
 
 import java.util.HashMap;
@@ -35,12 +34,12 @@ public final class WeaponAnimationEvents {
 
 	private static final int EMPTY_REPEAT_TICKS = 10;
 
-	public static void trigger(PlayerEntity player, ItemStack stack, String event) {
+	public static void trigger(LivingEntity player, ItemStack stack, String event) {
 		trigger(player, stack, event, 0);
 	}
 
 	/** Records event on the stack; its sequence's sounds play from the player at their ticks. */
-	public static void trigger(PlayerEntity player, ItemStack stack, String event, int duration) {
+	public static void trigger(LivingEntity player, ItemStack stack, String event, int duration) {
 		World world = player.getEntityWorld();
 		HandheldDefinition def = ModDefinitions.HANDHELD.getServer(stack.get(ModComponents.WEAPON));
 		if (def == null || def.animation().isEmpty()) {
@@ -54,10 +53,10 @@ public final class WeaponAnimationEvents {
 			return;
 		}
 		AnimationDefinition.Sequence sequence = animation.sequences().get(event);
-		if (player instanceof ServerPlayerEntity serverPlayer && sequence != null) {
+		if (!world.isClient() && sequence != null) {
 			double scale = sequence.timeScale(duration);
 			for (AnimationDefinition.SoundCue cue : sequence.sounds()) {
-				PlayerTasks.schedule(serverPlayer, Math.round(cue.tick() * scale), target ->
+				DelayedTasks.schedule(player, Math.round(cue.tick() * scale), target ->
 						HandheldCombat.playSound(target, cue.sound(), target.getEyePos(), cue.volume(), cue.pitch(), 0.05f));
 			}
 		}

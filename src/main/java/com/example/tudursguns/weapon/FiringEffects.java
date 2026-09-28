@@ -8,11 +8,11 @@ import com.example.tudursvehiclemod.asset.MuzzleFlashConfig;
 import com.example.tudursvehiclemod.asset.WeaponStats;
 import com.example.tudursvehiclemod.asset.WeaponType;
 import com.example.tudursvehiclemod.entity.projectile.VehicleModelProjectileEntity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.particle.DustParticleEffect;
 import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
@@ -44,7 +44,7 @@ public final class FiringEffects {
 	// ---------------------------------------------------------------- events
 
 	/** A shot left the weapon at muzzle. */
-	public static void onFire(ServerPlayerEntity player, Hand hand, HandheldDefinition def, WeaponStats stats,
+	public static void onFire(LivingEntity player, Hand hand, HandheldDefinition def, WeaponStats stats,
 			WeaponModifiers modifiers, Vec3d muzzle) {
 		ServerWorld world = (ServerWorld) player.getEntityWorld();
 		float flashScale = modifiers.muzzleFlashMultiplier();
@@ -69,7 +69,7 @@ public final class FiringEffects {
 	}
 
 	/** A reload started. spent: rounds fired since the magazine was last full. */
-	public static void onReload(ServerPlayerEntity player, ItemStack stack, HandheldDefinition def, WeaponStats stats, int spent) {
+	public static void onReload(LivingEntity player, ItemStack stack, HandheldDefinition def, WeaponStats stats, int spent) {
 		Hand hand = player.getOffHandStack() == stack ? Hand.OFF_HAND : Hand.MAIN_HAND;
 		for (HandheldEffects.Ejection ejection : List.of(cartridge(def, stats), magazine(def, stats))) {
 			if (!ejection.enabled() || ejection.on() != HandheldEffects.Trigger.RELOAD) {
@@ -148,7 +148,7 @@ public final class FiringEffects {
 
 	// ---------------------------------------------------------------- spawning
 
-	private static void spawnFlash(ServerWorld world, ServerPlayerEntity player, HandheldEffects.MuzzleFlash flash, float scale,
+	private static void spawnFlash(ServerWorld world, LivingEntity player, HandheldEffects.MuzzleFlash flash, float scale,
 			Vec3d muzzle) {
 		Vec3d pos = muzzle.add(player.getRotationVec(1.0f).multiply(flash.distance()));
 		if (flash.count() > 0) {
@@ -160,11 +160,11 @@ public final class FiringEffects {
 		}
 	}
 
-	private static void schedule(ServerPlayerEntity player, Hand hand, HandheldDefinition def, HandheldEffects.Ejection ejection,
+	private static void schedule(LivingEntity player, Hand hand, HandheldDefinition def, HandheldEffects.Ejection ejection,
 			int count) {
 		boolean rightSide = ViewSpace.rightSide(player, hand);
 		Vector3f muzzleOffset = new Vector3f(def.muzzleOffset());
-		PlayerTasks.schedule(player, ejection.delay(), target -> eject(target, rightSide, muzzleOffset, ejection, count));
+		DelayedTasks.schedule(player, ejection.delay(), target -> eject(target, rightSide, muzzleOffset, ejection, count));
 	}
 
 	/** Where it comes out when the definition doesn't say: the ejection port (cartridges) or the
@@ -179,7 +179,7 @@ public final class FiringEffects {
 				: new Vector3f(side, muzzleOffset.y() - 0.08f, muzzleOffset.z() * 0.35f);
 	}
 
-	private static void eject(ServerPlayerEntity player, boolean rightSide, Vector3f muzzleOffset, HandheldEffects.Ejection ejection,
+	private static void eject(LivingEntity player, boolean rightSide, Vector3f muzzleOffset, HandheldEffects.Ejection ejection,
 			int count) {
 		ServerWorld world = (ServerWorld) player.getEntityWorld();
 		Vec3d forward = player.getRotationVec(1.0f);

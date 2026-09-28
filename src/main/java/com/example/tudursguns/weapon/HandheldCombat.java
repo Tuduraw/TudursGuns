@@ -19,6 +19,7 @@ import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.AttributeModifierSlot;
 import net.minecraft.component.type.AttributeModifiersComponent;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.player.PlayerEntity;
@@ -117,48 +118,56 @@ public final class HandheldCombat {
 			return false;
 		}
 
-		int mode = stack.getOrDefault(ModComponents.MODE, 0);
-		Vec3d spawnPos = muzzlePosition(player, hand, def);
 		// Aiming with the aim key is a deliberate aim: ads_spread_multiplier applies. A quick shot with
 		// use alone doesn't get it.
 		float spreadDegrees = stats.accuracyDegrees() * modifiers.accuracyMultiplier()
 				* (isAimKeyHeld(player) ? def.handling().adsSpreadMultiplier() : 1f);
-		for (int pellet = 0; pellet < def.handling().pellets(); pellet++) {
-			spawnProjectile(world, player, def, stats, mode, spawnPos, spreadDegrees, lockTarget);
-		}
-		FiringEffects.onFire(player, hand, def, stats, modifiers, spawnPos);
-
+		shoot(player, stack, hand, def, stats, modifiers, muzzlePosition(player, hand, def), player.getRotationVec(1.0f),
+				spreadDegrees, lockTarget, WeaponTargeting.raycastGroundPoint(world, player));
 		NEXT_FIRE_TIME.put(player.getUuid(), now + Math.max(1, stats.cooldownTicks()));
-		stack.set(ModComponents.COOLDOWN_UNTIL, now + Math.max(1, stats.cooldownTicks()));
 		LAST_FIRED.put(player.getUuid(), now);
-		WeaponAnimationEvents.trigger(player, stack, WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.FIRE));
 		float recoil = def.handling().recoilFor(player.isSneaking()) * modifiers.recoilMultiplier();
 		if (recoil > 0f) {
 			float yaw = (world.random.nextFloat() * 2f - 1f) * recoil * 0.25f;
 			ServerPlayNetworking.send(player, new RecoilPayload(recoil, yaw));
 		}
-		if (magazineSize > 0) {
-			int remaining = stack.getOrDefault(Firing.ammoComponent(stack), 0) - 1;
-			stack.set(Firing.ammoComponent(stack), Math.max(0, remaining));
-			if (remaining <= 0) {
-				startReload(player, stack, def, stats, false);
-			}
+		if (magazineSize > 0 && stack.getOrDefault(Firing.ammoComponent(stack), 0) <= 0) {
+			startReload(player, stack, def, stats, false);
 		}
-		playFireSound(player, stats, modifiers, spawnPos);
 		return true;
 	}
 
+	/** One shot, by anyone (a player, a soldier): the projectiles (one per pellet), the muzzle
+	 * effects, the fire animation, the sound, the fire delay recorded on the stack and one round
+	 * taken from the magazine. direction: where it's aimed; groundTarget: the aim point for weapons
+	 * guided to a point (AS missiles, rockets). The caller has checked it can fire. */
+	public static void shoot(LivingEntity shooter, ItemStack stack, Hand hand, HandheldDefinition def, WeaponStats stats,
+			WeaponModifiers modifiers, Vec3d muzzle, Vec3d direction, float spreadDegrees, Entity lockTarget, Vec3d groundTarget) {
+		ServerWorld world = (ServerWorld) shooter.getEntityWorld();
+		int mode = stack.getOrDefault(ModComponents.MODE, 0);
+		for (int pellet = 0; pellet < def.handling().pellets(); pellet++) {
+			spawnProjectile(world, shooter, def, stats, mode, muzzle, direction, spreadDegrees, lockTarget, groundTarget);
+		}
+		FiringEffects.onFire(shooter, hand, def, stats, modifiers, muzzle);
+		stack.set(ModComponents.COOLDOWN_UNTIL, world.getTime() + Math.max(1, stats.cooldownTicks()));
+		WeaponAnimationEvents.trigger(shooter, stack, WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.FIRE));
+		if (modifiers.magazineSize(stats.magazineSize()) > 0) {
+			stack.set(Firing.ammoComponent(stack), Math.max(0, stack.getOrDefault(Firing.ammoComponent(stack), 0) - 1));
+		}
+		playFireSound(shooter, stats, modifiers, muzzle);
+	}
+
 	/** One projectile (one pellet of a shotgun shot): position, spread, guidance, spawn. */
-	private static void spawnProjectile(ServerWorld world, ServerPlayerEntity player, HandheldDefinition def, WeaponStats stats,
-			int mode, Vec3d spawnPos, float spreadDegrees, Entity lockTarget) {
+	private static void spawnProjectile(ServerWorld world, LivingEntity shooter, HandheldDefinition def, WeaponStats stats,
+			int mode, Vec3d spawnPos, Vec3d direction, float spreadDegrees, Entity lockTarget, Vec3d groundTarget) {
 		Item projectileItem = Registries.ITEM.get(def.projectileItem());
-		VehicleProjectileEntity projectile = WeaponProjectileFactory.create(world, player, projectileItem.getDefaultStack(), stats, mode);
+		VehicleProjectileEntity projectile = WeaponProjectileFactory.create(world, shooter, projectileItem.getDefaultStack(), stats, mode);
 
 		projectile.setPosition(spawnPos.x, spawnPos.y, spawnPos.z);
 
-		Vec3d velocity = player.getRotationVec(1.0f).multiply(stats.velocity());
+		Vec3d velocity = direction.normalize().multiply(stats.velocity());
 		if (def.inheritShooterVelocity()) {
-			velocity = velocity.add(player.getVelocity());
+			velocity = velocity.add(shooter.getVelocity());
 		}
 		velocity = WeaponTargeting.applyAccuracySpread(velocity, spreadDegrees, world.random);
 		projectile.setVelocity(velocity);
@@ -166,8 +175,7 @@ public final class HandheldCombat {
 
 		// Guidance - the same per-type setup AbstractVehicleEntity.tryFireWeapon() does.
 		switch (stats.weaponType()) {
-			case AS_MISSILE, MK_ROCKET -> projectile.tudursvehiclemod$setGuidanceTargetPos(
-					WeaponTargeting.raycastGroundPoint(world, player), stats.turnRateDegreesPerTick());
+			case AS_MISSILE, MK_ROCKET -> projectile.tudursvehiclemod$setGuidanceTargetPos(groundTarget, stats.turnRateDegreesPerTick());
 			case AA_MISSILE, AT_MISSILE, MISSILE -> {
 				projectile.tudursvehiclemod$setMissileGuidanceTuning(stats.rigidityTimeTicks(), stats.proximityFuseDist());
 				projectile.tudursvehiclemod$setTopAttack(stats.weaponType() == WeaponType.AT_MISSILE && stats.hasModes() && mode == 1);
@@ -175,14 +183,13 @@ public final class HandheldCombat {
 					projectile.tudursvehiclemod$setGuidanceTargetEntity(lockTarget.getId(), stats.turnRateDegreesPerTick());
 				}
 			}
-			// Mode 0 is steered by the shooter (camera follows the missile); mode 1 homes on the
-			// ground point under the crosshair instead.
+			// Mode 0 is steered by the shooting player (camera follows the missile); mode 1 - and any
+			// other shooter - homes on the ground point aimed at instead.
 			case TV_MISSILE -> {
-				if (stats.hasModes() && mode == 1) {
-					projectile.tudursvehiclemod$setGuidanceTargetPos(
-							WeaponTargeting.raycastGroundPoint(world, player), stats.turnRateDegreesPerTick());
-				} else {
+				if (shooter instanceof ServerPlayerEntity player && !(stats.hasModes() && mode == 1)) {
 					projectile.tudursvehiclemod$setTvControlled(player);
+				} else {
+					projectile.tudursvehiclemod$setGuidanceTargetPos(groundTarget, stats.turnRateDegreesPerTick());
 				}
 			}
 			default -> {
@@ -203,23 +210,25 @@ public final class HandheldCombat {
 	/** Same sound path as a vehicle weapon (WeaponFireSoundPayload, played by Tudur's Vehicle Mod's
 	 * client), sent to everyone tracking the shooter plus the shooter. Attachments can replace the
 	 * sound (a silencer) and scale its volume - which also scales how far it carries - and pitch. */
-	private static void playFireSound(ServerPlayerEntity player, WeaponStats stats, WeaponModifiers modifiers, Vec3d pos) {
+	private static void playFireSound(Entity shooter, WeaponStats stats, WeaponModifiers modifiers, Vec3d pos) {
 		Optional<String> sound = modifiers.soundOverride().isPresent() ? modifiers.soundOverride() : stats.sound();
 		if (sound.isEmpty()) {
 			return;
 		}
-		playSound(player, sound.get(), pos, stats.soundVolume() * modifiers.volumeMultiplier(),
+		playSound(shooter, sound.get(), pos, stats.soundVolume() * modifiers.volumeMultiplier(),
 				stats.soundPitch() * modifiers.pitchMultiplier(), stats.soundPitchRandom());
 	}
 
 	/** Plays a named sound (any .ogg Tudur's Vehicle Mod's sound loader knows) at pos for everyone
-	 * tracking the player plus the player. */
-	public static void playSound(ServerPlayerEntity player, String sound, Vec3d pos, float volume, float pitch, float pitchRandom) {
+	 * tracking the source, plus the source itself if it's a player. */
+	public static void playSound(Entity source, String sound, Vec3d pos, float volume, float pitch, float pitchRandom) {
 		WeaponFireSoundPayload payload = new WeaponFireSoundPayload(sound, pos.x, pos.y, pos.z, volume, pitch, pitchRandom);
-		for (ServerPlayerEntity tracking : PlayerLookup.tracking(player)) {
+		for (ServerPlayerEntity tracking : PlayerLookup.tracking(source)) {
 			ServerPlayNetworking.send(tracking, payload);
 		}
-		ServerPlayNetworking.send(player, payload);
+		if (source instanceof ServerPlayerEntity player) {
+			ServerPlayNetworking.send(player, payload);
+		}
 	}
 
 	/** Plays a named sound at pos for every player within earshot (scaled by volume, like the vehicle
