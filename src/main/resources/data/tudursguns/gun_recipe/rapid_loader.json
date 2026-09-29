@@ -1,0 +1,15 @@
+{
+  "category": "attachments",
+  "result": {
+    "attachment": "tudursguns:rapid_loader"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_nugget",
+      "count": 4
+    },
+    {
+      "item": "minecraft:leather"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+; Sample handheld anti-tank missile launcher - Tudur's Guns.
+; Hold use to lock onto a ground/water-surface target under the crosshair, release to fire once the
+; lock completes. ModeNum = 2: the mode switch key toggles the top-attack profile.
+
+DisplayName = Sample AT Launcher
+Type = ATMissile
+
+Power = 40
+Explosion = 3
+ExplosionBlock = 0
+Acceleration = 2.0
+Gravity = 0.0
+
+Round = 1
+ReloadTime = 80
+Delay = 10
+
+LockTime = 30
+RigidityTime = 7
+ProximityFuseDist = 1.5
+ModeNum = 2
+
+TrajectoryParticle = largesmoke
+Sound = tg_sample_at_launcher
+SoundVolume = 2.0
+ModelBullet = tg_at_missile

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IHI",
+    "BCB",
+    "PPP"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "H": "minecraft:iron_helmet",
+    "B": "minecraft:bread",
+    "C": "minecraft:chest",
+    "P": "#minecraft:planks"
+  },
+  "result": {
+    "id": "tudursguns:soldier_post",
+    "count": 1
+  }
+}

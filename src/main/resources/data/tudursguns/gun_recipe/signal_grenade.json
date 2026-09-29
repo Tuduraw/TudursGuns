@@ -1,0 +1,19 @@
+{
+  "category": "throwables",
+  "result": {
+    "throwable": "tudursguns:signal_grenade",
+    "count": 2
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_nugget"
+    },
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 3
+    },
+    {
+      "item": "minecraft:red_dye"
+    }
+  ]
+}

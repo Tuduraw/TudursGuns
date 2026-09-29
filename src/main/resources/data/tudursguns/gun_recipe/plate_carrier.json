@@ -1,0 +1,19 @@
+{
+  "category": "armor",
+  "result": {
+    "armor": "tudursguns:plate_carrier"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:leather",
+      "count": 4
+    },
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 3
+    },
+    {
+      "tag": "minecraft:wool"
+    }
+  ]
+}

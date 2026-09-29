@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " N ",
+    "IFI",
+    " I "
+  ],
+  "key": {
+    "N": "minecraft:iron_nugget",
+    "I": "minecraft:iron_ingot",
+    "F": "minecraft:fermented_spider_eye"
+  },
+  "result": {
+    "id": "tudursguns:throwable",
+    "count": 2,
+    "components": {
+      "tudursguns:throwable": "tudursguns:tear_gas_grenade"
+    }
+  }
+}

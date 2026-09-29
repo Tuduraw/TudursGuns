@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PGP",
+    "PIP"
+  ],
+  "key": {
+    "P": "#minecraft:planks",
+    "G": "minecraft:gunpowder",
+    "I": "minecraft:iron_ingot"
+  },
+  "result": {
+    "id": "tudursguns:ammo_box",
+    "count": 1
+  }
+}

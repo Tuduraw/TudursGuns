@@ -1,0 +1,27 @@
+; Sample handheld rifle - Tudur's Guns.
+; Same MC Heli directive format as any vehicle weapon; read by Tudur's Vehicle Mod's own
+; WeaponStatsLoader. Referenced by name (tg_sample_rifle) from data/tudursguns/handheld/sample_rifle.json.
+
+DisplayName = Sample Rifle
+Type = MachineGun1
+
+; --- Ballistics ---
+Power = 6.0
+Explosion = 0.0
+Accuracy = 1.5
+Acceleration = 8.0
+Gravity = 0.01
+
+; --- Rate of fire and ammunition ---
+; Round = magazine size, ReloadTime = reload ticks, Delay = ticks between shots (3 = ~6.7 rounds/second).
+Round = 30
+ReloadTime = 50
+Delay = 3
+
+; --- Presentation ---
+; The sound is assets/tudursguns/sounds/tg_sample_rifle.ogg - any assets/<namespace>/sounds/<name>.ogg
+; (or an addon pack's sounds/ folder) can be named here. A missing sound just fires silently.
+Sound = tg_sample_rifle
+SoundVolume = 1.5
+BulletColor = 255, 255, 220, 120
+ModelBullet = tg_rifle_round

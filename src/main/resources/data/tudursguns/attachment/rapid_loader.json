@@ -1,0 +1,102 @@
+{
+  "display_name": "Rapid Loader",
+  "model": "tudursguns:models/obj/rapid_loader.obj",
+  "texture": "tudursguns:textures/handheld/weapons.png",
+  "reload_time_multiplier": 0.3,
+  "display": {
+    "gui": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        20,
+        0,
+        0
+      ],
+      "scale": [
+        4.0,
+        4.0,
+        4.0
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "scale": [
+        2.8,
+        2.8,
+        2.8
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        4.0,
+        4.0,
+        4.0
+      ]
+    },
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.4,
+        0.5
+      ],
+      "scale": [
+        3.2,
+        3.2,
+        3.2
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.4,
+        0.5
+      ],
+      "scale": [
+        3.2,
+        3.2,
+        3.2
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.6,
+        0.4,
+        0.4
+      ],
+      "scale": [
+        4.0,
+        4.0,
+        4.0
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.4,
+        0.4,
+        0.4
+      ],
+      "scale": [
+        4.0,
+        4.0,
+        4.0
+      ]
+    }
+  }
+}

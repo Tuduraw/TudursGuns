@@ -1,0 +1,6 @@
+; Anti-Personnel Mine - Tudur's Guns. Placed charge (data/tudursguns/mine/ap_mine.json).
+
+DisplayName = Anti-Personnel Mine
+Power = 12
+Explosion = 2.0
+ExplosionBlock = 0

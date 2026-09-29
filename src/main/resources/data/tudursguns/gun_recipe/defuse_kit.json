@@ -1,0 +1,18 @@
+{
+  "category": "equipment",
+  "result": {
+    "equipment": "tudursguns:defuse_kit"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:shears"
+    },
+    {
+      "item": "minecraft:leather",
+      "count": 2
+    },
+    {
+      "item": "minecraft:redstone"
+    }
+  ]
+}

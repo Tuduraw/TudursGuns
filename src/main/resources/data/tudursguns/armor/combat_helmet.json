@@ -1,0 +1,16 @@
+{
+  "slot": "head",
+  "soldier_weight": 20,
+  "display_name": "Combat Helmet",
+  "armor": 2,
+  "toughness": 1,
+  "durability": 300,
+  "protection": {
+    "ballistic": 0.15,
+    "blast": 0.1,
+    "headshot": 0.6
+  },
+  "item_model": "tudursguns:combat_helmet",
+  "model": "tudursguns:models/obj/combat_helmet.obj",
+  "texture": "tudursguns:textures/armor/tg_armor.png"
+}

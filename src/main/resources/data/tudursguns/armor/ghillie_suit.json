@@ -1,0 +1,13 @@
+{
+  "slot": "chest",
+  "soldier_weight": 3,
+  "display_name": "Ghillie Suit",
+  "armor": 1,
+  "durability": 150,
+  "item_model": "tudursguns:ghillie_suit",
+  "model": "tudursguns:models/obj/ghillie_suit.obj",
+  "texture": "tudursguns:textures/armor/tg_armor.png",
+  "effects": {
+    "detection_multiplier": 0.35
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "  C",
+    " S ",
+    "R  "
+  ],
+  "key": {
+    "C": "minecraft:copper_ingot",
+    "S": "minecraft:stick",
+    "R": "minecraft:redstone"
+  },
+  "result": {
+    "id": "tudursguns:equipment",
+    "count": 1,
+    "components": {
+      "tudursguns:equipment": "tudursguns:mine_detector"
+    }
+  }
+}

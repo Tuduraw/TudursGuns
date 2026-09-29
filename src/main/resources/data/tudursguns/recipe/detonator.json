@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " R ",
+    "IBI",
+    "III"
+  ],
+  "key": {
+    "R": "minecraft:redstone_torch",
+    "I": "minecraft:iron_ingot",
+    "B": "minecraft:stone_button"
+  },
+  "result": {
+    "id": "tudursguns:equipment",
+    "count": 1,
+    "components": {
+      "tudursguns:equipment": "tudursguns:detonator"
+    }
+  }
+}

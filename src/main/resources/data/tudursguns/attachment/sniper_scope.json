@@ -1,0 +1,107 @@
+{
+  "display_name": "Sniper Scope",
+  "model": "tudursguns:models/obj/sniper_scope.obj",
+  "texture": "tudursguns:textures/handheld/weapons.png",
+  "zoom": {
+    "min": 2.0,
+    "max": 10.0,
+    "default": 4.0,
+    "step": 1.0
+  },
+  "display": {
+    "gui": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        20,
+        90,
+        0
+      ],
+      "scale": [
+        1.6,
+        1.6,
+        1.6
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "scale": [
+        1.1199999999999999,
+        1.1199999999999999,
+        1.1199999999999999
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        0,
+        90,
+        0
+      ],
+      "scale": [
+        1.6,
+        1.6,
+        1.6
+      ]
+    },
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.4,
+        0.5
+      ],
+      "scale": [
+        1.2800000000000002,
+        1.2800000000000002,
+        1.2800000000000002
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.4,
+        0.5
+      ],
+      "scale": [
+        1.2800000000000002,
+        1.2800000000000002,
+        1.2800000000000002
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.6,
+        0.4,
+        0.4
+      ],
+      "scale": [
+        1.6,
+        1.6,
+        1.6
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.4,
+        0.4,
+        0.4
+      ],
+      "scale": [
+        1.6,
+        1.6,
+        1.6
+      ]
+    }
+  }
+}

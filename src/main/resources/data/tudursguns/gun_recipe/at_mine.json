@@ -1,0 +1,22 @@
+{
+  "category": "mines",
+  "result": {
+    "mine": "tudursguns:at_mine"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 5
+    },
+    {
+      "item": "minecraft:heavy_weighted_pressure_plate"
+    },
+    {
+      "item": "minecraft:gunpowder",
+      "count": 2
+    },
+    {
+      "item": "minecraft:tnt"
+    }
+  ]
+}

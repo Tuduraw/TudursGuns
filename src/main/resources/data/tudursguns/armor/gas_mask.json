@@ -1,0 +1,13 @@
+{
+  "slot": "head",
+  "soldier_weight": 5,
+  "display_name": "Gas Mask",
+  "armor": 1,
+  "durability": 200,
+  "item_model": "tudursguns:gas_mask",
+  "model": "tudursguns:models/obj/gas_mask.obj",
+  "texture": "tudursguns:textures/armor/tg_armor.png",
+  "effects": {
+    "gas_protection": true
+  }
+}

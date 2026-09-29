@@ -1,0 +1,104 @@
+{
+  "display_name": "Silencer",
+  "model": "tudursguns:models/obj/silencer.obj",
+  "texture": "tudursguns:textures/handheld/weapons.png",
+  "sound_override": "tg_suppressed_shot",
+  "sound_volume_multiplier": 0.25,
+  "muzzle_flash_multiplier": 0,
+  "display": {
+    "gui": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        20,
+        90,
+        0
+      ],
+      "scale": [
+        1.8,
+        1.8,
+        1.8
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "scale": [
+        1.26,
+        1.26,
+        1.26
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        0,
+        90,
+        0
+      ],
+      "scale": [
+        1.8,
+        1.8,
+        1.8
+      ]
+    },
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.4,
+        0.5
+      ],
+      "scale": [
+        1.4400000000000002,
+        1.4400000000000002,
+        1.4400000000000002
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.4,
+        0.5
+      ],
+      "scale": [
+        1.4400000000000002,
+        1.4400000000000002,
+        1.4400000000000002
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.6,
+        0.4,
+        0.4
+      ],
+      "scale": [
+        1.8,
+        1.8,
+        1.8
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.4,
+        0.4,
+        0.4
+      ],
+      "scale": [
+        1.8,
+        1.8,
+        1.8
+      ]
+    }
+  }
+}

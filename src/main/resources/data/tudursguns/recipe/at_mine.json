@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "IPI",
+    "GTG",
+    "III"
+  ],
+  "key": {
+    "P": "minecraft:heavy_weighted_pressure_plate",
+    "I": "minecraft:iron_ingot",
+    "G": "minecraft:gunpowder",
+    "T": "minecraft:tnt"
+  },
+  "result": {
+    "id": "tudursguns:mine",
+    "count": 1,
+    "components": {
+      "tudursguns:mine": "tudursguns:at_mine"
+    }
+  }
+}

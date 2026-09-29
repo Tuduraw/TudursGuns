@@ -1,0 +1,6 @@
+; Anti-Tank Mine - Tudur's Guns. Placed charge that only vehicles set off (data/tudursguns/mine/at_mine.json).
+
+DisplayName = Anti-Tank Mine
+Power = 60
+Explosion = 4.5
+ExplosionBlock = 1.5

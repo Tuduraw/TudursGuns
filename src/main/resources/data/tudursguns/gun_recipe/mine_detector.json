@@ -1,0 +1,17 @@
+{
+  "category": "equipment",
+  "result": {
+    "equipment": "tudursguns:mine_detector"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:copper_ingot"
+    },
+    {
+      "item": "minecraft:stick"
+    },
+    {
+      "item": "minecraft:redstone"
+    }
+  ]
+}

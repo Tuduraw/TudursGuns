@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "GEG",
+    " H "
+  ],
+  "key": {
+    "G": "minecraft:glass_pane",
+    "E": "minecraft:ender_eye",
+    "H": "minecraft:iron_helmet"
+  },
+  "result": {
+    "id": "tudursguns:armor",
+    "count": 1,
+    "components": {
+      "tudursguns:armor": "tudursguns:nvg_helmet"
+    }
+  }
+}

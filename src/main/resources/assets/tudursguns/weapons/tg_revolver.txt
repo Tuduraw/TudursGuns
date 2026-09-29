@@ -1,0 +1,19 @@
+; Revolver - Tudur's Guns. Six rounds, slow to reload by hand. Attachment: rapid loader.
+
+DisplayName = Revolver
+Type = MachineGun1
+
+Power = 9.0
+Explosion = 0.0
+Accuracy = 1.2
+Acceleration = 5.0
+Gravity = 0.015
+
+Round = 6
+ReloadTime = 100
+Delay = 7
+
+Sound = tg_revolver_shot
+SoundVolume = 2.0
+SoundPitchRandom = 0.08
+ModelBullet = tg_pistol_round

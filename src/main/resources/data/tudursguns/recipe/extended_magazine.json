@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "I",
+    "I",
+    "I"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot"
+  },
+  "result": {
+    "id": "tudursguns:attachment",
+    "count": 1,
+    "components": {
+      "tudursguns:attachment": "tudursguns:extended_magazine"
+    }
+  }
+}

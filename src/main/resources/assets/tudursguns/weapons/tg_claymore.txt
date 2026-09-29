@@ -1,0 +1,6 @@
+; Claymore - Tudur's Guns. Directional charge; its fragments are tg_claymore_fragment.
+
+DisplayName = Claymore
+Power = 4
+Explosion = 1.0
+ExplosionBlock = 0

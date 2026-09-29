@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "particle": "tudursguns:item/throwable"
+  },
+  "gui_light": "front"
+}

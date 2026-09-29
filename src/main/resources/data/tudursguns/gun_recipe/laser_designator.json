@@ -1,0 +1,22 @@
+{
+  "category": "equipment",
+  "result": {
+    "equipment": "tudursguns:laser_designator"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 5
+    },
+    {
+      "item": "minecraft:redstone"
+    },
+    {
+      "item": "minecraft:glass_pane",
+      "count": 2
+    },
+    {
+      "item": "minecraft:diamond"
+    }
+  ]
+}

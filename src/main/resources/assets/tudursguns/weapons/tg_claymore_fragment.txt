@@ -1,0 +1,10 @@
+; Claymore Fragment - Tudur's Guns. Fired in a fan by the claymore.
+
+DisplayName = Claymore Fragment
+Type = MachineGun1
+Power = 7
+Explosion = 0
+Acceleration = 3.0
+Gravity = 0.02
+Accuracy = 2.0
+TimeFuse = 12

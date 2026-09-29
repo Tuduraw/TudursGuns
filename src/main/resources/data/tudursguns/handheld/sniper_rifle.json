@@ -1,0 +1,438 @@
+{
+  "weapon": "tg_sniper_rifle",
+  "model": "tudursguns:models/obj/sniper_rifle.obj",
+  "texture": "tudursguns:textures/handheld/weapons.png",
+  "projectile_item": "minecraft:iron_nugget",
+  "ammo_item": "minecraft:iron_nugget",
+  "rounds_per_ammo_item": 1,
+  "fire_mode": "semi",
+  "soldier_weight": 5,
+  "muzzle_offset": [
+    0.0,
+    -0.05,
+    1.0
+  ],
+  "reload_sound": "tg_reload_bolt",
+  "aim": {
+    "sight_position": [
+      0,
+      0.115,
+      0.03
+    ],
+    "eye_distance": 0.12,
+    "scale": 0.55,
+    "hip_translation": [
+      0.26,
+      -0.3,
+      -0.4
+    ],
+    "hip_rotation": [
+      0,
+      3,
+      0
+    ],
+    "right_arm": {
+      "translation": [
+        -0.2182,
+        -0.8305,
+        -0.5155
+      ],
+      "rotation": [
+        -85,
+        90,
+        0
+      ],
+      "scale": [
+        1.8182,
+        1.8182,
+        1.8182
+      ]
+    },
+    "left_arm": {
+      "translation": [
+        0.2545,
+        -0.7577,
+        -1.3155
+      ],
+      "rotation": [
+        -85,
+        90,
+        0
+      ],
+      "scale": [
+        1.8182,
+        1.8182,
+        1.8182
+      ]
+    }
+  },
+  "attachments": {
+    "optic": {
+      "accepts": {
+        "tudursguns:sniper_scope": {
+          "model": "tudursguns:models/obj/sniper_scope.obj",
+          "transform": {
+            "translation": [
+              0,
+              0.155,
+              -0.04
+            ]
+          },
+          "show_groups": [
+            "scope_mount"
+          ],
+          "hide_groups": [
+            "iron_sight"
+          ]
+        }
+      }
+    },
+    "muzzle": {
+      "accepts": {
+        "tudursguns:silencer": {
+          "model": "tudursguns:models/obj/silencer.obj",
+          "transform": {
+            "translation": [
+              0,
+              0.038,
+              -1.05
+            ]
+          }
+        }
+      }
+    },
+    "magazine": {
+      "accepts": {
+        "tudursguns:extended_magazine": {
+          "model": "tudursguns:models/obj/extended_magazine.obj",
+          "transform": {
+            "translation": [
+              0,
+              -0.02,
+              -0.075
+            ]
+          },
+          "hide_groups": [
+            "magazine"
+          ],
+          "part": "magazine"
+        }
+      }
+    }
+  },
+  "display": {
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.4,
+        0.5
+      ],
+      "scale": [
+        0.8,
+        0.8,
+        0.8
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.4,
+        0.5
+      ],
+      "scale": [
+        0.8,
+        0.8,
+        0.8
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.55,
+        0.3,
+        0.3
+      ],
+      "scale": [
+        0.9,
+        0.9,
+        0.9
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.45,
+        0.3,
+        0.3
+      ],
+      "scale": [
+        0.9,
+        0.9,
+        0.9
+      ]
+    },
+    "gui": {
+      "translation": [
+        0.5,
+        0.5,
+        0.45
+      ],
+      "rotation": [
+        0,
+        90,
+        0
+      ],
+      "scale": [
+        0.55,
+        0.55,
+        0.55
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "scale": [
+        0.45,
+        0.45,
+        0.45
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        0.5,
+        0.45
+      ],
+      "rotation": [
+        0,
+        90,
+        0
+      ],
+      "scale": [
+        0.55,
+        0.55,
+        0.55
+      ]
+    }
+  },
+  "aiming_movement_speed": -0.25,
+  "animation": {
+    "parts": {
+      "root": {
+        "pivot": [
+          0,
+          -0.05,
+          0.3
+        ]
+      },
+      "bolt": {
+        "groups": [
+          "bolt"
+        ],
+        "pivot": [
+          0,
+          0.05,
+          0.07
+        ]
+      },
+      "magazine": {
+        "groups": [
+          "magazine"
+        ]
+      }
+    },
+    "sequences": {
+      "fire": {
+        "tracks": [
+          {
+            "part": "root",
+            "keyframes": [
+              {
+                "tick": 1,
+                "translation": [
+                  0,
+                  0,
+                  0.04
+                ],
+                "rotation": [
+                  6,
+                  0,
+                  0
+                ],
+                "easing": "ease_out"
+              },
+              {
+                "tick": 7
+              }
+            ]
+          },
+          {
+            "part": "bolt",
+            "keyframes": [
+              {
+                "tick": 6
+              },
+              {
+                "tick": 10,
+                "rotation": [
+                  0,
+                  0,
+                  55
+                ]
+              },
+              {
+                "tick": 15,
+                "translation": [
+                  0,
+                  0,
+                  0.12
+                ],
+                "rotation": [
+                  0,
+                  0,
+                  55
+                ]
+              },
+              {
+                "tick": 20,
+                "translation": [
+                  0,
+                  0,
+                  0
+                ],
+                "rotation": [
+                  0,
+                  0,
+                  55
+                ]
+              },
+              {
+                "tick": 24,
+                "rotation": [
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "reload": {
+        "fit_to_event": true,
+        "tracks": [
+          {
+            "part": "root",
+            "keyframes": [
+              {
+                "tick": 5,
+                "rotation": [
+                  0,
+                  0,
+                  25
+                ]
+              },
+              {
+                "tick": 34,
+                "rotation": [
+                  0,
+                  0,
+                  25
+                ]
+              },
+              {
+                "tick": 40
+              }
+            ]
+          },
+          {
+            "part": "magazine",
+            "keyframes": [
+              {
+                "tick": 6
+              },
+              {
+                "tick": 10,
+                "translation": [
+                  0,
+                  -0.2,
+                  0
+                ],
+                "easing": "ease_in"
+              },
+              {
+                "tick": 26,
+                "translation": [
+                  0,
+                  -0.2,
+                  0
+                ]
+              },
+              {
+                "tick": 32,
+                "easing": "ease_out"
+              }
+            ]
+          },
+          {
+            "part": "bolt",
+            "keyframes": [
+              {
+                "tick": 30
+              },
+              {
+                "tick": 34,
+                "rotation": [
+                  0,
+                  0,
+                  55
+                ]
+              },
+              {
+                "tick": 39,
+                "translation": [
+                  0,
+                  0,
+                  0.12
+                ],
+                "rotation": [
+                  0,
+                  0,
+                  55
+                ]
+              },
+              {
+                "tick": 44,
+                "translation": [
+                  0,
+                  0,
+                  0
+                ],
+                "rotation": [
+                  0,
+                  0,
+                  55
+                ]
+              },
+              {
+                "tick": 48,
+                "rotation": [
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "effects": {
+    "cartridge": {
+      "delay": 12
+    },
+    "magazine": false
+  }
+}

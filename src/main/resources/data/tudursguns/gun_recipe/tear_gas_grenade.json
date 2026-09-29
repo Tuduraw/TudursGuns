@@ -1,0 +1,19 @@
+{
+  "category": "throwables",
+  "result": {
+    "throwable": "tudursguns:tear_gas_grenade",
+    "count": 2
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_nugget"
+    },
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 3
+    },
+    {
+      "item": "minecraft:fermented_spider_eye"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " N ",
+    "IDI",
+    " I "
+  ],
+  "key": {
+    "N": "minecraft:iron_nugget",
+    "I": "minecraft:iron_ingot",
+    "D": "minecraft:red_dye"
+  },
+  "result": {
+    "id": "tudursguns:throwable",
+    "count": 2,
+    "components": {
+      "tudursguns:throwable": "tudursguns:signal_grenade"
+    }
+  }
+}

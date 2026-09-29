@@ -1,0 +1,15 @@
+{
+  "category": "equipment",
+  "result": {
+    "equipment": "tudursguns:repair_kit"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 7
+    },
+    {
+      "item": "minecraft:copper_ingot"
+    }
+  ]
+}

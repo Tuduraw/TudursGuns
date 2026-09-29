@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "IGI"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "G": "minecraft:glass_pane"
+  },
+  "result": {
+    "id": "tudursguns:attachment",
+    "count": 1,
+    "components": {
+      "tudursguns:attachment": "tudursguns:sniper_scope"
+    }
+  }
+}

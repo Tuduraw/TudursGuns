@@ -1,0 +1,11 @@
+; Signal Smoke - Tudur's Guns throwable. The throw itself (speed, fuse, cooking) and any
+; non-explosive effect come from data/tudursguns/throwable/*.json; this file is what flies.
+
+DisplayName = Signal Smoke
+Power = 1
+Explosion = 0
+Gravity = 0.05
+Bound = 0.35
+Sound = tg_grenade_throw
+SoundVolume = 0.8
+SoundPitchRandom = 0.1

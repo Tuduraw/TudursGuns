@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "L L",
+    "IWI",
+    "LIL"
+  ],
+  "key": {
+    "L": "minecraft:leather",
+    "I": "minecraft:iron_ingot",
+    "W": "#minecraft:wool"
+  },
+  "result": {
+    "id": "tudursguns:armor",
+    "count": 1,
+    "components": {
+      "tudursguns:armor": "tudursguns:plate_carrier"
+    }
+  }
+}

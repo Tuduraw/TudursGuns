@@ -1,0 +1,12 @@
+{
+  "category": "attachments",
+  "result": {
+    "attachment": "tudursguns:extended_magazine"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 3
+    }
+  ]
+}
