@@ -3,8 +3,8 @@
   "rounds": 15,
   "max_stack": 16,
   "model": "tgsample:models/obj/pistol_magazine.obj",
-  "texture": "tgsample:textures/handheld/pistol_magazine.png",
-  "icon": "tgsample:textures/item/pistol_magazine_icon.png",
+  "texture": "tgsample:textures/vehicle/pistol_magazine.png",
+  "icon": "tgsample:textures/vehicle/pistol_magazine_icon.png",
   "display": {
     "gui": {
       "translation": [

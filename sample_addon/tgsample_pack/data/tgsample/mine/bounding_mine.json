@@ -2,7 +2,7 @@
   "weapon": "tgs_bounding_mine",
   "display_name": "Bounding Mine",
   "model": "tgsample:models/obj/bounding_mine.obj",
-  "texture": "tgsample:textures/handheld/bounding_mine.png",
+  "texture": "tgsample:textures/vehicle/bounding_mine.png",
   "trigger": "proximity",
   "trigger_radius": 1.4,
   "arming_ticks": 60,

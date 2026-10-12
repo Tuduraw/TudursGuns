@@ -5,7 +5,127 @@
   "durability": 200,
   "soldier_weight": 10,
   "knockback_resistance": 0.05,
-  "item_model": "tgsample:knee_pads",
   "model": "tgsample:models/obj/knee_pads.obj",
-  "texture": "tgsample:textures/handheld/knee_pads.png"
+  "texture": "tgsample:textures/vehicle/knee_pads.png",
+  "display": {
+    "gui": {
+      "translation": [
+        0.5281,
+        1.2615,
+        0.7254
+      ],
+      "rotation": [
+        20,
+        -30,
+        0
+      ],
+      "scale": [
+        2.1138,
+        2.1138,
+        2.1138
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.8454,
+        0.4649
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.3211,
+        1.3211,
+        1.3211
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        1.3807,
+        0.4376
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        2.3486,
+        2.3486,
+        2.3486
+      ]
+    },
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.9505,
+        0.511
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.4679,
+        1.4679,
+        1.4679
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.9505,
+        0.511
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.4679,
+        1.4679,
+        1.4679
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.616,
+        1.1106,
+        0.406
+      ],
+      "rotation": [
+        0,
+        -20,
+        0
+      ],
+      "scale": [
+        1.7615,
+        1.7615,
+        1.7615
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.384,
+        1.1106,
+        0.406
+      ],
+      "rotation": [
+        0,
+        20,
+        0
+      ],
+      "scale": [
+        1.7615,
+        1.7615,
+        1.7615
+      ]
+    }
+  }
 }

@@ -2,7 +2,7 @@
   "weapon": "tgs_compact_pistol",
   "display_name": "Compact Pistol",
   "model": "tgsample:models/obj/compact_pistol.obj",
-  "texture": "tgsample:textures/handheld/compact_pistol.png",
+  "texture": "tgsample:textures/vehicle/compact_pistol.png",
   "projectile_item": "minecraft:iron_nugget",
   "ammo": "tgsample:pistol_magazine",
   "fire_mode": "semi",
@@ -193,7 +193,7 @@
       "accepts": {
         "tgsample:compact_suppressor": {
           "model": "tgsample:models/obj/compact_suppressor.obj",
-          "texture": "tgsample:textures/handheld/compact_suppressor.png",
+          "texture": "tgsample:textures/vehicle/compact_suppressor.png",
           "transform": {
             "translation": [
               0,
@@ -209,7 +209,7 @@
       "accepts": {
         "tgsample:red_dot": {
           "model": "tgsample:models/obj/red_dot.obj",
-          "texture": "tgsample:textures/handheld/red_dot.png",
+          "texture": "tgsample:textures/vehicle/red_dot.png",
           "transform": {
             "translation": [
               0,

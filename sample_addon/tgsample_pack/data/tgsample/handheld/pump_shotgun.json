@@ -2,7 +2,7 @@
   "weapon": "tgs_pump_shotgun",
   "display_name": "Pump Shotgun",
   "model": "tgsample:models/obj/pump_shotgun.obj",
-  "texture": "tgsample:textures/handheld/pump_shotgun.png",
+  "texture": "tgsample:textures/vehicle/pump_shotgun.png",
   "projectile_item": "minecraft:iron_nugget",
   "ammo": "tgsample:shotgun_shells",
   "fire_mode": "semi",
@@ -195,7 +195,7 @@
       "accepts": {
         "tgsample:red_dot": {
           "model": "tgsample:models/obj/red_dot.obj",
-          "texture": "tgsample:textures/handheld/red_dot.png",
+          "texture": "tgsample:textures/vehicle/red_dot.png",
           "transform": {
             "translation": [
               0,

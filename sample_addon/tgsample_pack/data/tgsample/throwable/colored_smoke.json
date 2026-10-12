@@ -1,7 +1,7 @@
 {
   "weapon": "tgs_colored_smoke",
   "model": "tgsample:models/obj/colored_smoke.obj",
-  "texture": "tgsample:textures/handheld/colored_smoke.png",
+  "texture": "tgsample:textures/vehicle/colored_smoke.png",
   "display_name": "Red Smoke Grenade",
   "throw_velocity": 1.0,
   "underhand_velocity": 0.45,

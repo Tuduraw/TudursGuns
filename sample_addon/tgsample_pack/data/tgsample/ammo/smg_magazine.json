@@ -3,8 +3,8 @@
   "rounds": 30,
   "max_stack": 16,
   "model": "tgsample:models/obj/smg_magazine.obj",
-  "texture": "tgsample:textures/handheld/smg_magazine.png",
-  "icon": "tgsample:textures/item/smg_magazine_icon.png",
+  "texture": "tgsample:textures/vehicle/smg_magazine.png",
+  "icon": "tgsample:textures/vehicle/smg_magazine_icon.png",
   "display": {
     "gui": {
       "translation": [

@@ -1,7 +1,7 @@
 {
   "display_name": "Compact Suppressor",
   "model": "tgsample:models/obj/compact_suppressor.obj",
-  "texture": "tgsample:textures/handheld/compact_suppressor.png",
+  "texture": "tgsample:textures/vehicle/compact_suppressor.png",
   "sound_override": "tg_suppressed_shot",
   "sound_volume_multiplier": 0.3,
   "muzzle_flash_multiplier": 0,

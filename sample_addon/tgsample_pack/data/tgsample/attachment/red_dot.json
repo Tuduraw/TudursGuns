@@ -1,7 +1,7 @@
 {
   "display_name": "Red Dot Sight",
   "model": "tgsample:models/obj/red_dot.obj",
-  "texture": "tgsample:textures/handheld/red_dot.png",
+  "texture": "tgsample:textures/vehicle/red_dot.png",
   "accuracy_multiplier": 0.9,
   "display": {
     "gui": {

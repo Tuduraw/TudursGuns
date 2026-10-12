@@ -3,8 +3,8 @@
   "rounds": 1,
   "max_stack": 32,
   "model": "tgsample:models/obj/shotgun_shells.obj",
-  "texture": "tgsample:textures/handheld/shotgun_shells.png",
-  "icon": "tgsample:textures/item/shotgun_shells_icon.png",
+  "texture": "tgsample:textures/vehicle/shotgun_shells.png",
+  "icon": "tgsample:textures/vehicle/shotgun_shells_icon.png",
   "display": {
     "gui": {
       "translation": [

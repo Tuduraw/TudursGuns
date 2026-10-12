@@ -224,6 +224,10 @@
 
 どちらも、MODの jar、データパック・リソースパック、`tudursvehiclemod-addons/<pack>/` に置けます。
 
+> **アドオンフォルダ(`tudursvehiclemod-addons/<pack>/`)はリソースパックではありません。** 前提MODとこのMODが読む物(定義、武器ファイル、OBJ、テクスチャ、音、HUD、翻訳)だけが読み込まれます。
+> - テクスチャ(OBJ のテクスチャ、`icon`、スコープの `overlay` など)は、`assets/<namespace>/textures/` の下ならどこに置いても読み込まれます。前提MODだけの場合は `textures/vehicle/` の下に限られるため、その下に置くのが確実です。
+> - バニラのアイテムモデル(`assets/<namespace>/items/`、`models/item/`)と、`equipment_asset` の2D防具は読み込まれません。これらを使う場合はリソースパックにしてください。アドオンフォルダでは、OBJ モデルと `display`、または `icon` を使います。
+
 > 武器ファイル名は全MODで共通の名前として扱われます。他のMODと重ならないよう、接頭辞を付けてください(このMODのサンプルは `tg_`)。
 
 ### 携帯装備定義(JSON)
@@ -571,7 +575,7 @@
 | `durability` | `0` | 耐久値。`0` は壊れない |
 | `protection` | なし | `ballistic` / `blast` / `headshot`(それぞれ 0〜1) |
 | `equipment_asset` | なし | 2Dの見た目(OBJ と併用可)。`assets/<ns>/equipment/<name>.json` と `textures/entity/equipment/humanoid/<name>.png`(脚は `humanoid_leggings`)。バニラの防具と同じ形式 |
-| `item_model` | なし | アイテムのモデル(`assets/<ns>/items/<name>.json`)。ない場合は OBJ モデルをアイテムとして描きます |
+| `item_model` | なし | アイテムのモデル(`assets/<ns>/items/<name>.json`。リソースパックかMODの jar に置く物で、アドオンフォルダからは読み込まれません)。ない場合は OBJ モデルを `display` に従ってアイテムとして描きます |
 | `model` / `texture` / `display` | なし | OBJ の見た目 |
 | `worn` | なし | OBJ の位置の追加の調整(移動・回転・拡大)。モデルを部位の空間で作ってあれば不要です(「防具」の「モデルの座標」を参照) |
 | `effects` | なし | `night_vision`、`gas_protection`、`detection_multiplier` |

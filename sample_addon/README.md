@@ -46,9 +46,7 @@ tgsample_pack/
   assets/tgsample/
     weapons/tgs_*.txt          武器ファイル(前提MODと同じ書式。名前は全MOD共通なので接頭辞 tgs_ を付けています)
     models/obj/*.obj           モデル
-    textures/handheld/*.png    モデルのテクスチャ
-    textures/item/*.png        防具と弾薬のインベントリ用の画像
-    items/, models/item/       防具のアイテムモデル
+    textures/vehicle/*.png      モデルのテクスチャと、弾薬のインベントリ用の画像
   data/tgsample/
     handheld/ attachment/ ammo/ throwable/ mine/ equipment/ armor/   定義(キーは Tudur's Guns の README を参照)
     gun_recipe/                銃器製作台のレシピ
@@ -74,6 +72,7 @@ python sample_addon/tools/build_pack.py --preview preview_out
 ## 注意
 
 - コンパイル済みの Tudur's Guns で、定義がすべて読み込めることは確かめています。ゲーム内での見た目は確かめていません。
+- テクスチャはすべて `textures/vehicle/` に置いています。アドオンフォルダはリソースパックではなく、前提MODはこのフォルダの下のテクスチャしか読み込まないためです(Tudur's Guns は `textures/` の下ならどこでも読み込みます)。同じ理由で、防具のインベントリ表示にはバニラのアイテムモデルを使わず、OBJ モデルを `display` で縮小して表示しています。
 - 手に持ったときの位置(`display`)と一人称の構え(`aim`)は、Tudur's Guns 本体のサンプル(リボルバー・サンプルライフル・歩兵銃など)の値を、モデルの大きさに合わせて流用しています。ずれている場合は `build_pack.py` の値を直してください。
 
 ## クレジット

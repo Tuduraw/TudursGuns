@@ -10,7 +10,7 @@
     "overlay": "tudursguns:textures/misc/binoculars.png"
   },
   "model": "tgsample:models/obj/compact_binoculars.obj",
-  "texture": "tgsample:textures/handheld/compact_binoculars.png",
+  "texture": "tgsample:textures/vehicle/compact_binoculars.png",
   "display": {
     "gui": {
       "translation": [

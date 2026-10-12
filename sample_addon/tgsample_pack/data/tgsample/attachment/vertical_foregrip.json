@@ -1,7 +1,7 @@
 {
   "display_name": "Vertical Foregrip",
   "model": "tgsample:models/obj/vertical_foregrip.obj",
-  "texture": "tgsample:textures/handheld/vertical_foregrip.png",
+  "texture": "tgsample:textures/vehicle/vertical_foregrip.png",
   "recoil_multiplier": 0.65,
   "accuracy_multiplier": 0.9,
   "display": {

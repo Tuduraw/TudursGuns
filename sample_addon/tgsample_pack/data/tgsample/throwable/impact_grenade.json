@@ -1,7 +1,7 @@
 {
   "weapon": "tgs_impact_grenade",
   "model": "tgsample:models/obj/impact_grenade.obj",
-  "texture": "tgsample:textures/handheld/impact_grenade.png",
+  "texture": "tgsample:textures/vehicle/impact_grenade.png",
   "display_name": "Impact Grenade",
   "throw_velocity": 1.0,
   "underhand_velocity": 0.45,

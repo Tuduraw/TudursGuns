@@ -7,7 +7,7 @@
   "regeneration_ticks": 120,
   "sound": "tg_first_aid",
   "model": "tgsample:models/obj/field_medkit.obj",
-  "texture": "tgsample:textures/handheld/field_medkit.png",
+  "texture": "tgsample:textures/vehicle/field_medkit.png",
   "display": {
     "gui": {
       "translation": [

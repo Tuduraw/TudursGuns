@@ -1,7 +1,7 @@
 {
   "weapon": "tgs_stick_grenade",
   "model": "tgsample:models/obj/stick_grenade.obj",
-  "texture": "tgsample:textures/handheld/stick_grenade.png",
+  "texture": "tgsample:textures/vehicle/stick_grenade.png",
   "display_name": "Stick Grenade",
   "throw_velocity": 1.45,
   "underhand_velocity": 0.55,

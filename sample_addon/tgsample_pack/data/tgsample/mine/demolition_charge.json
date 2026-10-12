@@ -2,7 +2,7 @@
   "weapon": "tgs_demolition_charge",
   "display_name": "Demolition Charge",
   "model": "tgsample:models/obj/demolition_charge.obj",
-  "texture": "tgsample:textures/handheld/demolition_charge.png",
+  "texture": "tgsample:textures/vehicle/demolition_charge.png",
   "trigger": "remote",
   "trigger_radius": 0.0,
   "arming_ticks": 20,

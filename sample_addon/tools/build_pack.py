@@ -74,7 +74,7 @@ def write_text(path, text):
 
 
 def export(m, name, size=(128, 128), colors=None, flat=None, paint=None):
-    """Textures, checks and writes a model: models/obj/<name>.obj and textures/handheld/<name>.png."""
+    """Textures, checks and writes a model: models/obj/<name>.obj and textures/vehicle/<name>.png."""
     texture_model(m, size, colors=colors, flat=flat, paint=paint)
     rep = check.report(m)
     issues = rep.get("issues") or []
@@ -86,16 +86,15 @@ def export(m, name, size=(128, 128), colors=None, flat=None, paint=None):
     obj = os.path.join(ASSETS, "models", "obj", name + ".obj")
     os.makedirs(os.path.dirname(obj), exist_ok=True)
     mk.save(m, obj)
-    png = os.path.join(ASSETS, "textures", "handheld", name + ".png")
+    png = os.path.join(ASSETS, "textures", "vehicle", name + ".png")
     os.makedirs(os.path.dirname(png), exist_ok=True)
     Image.fromarray(m.texture).save(png)
     previews.append(m)
-    return f"{NS}:models/obj/{name}.obj", f"{NS}:textures/handheld/{name}.png"
+    return f"{NS}:models/obj/{name}.obj", f"{NS}:textures/vehicle/{name}.png"
 
 
-def icon(m, name, view_name="iso", item_files=True):
-    """A 32x32 inventory icon rendered from the model; with item_files, also the item model files that
-    make it an item_model (armor). Returns the item model id."""
+def icon(m, name, view_name="iso"):
+    """A 32x32 inventory icon rendered from the model (textures/vehicle/<name>.png); returns its id."""
     key = (255, 0, 255)
     img = view.render_view(m, view_name, 192, 192, mode="texture", refs=False, bg=key, zoom=1.15)
     rgb = img.astype(np.int16)
@@ -108,16 +107,10 @@ def icon(m, name, view_name="iso", item_files=True):
     square = Image.new("RGBA", (side, side), (0, 0, 0, 0))
     square.paste(rgba, ((side - rgba.size[0]) // 2, (side - rgba.size[1]) // 2))
     square = square.resize((32, 32), Image.LANCZOS)
-    path = os.path.join(ASSETS, "textures", "item", name + ".png")
+    path = os.path.join(ASSETS, "textures", "vehicle", name + ".png")
     os.makedirs(os.path.dirname(path), exist_ok=True)
     square.save(path)
-    if not item_files:
-        return f"{NS}:{name}"
-    write_json(os.path.join(ASSETS, "items", name + ".json"),
-               {"model": {"type": "minecraft:model", "model": f"{NS}:item/{name}"}})
-    write_json(os.path.join(ASSETS, "models", "item", name + ".json"),
-               {"parent": "minecraft:item/generated", "textures": {"layer0": f"{NS}:item/{name}"}})
-    return f"{NS}:{name}"
+    return f"{NS}:textures/vehicle/{name}.png"
 
 
 def max_dim(m):
@@ -134,6 +127,32 @@ def scaled_display(preset, base_dim, m):
         if "scale" in t:
             t["scale"] = [round(v * k, 3) for v in t["scale"]]
         out[ctx] = t
+    return out
+
+
+def centered_display(m):
+    """Item display transforms that put the model's centre in the middle of the item space at a
+    fixed size - for armor, whose models sit in body-part space rather than round an item origin."""
+    lo, hi = m.bbox()
+    centre = (lo + hi) / 2
+    out = {}
+    for ctx, rotation, size, at in (("gui", (20, -30, 0), 0.72, (0.5, 0.5, 0.5)),
+                                    ("ground", (0, 0, 0), 0.45, (0.5, 0.35, 0.5)),
+                                    ("fixed", (0, 0, 0), 0.8, (0.5, 0.5, 0.5)),
+                                    ("thirdperson_righthand", (0, 0, 0), 0.5, (0.5, 0.4, 0.55)),
+                                    ("thirdperson_lefthand", (0, 0, 0), 0.5, (0.5, 0.4, 0.55)),
+                                    ("firstperson_righthand", (0, -20, 0), 0.6, (0.6, 0.45, 0.45)),
+                                    ("firstperson_lefthand", (0, 20, 0), 0.6, (0.4, 0.45, 0.45))):
+        scale = size / max_dim(m)
+        # Tudur's Guns applies translate, then rotate X, Y, Z, then scale: solve for the translation
+        # that lands the model's centre on `at`.
+        rx, ry, rz = (math.radians(a) for a in rotation)
+        Rx = np.array([[1, 0, 0], [0, math.cos(rx), -math.sin(rx)], [0, math.sin(rx), math.cos(rx)]])
+        Ry = np.array([[math.cos(ry), 0, math.sin(ry)], [0, 1, 0], [-math.sin(ry), 0, math.cos(ry)]])
+        Rz = np.array([[math.cos(rz), -math.sin(rz), 0], [math.sin(rz), math.cos(rz), 0], [0, 0, 1]])
+        moved = Rx @ Ry @ Rz @ (centre * scale)
+        out[ctx] = {"translation": [round(float(a - b), 4) for a, b in zip(at, moved)],
+                    "rotation": list(rotation), "scale": [round(scale, 4)] * 3}
     return out
 
 
@@ -232,10 +251,10 @@ def compact_pistol():
                 "hip_translation": [0.22, -0.22, -0.45], "hip_rotation": [0, 5, 0], **PISTOL_ARMS},
         "attachments": {
             "muzzle": {"accepts": {f"{NS}:compact_suppressor": {
-                "model": f"{NS}:models/obj/compact_suppressor.obj", "texture": f"{NS}:textures/handheld/compact_suppressor.png",
+                "model": f"{NS}:models/obj/compact_suppressor.obj", "texture": f"{NS}:textures/vehicle/compact_suppressor.png",
                 "transform": {"translation": [0, 0.056, -0.262]}, "part": "root"}}},
             "optic": {"accepts": {f"{NS}:red_dot": {
-                "model": f"{NS}:models/obj/red_dot.obj", "texture": f"{NS}:textures/handheld/red_dot.png",
+                "model": f"{NS}:models/obj/red_dot.obj", "texture": f"{NS}:textures/vehicle/red_dot.png",
                 "transform": {"translation": [0, 0.081, -0.07]}, "part": "slide",
                 "sight_position": [0, 0.121, -0.07]}}}},
         "animation": {
@@ -294,14 +313,14 @@ def smg():
                 "hip_translation": [0.26, -0.3, -0.4], "hip_rotation": [0, 3, 0], **RIFLE_ARMS},
         "attachments": {
             "optic": {"accepts": {f"{NS}:red_dot": {
-                "model": f"{NS}:models/obj/red_dot.obj", "texture": f"{NS}:textures/handheld/red_dot.png",
+                "model": f"{NS}:models/obj/red_dot.obj", "texture": f"{NS}:textures/vehicle/red_dot.png",
                 "transform": {"translation": [0, 0.075, -0.06]}, "hide_groups": ["iron_sight"],
                 "sight_position": [0, 0.115, -0.06]}}},
             "muzzle": {"accepts": {f"{NS}:compact_suppressor": {
-                "model": f"{NS}:models/obj/compact_suppressor.obj", "texture": f"{NS}:textures/handheld/compact_suppressor.png",
+                "model": f"{NS}:models/obj/compact_suppressor.obj", "texture": f"{NS}:textures/vehicle/compact_suppressor.png",
                 "transform": {"translation": [0, 0.035, -0.525]}}}},
             "grip": {"accepts": {f"{NS}:vertical_foregrip": {
-                "model": f"{NS}:models/obj/vertical_foregrip.obj", "texture": f"{NS}:textures/handheld/vertical_foregrip.png",
+                "model": f"{NS}:models/obj/vertical_foregrip.obj", "texture": f"{NS}:textures/vehicle/vertical_foregrip.png",
                 "transform": {"translation": [0, -0.017, -0.36]}}}}},
         "animation": {
             "parts": {"root": {"pivot": [0, -0.05, 0.1]},
@@ -359,7 +378,7 @@ def pump_shotgun():
                 "hip_translation": [0.26, -0.3, -0.4], "hip_rotation": [0, 3, 0], **RIFLE_ARMS},
         "attachments": {
             "optic": {"accepts": {f"{NS}:red_dot": {
-                "model": f"{NS}:models/obj/red_dot.obj", "texture": f"{NS}:textures/handheld/red_dot.png",
+                "model": f"{NS}:models/obj/red_dot.obj", "texture": f"{NS}:textures/vehicle/red_dot.png",
                 "transform": {"translation": [0, 0.067, 0.0]}, "hide_groups": ["iron_sight"],
                 "sight_position": [0, 0.107, 0.0]}}}},
         "animation": {
@@ -427,11 +446,11 @@ def vertical_foregrip():
 
 # ============================================================================ ammo
 def ammo_def(name, display_name, m, model, tex, rounds, max_stack, ingredients, count):
-    icon(m, name + "_icon", item_files=False)
+    icon_id = icon(m, name + "_icon")
     base_dim, preset = SMALL_DISPLAY
     write_json(os.path.join(DATA, "ammo", name + ".json"),
                {"display_name": display_name, "rounds": rounds, "max_stack": max_stack, "model": model, "texture": tex,
-                "icon": f"{NS}:textures/item/{name}_icon.png", "display": scaled_display(preset, base_dim, m)})
+                "icon": icon_id, "display": scaled_display(preset, base_dim, m)})
     recipe(name, "ammo", {"ammo": f"{NS}:{name}", "count": count}, ingredients)
 
 
@@ -611,12 +630,11 @@ def compact_binoculars():
 
 
 # ============================================================================ armor
-def armor_def(name, slot, display_name, m, extra, ingredients, colors, flat=None, paint=None, icon_view="iso"):
+def armor_def(name, slot, display_name, m, extra, ingredients, colors, flat=None, paint=None):
     model, tex = export(m, name, (128, 128), colors=colors, flat=flat, paint=paint)
-    item_model = icon(m, name, icon_view)
     write_json(os.path.join(DATA, "armor", name + ".json"),
-               {"slot": slot, "display_name": display_name, **extra, "item_model": item_model, "model": model,
-                "texture": tex})
+               {"slot": slot, "display_name": display_name, **extra, "model": model,
+                "texture": tex, "display": centered_display(m)})
     recipe(name, "armor", {"armor": f"{NS}:{name}"}, ingredients)
 
 
@@ -676,7 +694,7 @@ def knee_pads():
     armor_def("knee_pads", "legs", "Knee Pads", m,
               {"armor": 2, "durability": 200, "soldier_weight": 10, "knockback_resistance": 0.05},
               [item("minecraft:leather", 2), item("minecraft:iron_nugget", 4)],
-              colors={"pad": OD}, flat={"cap": POLYMER, "strap": POLYMER}, icon_view="front")
+              colors={"pad": OD}, flat={"cap": POLYMER, "strap": POLYMER})
 
 
 # ============================================================================ main

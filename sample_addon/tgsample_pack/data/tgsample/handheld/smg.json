@@ -2,7 +2,7 @@
   "weapon": "tgs_smg",
   "display_name": "Submachine Gun",
   "model": "tgsample:models/obj/smg.obj",
-  "texture": "tgsample:textures/handheld/smg.png",
+  "texture": "tgsample:textures/vehicle/smg.png",
   "projectile_item": "minecraft:iron_nugget",
   "ammo": "tgsample:smg_magazine",
   "fire_mode": "auto",
@@ -194,7 +194,7 @@
       "accepts": {
         "tgsample:red_dot": {
           "model": "tgsample:models/obj/red_dot.obj",
-          "texture": "tgsample:textures/handheld/red_dot.png",
+          "texture": "tgsample:textures/vehicle/red_dot.png",
           "transform": {
             "translation": [
               0,
@@ -217,7 +217,7 @@
       "accepts": {
         "tgsample:compact_suppressor": {
           "model": "tgsample:models/obj/compact_suppressor.obj",
-          "texture": "tgsample:textures/handheld/compact_suppressor.png",
+          "texture": "tgsample:textures/vehicle/compact_suppressor.png",
           "transform": {
             "translation": [
               0,
@@ -232,7 +232,7 @@
       "accepts": {
         "tgsample:vertical_foregrip": {
           "model": "tgsample:models/obj/vertical_foregrip.obj",
-          "texture": "tgsample:textures/handheld/vertical_foregrip.png",
+          "texture": "tgsample:textures/vehicle/vertical_foregrip.png",
           "transform": {
             "translation": [
               0,

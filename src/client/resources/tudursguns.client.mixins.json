@@ -4,6 +4,7 @@
   "package": "com.example.tudursguns.client.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "AddonTextureLoaderMixin",
     "BipedEntityModelAimMixin",
     "ClientPlayerEntitySprintMixin",
     "EntityLookSensitivityMixin",
