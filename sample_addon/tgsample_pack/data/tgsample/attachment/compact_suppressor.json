@@ -1,0 +1,130 @@
+{
+  "display_name": "Compact Suppressor",
+  "model": "tgsample:models/obj/compact_suppressor.obj",
+  "texture": "tgsample:textures/vehicle/compact_suppressor.png",
+  "sound_override": "tg_suppressed_shot",
+  "sound_volume_multiplier": 0.3,
+  "muzzle_flash_multiplier": 0,
+  "accuracy_multiplier": 1.05,
+  "display": {
+    "gui": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        20,
+        90,
+        0
+      ],
+      "scale": [
+        3.114,
+        3.114,
+        3.114
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        2.179,
+        2.179,
+        2.179
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        0,
+        90,
+        0
+      ],
+      "scale": [
+        3.114,
+        3.114,
+        3.114
+      ]
+    },
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.4,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        2.491,
+        2.491,
+        2.491
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.4,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        2.491,
+        2.491,
+        2.491
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.6,
+        0.4,
+        0.4
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        3.114,
+        3.114,
+        3.114
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.4,
+        0.4,
+        0.4
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        3.114,
+        3.114,
+        3.114
+      ]
+    }
+  }
+}

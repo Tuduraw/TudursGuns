@@ -1,0 +1,135 @@
+{
+  "slot": "chest",
+  "display_name": "Assault Vest",
+  "armor": 4,
+  "toughness": 1,
+  "durability": 300,
+  "soldier_weight": 12,
+  "protection": {
+    "ballistic": 0.25,
+    "blast": 0.15
+  },
+  "model": "tgsample:models/obj/assault_vest.obj",
+  "texture": "tgsample:textures/vehicle/assault_vest.png",
+  "display": {
+    "gui": {
+      "translation": [
+        0.5184,
+        0.7905,
+        0.5719
+      ],
+      "rotation": [
+        20,
+        -30,
+        0
+      ],
+      "scale": [
+        1.1755,
+        1.1755,
+        1.1755
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.536,
+        0.477
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.7347,
+        0.7347,
+        0.7347
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        0.8306,
+        0.4592
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.3061,
+        1.3061,
+        1.3061
+      ]
+    },
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.6066,
+        0.5245
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.8163,
+        0.8163,
+        0.8163
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.6066,
+        0.5245
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.8163,
+        0.8163,
+        0.8163
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.6105,
+        0.698,
+        0.4212
+      ],
+      "rotation": [
+        0,
+        -20,
+        0
+      ],
+      "scale": [
+        0.9796,
+        0.9796,
+        0.9796
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.3895,
+        0.698,
+        0.4212
+      ],
+      "rotation": [
+        0,
+        20,
+        0
+      ],
+      "scale": [
+        0.9796,
+        0.9796,
+        0.9796
+      ]
+    }
+  }
+}

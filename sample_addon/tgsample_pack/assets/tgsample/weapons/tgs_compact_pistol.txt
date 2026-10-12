@@ -1,0 +1,20 @@
+; Compact Pistol - Tudur's Guns sample addon (tgsample). Semi-automatic, 15-round magazine.
+
+DisplayName = Compact Pistol
+Type = MachineGun1
+
+Power = 6.0
+Explosion = 0.0
+Accuracy = 1.6
+Acceleration = 5.0
+Gravity = 0.015
+
+Round = 15
+ReloadTime = 40
+Delay = 4
+
+Sound = tg_revolver_shot
+SoundVolume = 1.6
+SoundPitch = 1.25
+SoundPitchRandom = 0.06
+ModelBullet = tg_pistol_round

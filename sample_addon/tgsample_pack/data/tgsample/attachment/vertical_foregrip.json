@@ -1,0 +1,128 @@
+{
+  "display_name": "Vertical Foregrip",
+  "model": "tgsample:models/obj/vertical_foregrip.obj",
+  "texture": "tgsample:textures/vehicle/vertical_foregrip.png",
+  "recoil_multiplier": 0.65,
+  "accuracy_multiplier": 0.9,
+  "display": {
+    "gui": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        20,
+        90,
+        0
+      ],
+      "scale": [
+        5.084,
+        5.084,
+        5.084
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        3.559,
+        3.559,
+        3.559
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        0,
+        90,
+        0
+      ],
+      "scale": [
+        5.084,
+        5.084,
+        5.084
+      ]
+    },
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.4,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        4.067,
+        4.067,
+        4.067
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.4,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        4.067,
+        4.067,
+        4.067
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.6,
+        0.4,
+        0.4
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        5.084,
+        5.084,
+        5.084
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.4,
+        0.4,
+        0.4
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        5.084,
+        5.084,
+        5.084
+      ]
+    }
+  }
+}

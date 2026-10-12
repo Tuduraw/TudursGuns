@@ -1,0 +1,135 @@
+{
+  "type": "binoculars",
+  "display_name": "Compact Binoculars",
+  "rangefinder": true,
+  "zoom": {
+    "min": 2,
+    "max": 4,
+    "default": 3,
+    "step": 1,
+    "overlay": "tudursguns:textures/misc/binoculars.png"
+  },
+  "model": "tgsample:models/obj/compact_binoculars.obj",
+  "texture": "tgsample:textures/vehicle/compact_binoculars.png",
+  "display": {
+    "gui": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        20,
+        -30,
+        0
+      ],
+      "scale": [
+        4.658,
+        4.658,
+        4.658
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        2.994,
+        2.994,
+        2.994
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        4.658,
+        4.658,
+        4.658
+      ]
+    },
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.35,
+        0.55
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        2.329,
+        2.329,
+        2.329
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.35,
+        0.55
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        2.329,
+        2.329,
+        2.329
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.6,
+        0.45,
+        0.45
+      ],
+      "rotation": [
+        0,
+        -20,
+        0
+      ],
+      "scale": [
+        3.327,
+        3.327,
+        3.327
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.4,
+        0.45,
+        0.45
+      ],
+      "rotation": [
+        0,
+        20,
+        0
+      ],
+      "scale": [
+        3.327,
+        3.327,
+        3.327
+      ]
+    }
+  }
+}

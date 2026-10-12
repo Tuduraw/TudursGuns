@@ -1,0 +1,19 @@
+{
+  "category": "armor",
+  "result": {
+    "armor": "tgsample:assault_vest"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:leather",
+      "count": 4
+    },
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 3
+    },
+    {
+      "item": "minecraft:green_dye"
+    }
+  ]
+}

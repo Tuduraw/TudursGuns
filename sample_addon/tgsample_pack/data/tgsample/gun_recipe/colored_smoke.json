@@ -1,0 +1,18 @@
+{
+  "category": "throwables",
+  "result": {
+    "throwable": "tgsample:colored_smoke",
+    "count": 2
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_ingot"
+    },
+    {
+      "item": "minecraft:gunpowder"
+    },
+    {
+      "item": "minecraft:red_dye"
+    }
+  ]
+}

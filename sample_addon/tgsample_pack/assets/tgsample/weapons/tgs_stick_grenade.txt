@@ -1,0 +1,12 @@
+; Stick Grenade - Tudur's Guns sample addon (tgsample). Long throw, timed fuse from the throw.
+
+DisplayName = Stick Grenade
+Power = 2
+Explosion = 2.6
+ExplosionBlock = 0
+Gravity = 0.05
+Bound = 0.25
+Sound = tg_grenade_throw
+SoundVolume = 0.8
+SoundPitch = 0.9
+SoundPitchRandom = 0.1

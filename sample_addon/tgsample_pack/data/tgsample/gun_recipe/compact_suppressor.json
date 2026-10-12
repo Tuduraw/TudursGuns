@@ -1,0 +1,15 @@
+{
+  "category": "attachments",
+  "result": {
+    "attachment": "tgsample:compact_suppressor"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 2
+    },
+    {
+      "item": "minecraft:white_wool"
+    }
+  ]
+}

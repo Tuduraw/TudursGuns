@@ -1,0 +1,16 @@
+{
+  "category": "armor",
+  "result": {
+    "armor": "tgsample:knee_pads"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:leather",
+      "count": 2
+    },
+    {
+      "item": "minecraft:iron_nugget",
+      "count": 4
+    }
+  ]
+}

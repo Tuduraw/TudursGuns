@@ -1,0 +1,138 @@
+{
+  "weapon": "tgs_bounding_mine",
+  "display_name": "Bounding Mine",
+  "model": "tgsample:models/obj/bounding_mine.obj",
+  "texture": "tgsample:textures/vehicle/bounding_mine.png",
+  "trigger": "proximity",
+  "trigger_radius": 1.4,
+  "arming_ticks": 60,
+  "trigger_delay_ticks": 12,
+  "placement": "ground",
+  "defuse_ticks": 80,
+  "sounds": {
+    "arm": "tg_mine_arm",
+    "trigger": "tg_mine_click",
+    "place": "tg_mine_place"
+  },
+  "display": {
+    "gui": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        20,
+        -30,
+        0
+      ],
+      "scale": [
+        3.733,
+        3.733,
+        3.733
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        2.4,
+        2.4,
+        2.4
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        3.733,
+        3.733,
+        3.733
+      ]
+    },
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.35,
+        0.55
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.867,
+        1.867,
+        1.867
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.35,
+        0.55
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.867,
+        1.867,
+        1.867
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.6,
+        0.45,
+        0.45
+      ],
+      "rotation": [
+        0,
+        -20,
+        0
+      ],
+      "scale": [
+        2.667,
+        2.667,
+        2.667
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.4,
+        0.45,
+        0.45
+      ],
+      "rotation": [
+        0,
+        20,
+        0
+      ],
+      "scale": [
+        2.667,
+        2.667,
+        2.667
+      ]
+    }
+  }
+}

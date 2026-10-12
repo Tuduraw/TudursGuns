@@ -221,6 +221,10 @@
 
 どちらも、MODの jar、データパック・リソースパック、`tudursvehiclemod-addons/<pack>/` に置けます。
 
+> **アドオンフォルダ(`tudursvehiclemod-addons/<pack>/`)はリソースパックではありません。** 前提MODとこのMODが読む物(定義、武器ファイル、OBJ、テクスチャ、音、HUD、翻訳)だけが読み込まれます。
+> - テクスチャ(OBJ のテクスチャ、`icon`、スコープの `overlay` など)は、`assets/<namespace>/textures/` の下ならどこに置いても読み込まれます。前提MODだけの場合は `textures/vehicle/` の下に限られるため、その下に置くのが確実です。
+> - バニラのアイテムモデル(`assets/<namespace>/items/`、`models/item/`)と、`equipment_asset` の2D防具は読み込まれません。これらを使う場合はリソースパックにしてください。アドオンフォルダでは、OBJ モデルと `display`、または `icon` を使います。
+
 > 武器ファイル名は全MODで共通の名前として扱われます。他のMODと重ならないよう、接頭辞を付けてください(このMODのサンプルは `tg_`)。
 
 ### 携帯装備定義(JSON)
@@ -568,7 +572,7 @@
 | `durability` | `0` | 耐久値。`0` は壊れない |
 | `protection` | なし | `ballistic` / `blast` / `headshot`(それぞれ 0〜1) |
 | `equipment_asset` | なし | 2Dの見た目(OBJ と併用可)。`assets/<ns>/equipment/<name>.json` と `textures/entity/equipment/humanoid/<name>.png`(脚は `humanoid_leggings`)。バニラの防具と同じ形式 |
-| `item_model` | なし | アイテムのモデル(`assets/<ns>/items/<name>.json`)。ない場合は OBJ モデルをアイテムとして描きます |
+| `item_model` | なし | アイテムのモデル(`assets/<ns>/items/<name>.json`。リソースパックかMODの jar に置く物で、アドオンフォルダからは読み込まれません)。ない場合は OBJ モデルを `display` に従ってアイテムとして描きます |
 | `model` / `texture` / `display` | なし | OBJ の見た目 |
 | `worn` | なし | OBJ の位置の追加の調整(移動・回転・拡大)。モデルを部位の空間で作ってあれば不要です(「防具」の「モデルの座標」を参照) |
 | `effects` | なし | `night_vision`、`gas_protection`、`detection_multiplier` |
@@ -697,6 +701,10 @@
 | `scope_magnification` | `{}` | スコープごとの倍率。ゲーム内で変えると保存され、次回もその倍率で始まります。値を書いておけば初期倍率になります |
 
 個々の武器の位置は武器定義の `aim` で調整し(`/reload` で反映)、見た目の好みに合わせた全体の補正はこの設定で行う想定です。
+
+## サンプルアドオンパック
+
+`sample_addon/` に、武器・アタッチメント・弾薬・投擲物・地雷・関連装備・防具を種類ごとに2〜3個ずつ追加するアドオンパックの見本(`tgsample_pack`)と、それを [meshkit](https://github.com/Tuduraw/Meshkit) で作るスクリプトを置いています。導入と作り直しの方法は `sample_addon/README.md` を参照してください。
 
 ## Hand Made Guns EX のパックの変換
 

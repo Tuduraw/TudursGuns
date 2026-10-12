@@ -1,0 +1,21 @@
+; Pump Shotgun - Tudur's Guns sample addon (tgsample). Pump action, six shells, eight pellets a shot.
+
+DisplayName = Pump Shotgun
+Type = MachineGun1
+
+; Power is per pellet (8 pellets, see the definition's "pellets").
+Power = 3.0
+Explosion = 0.0
+Accuracy = 6.0
+Acceleration = 4.5
+Gravity = 0.02
+
+Round = 6
+ReloadTime = 90
+Delay = 16
+
+Sound = tg_sniper_shot
+SoundVolume = 2.0
+SoundPitch = 0.85
+SoundPitchRandom = 0.06
+ModelBullet = tg_pistol_round

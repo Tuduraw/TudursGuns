@@ -1,0 +1,133 @@
+{
+  "slot": "head",
+  "display_name": "Boonie Hat",
+  "armor": 1,
+  "durability": 120,
+  "soldier_weight": 15,
+  "effects": {
+    "detection_multiplier": 0.85
+  },
+  "model": "tgsample:models/obj/boonie_hat.obj",
+  "texture": "tgsample:textures/vehicle/boonie_hat.png",
+  "display": {
+    "gui": {
+      "translation": [
+        0.5,
+        0.0475,
+        0.3353
+      ],
+      "rotation": [
+        20,
+        -30,
+        0
+      ],
+      "scale": [
+        0.96,
+        0.96,
+        0.96
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.0491,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.6,
+        0.6,
+        0.6
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        -0.035,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.0667,
+        1.0667,
+        1.0667
+      ]
+    },
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.0656,
+        0.55
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.6667,
+        0.6667,
+        0.6667
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.0656,
+        0.55
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.6667,
+        0.6667,
+        0.6667
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.6,
+        0.0488,
+        0.45
+      ],
+      "rotation": [
+        0,
+        -20,
+        0
+      ],
+      "scale": [
+        0.8,
+        0.8,
+        0.8
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.4,
+        0.0488,
+        0.45
+      ],
+      "rotation": [
+        0,
+        20,
+        0
+      ],
+      "scale": [
+        0.8,
+        0.8,
+        0.8
+      ]
+    }
+  }
+}
