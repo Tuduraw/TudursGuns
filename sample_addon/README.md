@@ -78,7 +78,6 @@ python sample_addon/tools/build_pack.py --preview preview_out
 
 ## クレジット
 
-- 前提MOD:Tudur's Vehicle Mod(作者 Tuduraw 氏)
-- モデル作成:meshkit(作者 Tuduraw 氏)
-- このパックの内容(モデル・テクスチャ・定義・スクリプト)はすべて自作です。他者が権利を持つデータは使っていません。
-- 制作には Claude(Anthropic)を使用しました。
+- 前提MOD:Tudur's Vehicle Mod
+- モデル作成:meshkit
+- このパックの内容(モデル・テクスチャ・定義・スクリプト)の制作には Claude(Anthropic)を使用しました。
