@@ -1,0 +1,132 @@
+{
+  "weapon": "tgs_stick_grenade",
+  "model": "tgsample:models/obj/stick_grenade.obj",
+  "texture": "tgsample:textures/handheld/stick_grenade.png",
+  "display_name": "Stick Grenade",
+  "throw_velocity": 1.45,
+  "underhand_velocity": 0.55,
+  "fuse_ticks": 90,
+  "cookable": false,
+  "pin_sound": "tg_grenade_pin",
+  "display": {
+    "gui": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        20,
+        -30,
+        0
+      ],
+      "scale": [
+        1.644,
+        1.644,
+        1.644
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.028,
+        1.028,
+        1.028
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.542,
+        1.542,
+        1.542
+      ]
+    },
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.35,
+        0.55
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.822,
+        0.822,
+        0.822
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.35,
+        0.55
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.822,
+        0.822,
+        0.822
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.6,
+        0.45,
+        0.45
+      ],
+      "rotation": [
+        0,
+        -20,
+        0
+      ],
+      "scale": [
+        1.131,
+        1.131,
+        1.131
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.4,
+        0.45,
+        0.45
+      ],
+      "rotation": [
+        0,
+        20,
+        0
+      ],
+      "scale": [
+        1.131,
+        1.131,
+        1.131
+      ]
+    }
+  }
+}

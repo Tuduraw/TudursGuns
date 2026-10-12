@@ -1,0 +1,18 @@
+{
+  "category": "weapons",
+  "result": {
+    "weapon": "tgsample:compact_pistol"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 3
+    },
+    {
+      "item": "minecraft:gunpowder"
+    },
+    {
+      "item": "minecraft:black_dye"
+    }
+  ]
+}

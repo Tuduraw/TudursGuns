@@ -1,0 +1,10 @@
+; Impact Grenade - Tudur's Guns sample addon (tgsample). Goes off where it first hits.
+
+DisplayName = Impact Grenade
+Power = 2
+Explosion = 2.0
+ExplosionBlock = 0
+Gravity = 0.05
+Sound = tg_grenade_throw
+SoundVolume = 0.8
+SoundPitchRandom = 0.1

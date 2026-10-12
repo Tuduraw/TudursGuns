@@ -1,0 +1,129 @@
+{
+  "display_name": "SMG Magazine (30)",
+  "rounds": 30,
+  "max_stack": 16,
+  "model": "tgsample:models/obj/smg_magazine.obj",
+  "texture": "tgsample:textures/handheld/smg_magazine.png",
+  "icon": "tgsample:textures/item/smg_magazine_icon.png",
+  "display": {
+    "gui": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        20,
+        -30,
+        0
+      ],
+      "scale": [
+        2.956,
+        2.956,
+        2.956
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.901,
+        1.901,
+        1.901
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        2.956,
+        2.956,
+        2.956
+      ]
+    },
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.35,
+        0.55
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.478,
+        1.478,
+        1.478
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.35,
+        0.55
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.478,
+        1.478,
+        1.478
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.6,
+        0.45,
+        0.45
+      ],
+      "rotation": [
+        0,
+        -20,
+        0
+      ],
+      "scale": [
+        2.112,
+        2.112,
+        2.112
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.4,
+        0.45,
+        0.45
+      ],
+      "rotation": [
+        0,
+        20,
+        0
+      ],
+      "scale": [
+        2.112,
+        2.112,
+        2.112
+      ]
+    }
+  }
+}

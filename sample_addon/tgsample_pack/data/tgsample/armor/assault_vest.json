@@ -1,0 +1,15 @@
+{
+  "slot": "chest",
+  "display_name": "Assault Vest",
+  "armor": 4,
+  "toughness": 1,
+  "durability": 300,
+  "soldier_weight": 12,
+  "protection": {
+    "ballistic": 0.25,
+    "blast": 0.15
+  },
+  "item_model": "tgsample:assault_vest",
+  "model": "tgsample:models/obj/assault_vest.obj",
+  "texture": "tgsample:textures/handheld/assault_vest.png"
+}

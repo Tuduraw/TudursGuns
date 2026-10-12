@@ -1,0 +1,132 @@
+{
+  "weapon": "tgs_impact_grenade",
+  "model": "tgsample:models/obj/impact_grenade.obj",
+  "texture": "tgsample:textures/handheld/impact_grenade.png",
+  "display_name": "Impact Grenade",
+  "throw_velocity": 1.0,
+  "underhand_velocity": 0.45,
+  "fuse_ticks": 200,
+  "impact": true,
+  "pin_sound": "tg_grenade_pin",
+  "display": {
+    "gui": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        20,
+        -30,
+        0
+      ],
+      "scale": [
+        4.083,
+        4.083,
+        4.083
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        2.552,
+        2.552,
+        2.552
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        3.828,
+        3.828,
+        3.828
+      ]
+    },
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.35,
+        0.55
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        2.041,
+        2.041,
+        2.041
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.35,
+        0.55
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        2.041,
+        2.041,
+        2.041
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.6,
+        0.45,
+        0.45
+      ],
+      "rotation": [
+        0,
+        -20,
+        0
+      ],
+      "scale": [
+        2.807,
+        2.807,
+        2.807
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.4,
+        0.45,
+        0.45
+      ],
+      "rotation": [
+        0,
+        20,
+        0
+      ],
+      "scale": [
+        2.807,
+        2.807,
+        2.807
+      ]
+    }
+  }
+}

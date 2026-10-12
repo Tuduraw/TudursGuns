@@ -1,0 +1,17 @@
+{
+  "category": "attachments",
+  "result": {
+    "attachment": "tgsample:red_dot"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_ingot"
+    },
+    {
+      "item": "minecraft:glass_pane"
+    },
+    {
+      "item": "minecraft:redstone"
+    }
+  ]
+}

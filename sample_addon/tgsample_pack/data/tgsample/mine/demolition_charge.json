@@ -1,0 +1,136 @@
+{
+  "weapon": "tgs_demolition_charge",
+  "display_name": "Demolition Charge",
+  "model": "tgsample:models/obj/demolition_charge.obj",
+  "texture": "tgsample:textures/handheld/demolition_charge.png",
+  "trigger": "remote",
+  "trigger_radius": 0.0,
+  "arming_ticks": 20,
+  "placement": "anywhere",
+  "defuse_ticks": 40,
+  "sounds": {
+    "arm": "tg_mine_arm",
+    "place": "tg_mine_place"
+  },
+  "display": {
+    "gui": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        20,
+        -30,
+        0
+      ],
+      "scale": [
+        3.027,
+        3.027,
+        3.027
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.946,
+        1.946,
+        1.946
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        3.027,
+        3.027,
+        3.027
+      ]
+    },
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.35,
+        0.55
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.514,
+        1.514,
+        1.514
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.35,
+        0.55
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.514,
+        1.514,
+        1.514
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.6,
+        0.45,
+        0.45
+      ],
+      "rotation": [
+        0,
+        -20,
+        0
+      ],
+      "scale": [
+        2.162,
+        2.162,
+        2.162
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.4,
+        0.45,
+        0.45
+      ],
+      "rotation": [
+        0,
+        20,
+        0
+      ],
+      "scale": [
+        2.162,
+        2.162,
+        2.162
+      ]
+    }
+  }
+}

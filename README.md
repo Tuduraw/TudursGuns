@@ -701,6 +701,10 @@
 
 個々の武器の位置は武器定義の `aim` で調整し(`/reload` で反映)、見た目の好みに合わせた全体の補正はこの設定で行う想定です。
 
+## サンプルアドオンパック
+
+`sample_addon/` に、武器・アタッチメント・弾薬・投擲物・地雷・関連装備・防具を種類ごとに2〜3個ずつ追加するアドオンパックの見本(`tgsample_pack`)と、それを [meshkit](https://github.com/Tuduraw/Meshkit) で作るスクリプトを置いています。導入と作り直しの方法は `sample_addon/README.md` を参照してください。
+
 ## Hand Made Guns EX のパックの変換
 
 Hand Made Guns & Vehicle : EX(1.7.10)のパックを変換するツールを `docs/tools/HMGEX/` に置いています。使い方と、変換できる項目・できない項目は、同じフォルダの README を参照してください。

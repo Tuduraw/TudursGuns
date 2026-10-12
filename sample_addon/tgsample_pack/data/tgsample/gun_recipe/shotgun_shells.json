@@ -1,0 +1,19 @@
+{
+  "category": "ammo",
+  "result": {
+    "ammo": "tgsample:shotgun_shells",
+    "count": 12
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_nugget",
+      "count": 2
+    },
+    {
+      "item": "minecraft:gunpowder"
+    },
+    {
+      "item": "minecraft:paper"
+    }
+  ]
+}

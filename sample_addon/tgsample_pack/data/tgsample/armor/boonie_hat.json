@@ -1,0 +1,13 @@
+{
+  "slot": "head",
+  "display_name": "Boonie Hat",
+  "armor": 1,
+  "durability": 120,
+  "soldier_weight": 15,
+  "effects": {
+    "detection_multiplier": 0.85
+  },
+  "item_model": "tgsample:boonie_hat",
+  "model": "tgsample:models/obj/boonie_hat.obj",
+  "texture": "tgsample:textures/handheld/boonie_hat.png"
+}

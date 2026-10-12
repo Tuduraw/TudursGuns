@@ -1,0 +1,366 @@
+{
+  "weapon": "tgs_pump_shotgun",
+  "display_name": "Pump Shotgun",
+  "model": "tgsample:models/obj/pump_shotgun.obj",
+  "texture": "tgsample:textures/handheld/pump_shotgun.png",
+  "projectile_item": "minecraft:iron_nugget",
+  "ammo": "tgsample:shotgun_shells",
+  "fire_mode": "semi",
+  "pellets": 8,
+  "soldier_weight": 15,
+  "recoil": 6.0,
+  "muzzle_offset": [
+    0.0,
+    -0.05,
+    0.95
+  ],
+  "movement_speed": -0.05,
+  "reload_sound": "tg_reload_revolver",
+  "display": {
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.4,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.761,
+        0.761,
+        0.761
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.4,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.761,
+        0.761,
+        0.761
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.55,
+        0.3,
+        0.3
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.856,
+        0.856,
+        0.856
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.45,
+        0.3,
+        0.3
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.856,
+        0.856,
+        0.856
+      ]
+    },
+    "gui": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        0,
+        90,
+        0
+      ],
+      "scale": [
+        0.665,
+        0.665,
+        0.665
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.475,
+        0.475,
+        0.475
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        0,
+        90,
+        0
+      ],
+      "scale": [
+        0.665,
+        0.665,
+        0.665
+      ]
+    }
+  },
+  "aim": {
+    "sight_position": [
+      0,
+      0.081,
+      0.11
+    ],
+    "eye_distance": 0.14,
+    "scale": 0.55,
+    "hip_translation": [
+      0.26,
+      -0.3,
+      -0.4
+    ],
+    "hip_rotation": [
+      0,
+      3,
+      0
+    ],
+    "right_arm": {
+      "translation": [
+        -0.2182,
+        -0.8055,
+        -0.4409
+      ],
+      "rotation": [
+        -85,
+        90,
+        0
+      ],
+      "scale": [
+        1.8182,
+        1.8182,
+        1.8182
+      ]
+    },
+    "left_arm": {
+      "translation": [
+        0.2545,
+        -0.7327,
+        -1.2409
+      ],
+      "rotation": [
+        -85,
+        90,
+        0
+      ],
+      "scale": [
+        1.8182,
+        1.8182,
+        1.8182
+      ]
+    }
+  },
+  "attachments": {
+    "optic": {
+      "accepts": {
+        "tgsample:red_dot": {
+          "model": "tgsample:models/obj/red_dot.obj",
+          "texture": "tgsample:textures/handheld/red_dot.png",
+          "transform": {
+            "translation": [
+              0,
+              0.067,
+              0.0
+            ]
+          },
+          "hide_groups": [
+            "iron_sight"
+          ],
+          "sight_position": [
+            0,
+            0.107,
+            0.0
+          ]
+        }
+      }
+    }
+  },
+  "animation": {
+    "parts": {
+      "root": {
+        "pivot": [
+          0,
+          -0.03,
+          0.15
+        ]
+      },
+      "pump": {
+        "groups": [
+          "pump"
+        ],
+        "pivot": [
+          0,
+          0.0,
+          -0.4
+        ]
+      }
+    },
+    "sequences": {
+      "fire": {
+        "tracks": [
+          {
+            "part": "root",
+            "keyframes": [
+              {
+                "tick": 1,
+                "translation": [
+                  0,
+                  0,
+                  0.04
+                ],
+                "rotation": [
+                  9,
+                  0,
+                  0
+                ],
+                "easing": "ease_out"
+              },
+              {
+                "tick": 7
+              }
+            ]
+          },
+          {
+            "part": "pump",
+            "keyframes": [
+              {
+                "tick": 5
+              },
+              {
+                "tick": 8,
+                "translation": [
+                  0,
+                  0,
+                  0.1
+                ]
+              },
+              {
+                "tick": 12,
+                "translation": [
+                  0,
+                  0,
+                  0
+                ],
+                "easing": "ease_in"
+              }
+            ]
+          }
+        ],
+        "sounds": [
+          {
+            "tick": 7,
+            "sound": "tg_reload_bolt",
+            "volume": 0.6,
+            "pitch": 1.2
+          }
+        ]
+      },
+      "reload": {
+        "fit_to_event": true,
+        "tracks": [
+          {
+            "part": "root",
+            "keyframes": [
+              {
+                "tick": 5,
+                "rotation": [
+                  0,
+                  0,
+                  -30
+                ]
+              },
+              {
+                "tick": 34,
+                "rotation": [
+                  0,
+                  0,
+                  -30
+                ]
+              },
+              {
+                "tick": 40
+              }
+            ]
+          },
+          {
+            "part": "pump",
+            "keyframes": [
+              {
+                "tick": 34
+              },
+              {
+                "tick": 36,
+                "translation": [
+                  0,
+                  0,
+                  0.1
+                ]
+              },
+              {
+                "tick": 39,
+                "translation": [
+                  0,
+                  0,
+                  0
+                ],
+                "easing": "ease_in"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "effects": {
+    "cartridge": {
+      "type": "shotgun",
+      "delay": 8
+    },
+    "magazine": false,
+    "muzzle_flash": {
+      "size": 1.8,
+      "count": 5,
+      "smoke": 4
+    }
+  }
+}

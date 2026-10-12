@@ -1,0 +1,19 @@
+{
+  "category": "weapons",
+  "result": {
+    "weapon": "tgsample:smg"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 6
+    },
+    {
+      "item": "minecraft:gunpowder",
+      "count": 2
+    },
+    {
+      "item": "minecraft:black_dye"
+    }
+  ]
+}

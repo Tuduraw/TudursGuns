@@ -1,0 +1,19 @@
+{
+  "category": "equipment",
+  "result": {
+    "equipment": "tgsample:field_medkit",
+    "count": 1
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:white_wool",
+      "count": 2
+    },
+    {
+      "item": "minecraft:golden_carrot"
+    },
+    {
+      "item": "minecraft:green_dye"
+    }
+  ]
+}

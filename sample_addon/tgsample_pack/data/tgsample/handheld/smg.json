@@ -1,0 +1,421 @@
+{
+  "weapon": "tgs_smg",
+  "display_name": "Submachine Gun",
+  "model": "tgsample:models/obj/smg.obj",
+  "texture": "tgsample:textures/handheld/smg.png",
+  "projectile_item": "minecraft:iron_nugget",
+  "ammo": "tgsample:smg_magazine",
+  "fire_mode": "auto",
+  "soldier_weight": 25,
+  "recoil": 1.2,
+  "ads_spread_multiplier": 0.6,
+  "muzzle_offset": [
+    0.0,
+    -0.05,
+    0.7
+  ],
+  "reload_sound": "tg_reload_magazine",
+  "display": {
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.4,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.217,
+        1.217,
+        1.217
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.4,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.217,
+        1.217,
+        1.217
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.55,
+        0.3,
+        0.3
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.369,
+        1.369,
+        1.369
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.45,
+        0.3,
+        0.3
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.369,
+        1.369,
+        1.369
+      ]
+    },
+    "gui": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        0,
+        90,
+        0
+      ],
+      "scale": [
+        1.065,
+        1.065,
+        1.065
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.761,
+        0.761,
+        0.761
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        0,
+        90,
+        0
+      ],
+      "scale": [
+        1.065,
+        1.065,
+        1.065
+      ]
+    }
+  },
+  "aim": {
+    "sight_position": [
+      0,
+      0.096,
+      0.07
+    ],
+    "eye_distance": 0.15,
+    "scale": 0.6,
+    "hip_translation": [
+      0.26,
+      -0.3,
+      -0.4
+    ],
+    "hip_rotation": [
+      0,
+      3,
+      0
+    ],
+    "right_arm": {
+      "translation": [
+        -0.2182,
+        -0.8055,
+        -0.4409
+      ],
+      "rotation": [
+        -85,
+        90,
+        0
+      ],
+      "scale": [
+        1.8182,
+        1.8182,
+        1.8182
+      ]
+    },
+    "left_arm": {
+      "translation": [
+        0.2545,
+        -0.7327,
+        -1.2409
+      ],
+      "rotation": [
+        -85,
+        90,
+        0
+      ],
+      "scale": [
+        1.8182,
+        1.8182,
+        1.8182
+      ]
+    }
+  },
+  "attachments": {
+    "optic": {
+      "accepts": {
+        "tgsample:red_dot": {
+          "model": "tgsample:models/obj/red_dot.obj",
+          "texture": "tgsample:textures/handheld/red_dot.png",
+          "transform": {
+            "translation": [
+              0,
+              0.075,
+              -0.06
+            ]
+          },
+          "hide_groups": [
+            "iron_sight"
+          ],
+          "sight_position": [
+            0,
+            0.115,
+            -0.06
+          ]
+        }
+      }
+    },
+    "muzzle": {
+      "accepts": {
+        "tgsample:compact_suppressor": {
+          "model": "tgsample:models/obj/compact_suppressor.obj",
+          "texture": "tgsample:textures/handheld/compact_suppressor.png",
+          "transform": {
+            "translation": [
+              0,
+              0.035,
+              -0.525
+            ]
+          }
+        }
+      }
+    },
+    "grip": {
+      "accepts": {
+        "tgsample:vertical_foregrip": {
+          "model": "tgsample:models/obj/vertical_foregrip.obj",
+          "texture": "tgsample:textures/handheld/vertical_foregrip.png",
+          "transform": {
+            "translation": [
+              0,
+              -0.017,
+              -0.36
+            ]
+          }
+        }
+      }
+    }
+  },
+  "animation": {
+    "parts": {
+      "root": {
+        "pivot": [
+          0,
+          -0.05,
+          0.1
+        ]
+      },
+      "bolt": {
+        "groups": [
+          "bolt"
+        ],
+        "pivot": [
+          0.036,
+          0.04,
+          -0.04
+        ]
+      },
+      "magazine": {
+        "groups": [
+          "magazine"
+        ],
+        "pivot": [
+          0,
+          -0.1,
+          -0.11
+        ]
+      }
+    },
+    "sequences": {
+      "fire": {
+        "tracks": [
+          {
+            "part": "bolt",
+            "keyframes": [
+              {
+                "tick": 0,
+                "translation": [
+                  0,
+                  0,
+                  0.05
+                ],
+                "easing": "step"
+              },
+              {
+                "tick": 1,
+                "translation": [
+                  0,
+                  0,
+                  0
+                ],
+                "easing": "linear"
+              }
+            ]
+          },
+          {
+            "part": "root",
+            "keyframes": [
+              {
+                "tick": 1,
+                "translation": [
+                  0,
+                  0,
+                  0.012
+                ],
+                "rotation": [
+                  2,
+                  0,
+                  0
+                ],
+                "easing": "ease_out"
+              },
+              {
+                "tick": 3
+              }
+            ]
+          }
+        ]
+      },
+      "reload": {
+        "fit_to_event": true,
+        "tracks": [
+          {
+            "part": "root",
+            "keyframes": [
+              {
+                "tick": 4,
+                "rotation": [
+                  0,
+                  0,
+                  20
+                ]
+              },
+              {
+                "tick": 34,
+                "rotation": [
+                  0,
+                  0,
+                  20
+                ]
+              },
+              {
+                "tick": 40
+              }
+            ]
+          },
+          {
+            "part": "magazine",
+            "keyframes": [
+              {
+                "tick": 6
+              },
+              {
+                "tick": 10,
+                "translation": [
+                  0,
+                  -0.3,
+                  0
+                ]
+              },
+              {
+                "tick": 24,
+                "translation": [
+                  0,
+                  -0.3,
+                  0
+                ]
+              },
+              {
+                "tick": 30,
+                "translation": [
+                  0,
+                  0,
+                  0
+                ],
+                "easing": "ease_out"
+              }
+            ]
+          },
+          {
+            "part": "bolt",
+            "keyframes": [
+              {
+                "tick": 31
+              },
+              {
+                "tick": 34,
+                "translation": [
+                  0,
+                  0,
+                  0.08
+                ]
+              },
+              {
+                "tick": 36,
+                "translation": [
+                  0,
+                  0,
+                  0
+                ],
+                "easing": "linear"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "effects": {
+    "cartridge": {
+      "type": "pistol"
+    }
+  }
+}

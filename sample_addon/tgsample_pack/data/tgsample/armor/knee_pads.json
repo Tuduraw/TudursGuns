@@ -1,0 +1,11 @@
+{
+  "slot": "legs",
+  "display_name": "Knee Pads",
+  "armor": 2,
+  "durability": 200,
+  "soldier_weight": 10,
+  "knockback_resistance": 0.05,
+  "item_model": "tgsample:knee_pads",
+  "model": "tgsample:models/obj/knee_pads.obj",
+  "texture": "tgsample:textures/handheld/knee_pads.png"
+}

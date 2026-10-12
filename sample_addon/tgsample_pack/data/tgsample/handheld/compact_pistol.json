@@ -1,0 +1,399 @@
+{
+  "weapon": "tgs_compact_pistol",
+  "display_name": "Compact Pistol",
+  "model": "tgsample:models/obj/compact_pistol.obj",
+  "texture": "tgsample:textures/handheld/compact_pistol.png",
+  "projectile_item": "minecraft:iron_nugget",
+  "ammo": "tgsample:pistol_magazine",
+  "fire_mode": "semi",
+  "soldier_weight": 25,
+  "recoil": 2.0,
+  "muzzle_offset": [
+    0.0,
+    -0.05,
+    0.55
+  ],
+  "reload_sound": "tg_reload_magazine",
+  "display": {
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.45,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.3,
+        1.3,
+        1.3
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.45,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.3,
+        1.3,
+        1.3
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.55,
+        0.35,
+        0.4
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.418,
+        1.418,
+        1.418
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.45,
+        0.35,
+        0.4
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.418,
+        1.418,
+        1.418
+      ]
+    },
+    "gui": {
+      "translation": [
+        0.45,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        0,
+        90,
+        0
+      ],
+      "scale": [
+        1.891,
+        1.891,
+        1.891
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.182,
+        1.182,
+        1.182
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.45,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        0,
+        90,
+        0
+      ],
+      "scale": [
+        1.891,
+        1.891,
+        1.891
+      ]
+    }
+  },
+  "aim": {
+    "sight_position": [
+      0,
+      0.092,
+      0.04
+    ],
+    "eye_distance": 0.3,
+    "scale": 0.9,
+    "hip_translation": [
+      0.22,
+      -0.22,
+      -0.45
+    ],
+    "hip_rotation": [
+      0,
+      5,
+      0
+    ],
+    "right_arm": {
+      "translation": [
+        -0.0222,
+        -0.407,
+        -0.2094
+      ],
+      "rotation": [
+        -85,
+        90,
+        0
+      ],
+      "scale": [
+        1.1111,
+        1.1111,
+        1.1111
+      ]
+    },
+    "left_arm": {
+      "translation": [
+        0.1111,
+        -0.4292,
+        -0.2761
+      ],
+      "rotation": [
+        -85,
+        90,
+        0
+      ],
+      "scale": [
+        1.1111,
+        1.1111,
+        1.1111
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "accepts": {
+        "tgsample:compact_suppressor": {
+          "model": "tgsample:models/obj/compact_suppressor.obj",
+          "texture": "tgsample:textures/handheld/compact_suppressor.png",
+          "transform": {
+            "translation": [
+              0,
+              0.056,
+              -0.262
+            ]
+          },
+          "part": "root"
+        }
+      }
+    },
+    "optic": {
+      "accepts": {
+        "tgsample:red_dot": {
+          "model": "tgsample:models/obj/red_dot.obj",
+          "texture": "tgsample:textures/handheld/red_dot.png",
+          "transform": {
+            "translation": [
+              0,
+              0.081,
+              -0.07
+            ]
+          },
+          "part": "slide",
+          "sight_position": [
+            0,
+            0.121,
+            -0.07
+          ]
+        }
+      }
+    }
+  },
+  "animation": {
+    "parts": {
+      "root": {
+        "pivot": [
+          0,
+          -0.06,
+          0.03
+        ]
+      },
+      "slide": {
+        "groups": [
+          "slide"
+        ],
+        "pivot": [
+          0,
+          0.056,
+          -0.1
+        ]
+      },
+      "magazine": {
+        "groups": [
+          "magazine"
+        ],
+        "pivot": [
+          0,
+          -0.13,
+          0.05
+        ]
+      }
+    },
+    "sequences": {
+      "fire": {
+        "tracks": [
+          {
+            "part": "slide",
+            "keyframes": [
+              {
+                "tick": 0,
+                "translation": [
+                  0,
+                  0,
+                  0.06
+                ],
+                "easing": "step"
+              },
+              {
+                "tick": 2,
+                "translation": [
+                  0,
+                  0,
+                  0
+                ],
+                "easing": "ease_out"
+              }
+            ]
+          },
+          {
+            "part": "root",
+            "keyframes": [
+              {
+                "tick": 1,
+                "rotation": [
+                  12,
+                  0,
+                  0
+                ],
+                "easing": "ease_out"
+              },
+              {
+                "tick": 5
+              }
+            ]
+          }
+        ]
+      },
+      "reload": {
+        "fit_to_event": true,
+        "tracks": [
+          {
+            "part": "root",
+            "keyframes": [
+              {
+                "tick": 4,
+                "rotation": [
+                  0,
+                  0,
+                  -25
+                ]
+              },
+              {
+                "tick": 34,
+                "rotation": [
+                  0,
+                  0,
+                  -25
+                ]
+              },
+              {
+                "tick": 40
+              }
+            ]
+          },
+          {
+            "part": "magazine",
+            "keyframes": [
+              {
+                "tick": 6
+              },
+              {
+                "tick": 10,
+                "translation": [
+                  0,
+                  -0.25,
+                  0.05
+                ]
+              },
+              {
+                "tick": 24,
+                "translation": [
+                  0,
+                  -0.25,
+                  0.05
+                ]
+              },
+              {
+                "tick": 30,
+                "translation": [
+                  0,
+                  0,
+                  0
+                ],
+                "easing": "ease_out"
+              }
+            ]
+          },
+          {
+            "part": "slide",
+            "keyframes": [
+              {
+                "tick": 32
+              },
+              {
+                "tick": 34,
+                "translation": [
+                  0,
+                  0,
+                  0.06
+                ]
+              },
+              {
+                "tick": 36,
+                "translation": [
+                  0,
+                  0,
+                  0
+                ],
+                "easing": "linear"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "effects": {
+    "cartridge": {
+      "type": "pistol"
+    }
+  }
+}

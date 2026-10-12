@@ -1,0 +1,10 @@
+; Red Smoke Grenade - Tudur's Guns sample addon (tgsample). Red smoke, for marking a spot.
+
+DisplayName = Red Smoke Grenade
+Power = 1
+Explosion = 0
+Gravity = 0.05
+Bound = 0.35
+Sound = tg_grenade_throw
+SoundVolume = 0.8
+SoundPitchRandom = 0.1

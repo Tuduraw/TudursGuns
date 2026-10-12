@@ -1,0 +1,6 @@
+; Bounding Mine - Tudur's Guns sample addon (tgsample). Proximity mine with a short delay.
+
+DisplayName = Bounding Mine
+Power = 14
+Explosion = 2.6
+ExplosionBlock = 0

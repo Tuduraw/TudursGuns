@@ -1,0 +1,16 @@
+{
+  "category": "ammo",
+  "result": {
+    "ammo": "tgsample:pistol_magazine",
+    "count": 2
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_nugget",
+      "count": 6
+    },
+    {
+      "item": "minecraft:gunpowder"
+    }
+  ]
+}

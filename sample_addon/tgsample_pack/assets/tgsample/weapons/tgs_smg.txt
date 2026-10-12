@@ -1,0 +1,20 @@
+; Submachine Gun - Tudur's Guns sample addon (tgsample). Automatic, 30-round magazine.
+
+DisplayName = Submachine Gun
+Type = MachineGun1
+
+Power = 4.5
+Explosion = 0.0
+Accuracy = 2.4
+Acceleration = 6.0
+Gravity = 0.012
+
+Round = 30
+ReloadTime = 45
+Delay = 2
+
+Sound = tg_sample_rifle
+SoundVolume = 1.3
+SoundPitch = 1.15
+SoundPitchRandom = 0.05
+ModelBullet = tg_pistol_round
