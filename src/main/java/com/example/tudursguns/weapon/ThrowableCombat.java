@@ -8,24 +8,23 @@ import com.example.tudursvehiclemod.asset.WeaponStatsLoader;
 import com.example.tudursvehiclemod.entity.projectile.VehicleProjectileEntity;
 import com.example.tudursvehiclemod.entity.projectile.WeaponProjectileFactory;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.RaycastContext;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -61,58 +60,58 @@ public final class ThrowableCombat {
 		PIN_PULLED_AT.remove(playerId);
 	}
 
-	public static void pullPin(ServerPlayerEntity player, ThrowableDefinition def) {
-		PIN_PULLED_AT.put(player.getUuid(), player.getEntityWorld().getTime());
-		def.pinSound().ifPresent(sound -> HandheldCombat.playSound(player, sound, player.getEyePos(), 0.6f, 1.0f, 0.05f));
+	public static void pullPin(ServerPlayer player, ThrowableDefinition def) {
+		PIN_PULLED_AT.put(player.getUUID(), player.level().getGameTime());
+		def.pinSound().ifPresent(sound -> HandheldCombat.playSound(player, sound, player.getEyePosition(), 0.6f, 1.0f, 0.05f));
 	}
 
 	/** Ticks the held throwable has been cooking (0 if not cookable or no pin pulled). */
-	public static int cookedTicks(ServerPlayerEntity player, ThrowableDefinition def) {
-		Long pulled = PIN_PULLED_AT.get(player.getUuid());
+	public static int cookedTicks(ServerPlayer player, ThrowableDefinition def) {
+		Long pulled = PIN_PULLED_AT.get(player.getUUID());
 		if (!def.cooks() || pulled == null) {
 			return 0;
 		}
-		return (int) Math.max(0, player.getEntityWorld().getTime() - pulled);
+		return (int) Math.max(0, player.level().getGameTime() - pulled);
 	}
 
 	/** Called every tick while held with the pin out: a cookable throwable held past its fuse goes off
 	 * in the thrower's hand. Returns true if it did. */
-	public static boolean checkCookedOff(ServerPlayerEntity player, ItemStack stack, ThrowableDefinition def) {
+	public static boolean checkCookedOff(ServerPlayer player, ItemStack stack, ThrowableDefinition def) {
 		if (!def.cooks() || cookedTicks(player, def) < def.fuseTicks()) {
 			return false;
 		}
-		launch(player, stack, def, Vec3d.ZERO, player.getEyePos().add(0, -0.3, 0), 1);
-		PIN_PULLED_AT.remove(player.getUuid());
+		launch(player, stack, def, Vec3.ZERO, player.getEyePosition().add(0, -0.3, 0), 1);
+		PIN_PULLED_AT.remove(player.getUUID());
 		return true;
 	}
 
 	/** Releases the throw: overhand, or underhand (a gentle lob) while the aim key is held. */
-	public static void throwHeld(ServerPlayerEntity player, ItemStack stack, ThrowableDefinition def) {
+	public static void throwHeld(ServerPlayer player, ItemStack stack, ThrowableDefinition def) {
 		boolean underhand = HandheldCombat.isAimKeyHeld(player);
 		int cooked = cookedTicks(player, def);
-		PIN_PULLED_AT.remove(player.getUuid());
+		PIN_PULLED_AT.remove(player.getUUID());
 		float speed = underhand ? def.underhandVelocity() : def.throwVelocity();
-		Vec3d direction = underhand ? lobDirection(player) : player.getRotationVec(1.0f);
-		Vec3d velocity = direction.multiply(speed).add(player.getVelocity());
+		Vec3 direction = underhand ? lobDirection(player) : player.getViewVector(1.0f);
+		Vec3 velocity = direction.scale(speed).add(player.getDeltaMovement());
 		int remainingFuse = def.fuseTicks() > 0 ? Math.max(1, def.fuseTicks() - cooked) : -1;
 		launch(player, stack, def, velocity, throwOrigin(player), remainingFuse);
 	}
 
 	/** Underhand: the view direction tilted 20 degrees down (a short, low lob at the feet ahead). */
-	private static Vec3d lobDirection(ServerPlayerEntity player) {
-		float pitch = MathHelper.clamp(player.getPitch() + 20f, -90f, 90f);
-		return Vec3d.fromPolar(pitch, player.getYaw());
+	private static Vec3 lobDirection(ServerPlayer player) {
+		float pitch = Mth.clamp(player.getXRot() + 20f, -90f, 90f);
+		return Vec3.directionFromRotation(pitch, player.getYRot());
 	}
 
 	/** Slightly in front of and below the eyes - pulled back to the eyes if a block is in the way. */
-	private static Vec3d throwOrigin(ServerPlayerEntity player) {
-		return ViewSpace.clearOfBlocks(player, player.getEyePos().add(player.getRotationVec(1.0f).multiply(0.4)).add(0, -0.1, 0));
+	private static Vec3 throwOrigin(ServerPlayer player) {
+		return ViewSpace.clearOfBlocks(player, player.getEyePosition().add(player.getViewVector(1.0f).scale(0.4)).add(0, -0.1, 0));
 	}
 
 	/** Spawns the thrown projectile and takes one throwable from the stack (not in creative). */
-	private static void launch(ServerPlayerEntity player, ItemStack stack, ThrowableDefinition def, Vec3d velocity, Vec3d origin,
+	private static void launch(ServerPlayer player, ItemStack stack, ThrowableDefinition def, Vec3 velocity, Vec3 origin,
 			int timeFuseTicks) {
-		ServerWorld world = (ServerWorld) player.getEntityWorld();
+		ServerLevel world = (ServerLevel) player.level();
 		WeaponStats stats = WeaponStatsLoader.get(def.weapon());
 		ItemStack shown = stack.copyWithCount(1);
 		VehicleProjectileEntity projectile = WeaponProjectileFactory.create(world, player, shown, stats, 0);
@@ -127,33 +126,33 @@ public final class ThrowableCombat {
 		}
 		int timeFuse = timeFuseTicks > 0 ? timeFuseTicks : stats.timeFuseTicks();
 		projectile.tudursvehiclemod$setFuseTicks(delayFuse, timeFuse);
-		projectile.setPosition(origin.x, origin.y, origin.z);
-		projectile.setVelocity(velocity);
+		projectile.setPos(origin.x, origin.y, origin.z);
+		projectile.setDeltaMovement(velocity);
 		ViewSpace.faceAlong(projectile, velocity);
-		world.spawnEntity(projectile);
+		world.addFreshEntity(projectile);
 		projectile.tudursvehiclemod$forceLoadSpawnChunk();
 		if (def.effect().type() != ThrowableDefinition.Type.NONE) {
-			PENDING_EFFECTS.put(projectile.getUuid(), def.effect());
+			PENDING_EFFECTS.put(projectile.getUUID(), def.effect());
 		}
 		stats.sound().ifPresent(sound -> HandheldCombat.playSound(player, sound, origin, stats.soundVolume(),
 				stats.soundPitch(), stats.soundPitchRandom()));
 		if (!player.isCreative()) {
-			stack.decrement(1);
+			stack.shrink(1);
 		}
 	}
 
 	/** A thrown projectile left the world. Its effect happens if it was used up (fuse or impact); one
 	 * merely unloaded with its chunk keeps it for when it's loaded again. */
-	public static void onProjectileRemoved(Entity entity, ServerWorld world) {
+	public static void onProjectileRemoved(Entity entity, ServerLevel world) {
 		Entity.RemovalReason reason = entity.getRemovalReason();
 		if (reason == Entity.RemovalReason.UNLOADED_TO_CHUNK) {
 			return;
 		}
-		ThrowableDefinition.Effect effect = PENDING_EFFECTS.remove(entity.getUuid());
+		ThrowableDefinition.Effect effect = PENDING_EFFECTS.remove(entity.getUUID());
 		if (effect == null || (reason != Entity.RemovalReason.DISCARDED && reason != Entity.RemovalReason.KILLED)) {
 			return;
 		}
-		Vec3d pos = entity.getEntityPos();
+		Vec3 pos = entity.position();
 		effect.sound().ifPresent(sound -> HandheldCombat.playSoundAt(world, sound, pos, 1.5f, 1.0f, 0.1f));
 		switch (effect.type()) {
 			case SMOKE, SIGNAL, GAS -> SmokeCloudEntity.create(world, pos, effect.radius(), effect.durationTicks(), effect.rgb(),
@@ -167,51 +166,51 @@ public final class ThrowableCombat {
 
 	/** Players who can see the flash get a white-out (FlashPayload), strongest up close and when
 	 * looking straight at it; mobs nearby lose their target and are slowed. */
-	private static void flash(ServerWorld world, Vec3d pos, ThrowableDefinition.Effect effect) {
+	private static void flash(ServerLevel world, Vec3 pos, ThrowableDefinition.Effect effect) {
 		double radius = effect.radius();
-		for (ServerPlayerEntity player : world.getPlayers(candidate -> candidate.squaredDistanceTo(pos) <= radius * radius)) {
-			Vec3d eye = player.getEyePos();
-			HitResult hit = world.raycast(new RaycastContext(pos, eye, RaycastContext.ShapeType.VISUAL,
-					RaycastContext.FluidHandling.NONE, player));
+		for (ServerPlayer player : world.getPlayers(candidate -> candidate.distanceToSqr(pos) <= radius * radius)) {
+			Vec3 eye = player.getEyePosition();
+			HitResult hit = world.clip(new ClipContext(pos, eye, ClipContext.Block.VISUAL,
+					ClipContext.Fluid.NONE, player));
 			if (hit.getType() != HitResult.Type.MISS) {
 				continue;
 			}
 			double distance = eye.distanceTo(pos);
-			double facing = distance < 1.0E-3 ? 1.0 : player.getRotationVec(1.0f).dotProduct(pos.subtract(eye).multiply(1.0 / distance));
+			double facing = distance < 1.0E-3 ? 1.0 : player.getViewVector(1.0f).dot(pos.subtract(eye).scale(1.0 / distance));
 			double closeness = 1.0 - distance / radius;
-			float intensity = (float) MathHelper.clamp(closeness * (facing > 0 ? 0.5 + 0.5 * facing : 0.25), 0.0, 1.0);
+			float intensity = (float) Mth.clamp(closeness * (facing > 0 ? 0.5 + 0.5 * facing : 0.25), 0.0, 1.0);
 			if (intensity > 0.05f) {
 				ServerPlayNetworking.send(player, new FlashPayload(intensity, Math.round(effect.durationTicks() * intensity)));
 			}
 		}
-		Box area = new Box(pos, pos).expand(radius);
-		for (MobEntity mob : world.getEntitiesByClass(MobEntity.class, area, mob -> mob.squaredDistanceTo(pos) <= radius * radius)) {
+		AABB area = new AABB(pos, pos).inflate(radius);
+		for (Mob mob : world.getEntitiesOfClass(Mob.class, area, mob -> mob.distanceToSqr(pos) <= radius * radius)) {
 			mob.setTarget(null);
 			mob.getNavigation().stop();
-			mob.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, effect.durationTicks(), 3));
+			mob.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, effect.durationTicks(), 3));
 		}
 	}
 
 	/** Fire on every open spot above solid ground within the radius, and everything living in it alight. */
-	private static void ignite(ServerWorld world, Vec3d pos, ThrowableDefinition.Effect effect) {
+	private static void ignite(ServerLevel world, Vec3 pos, ThrowableDefinition.Effect effect) {
 		int radius = Math.max(1, Math.round(effect.radius()));
-		BlockPos center = BlockPos.ofFloored(pos);
-		BlockState fire = Blocks.FIRE.getDefaultState();
-		for (BlockPos target : BlockPos.iterate(center.add(-radius, -2, -radius), center.add(radius, 2, radius))) {
-			if (target.getSquaredDistance(center) > (double) radius * radius) {
+		BlockPos center = BlockPos.containing(pos);
+		BlockState fire = Blocks.FIRE.defaultBlockState();
+		for (BlockPos target : BlockPos.betweenClosed(center.offset(-radius, -2, -radius), center.offset(radius, 2, radius))) {
+			if (target.distSqr(center) > (double) radius * radius) {
 				continue;
 			}
-			BlockPos below = target.down();
+			BlockPos below = target.below();
 			if (world.getBlockState(target).isAir()
-					&& world.getBlockState(below).isSideSolidFullSquare(world, below, Direction.UP)
+					&& world.getBlockState(below).isFaceSturdy(world, below, Direction.UP)
 					&& world.random.nextFloat() < 0.7f) {
-				world.setBlockState(target, fire);
+				world.setBlockAndUpdate(target, fire);
 			}
 		}
-		Box area = new Box(pos, pos).expand(effect.radius());
-		for (LivingEntity living : world.getEntitiesByClass(LivingEntity.class, area,
-				living -> living.squaredDistanceTo(pos) <= effect.radius() * effect.radius())) {
-			living.setOnFireFor(Math.max(1f, effect.durationTicks() / 20f));
+		AABB area = new AABB(pos, pos).inflate(effect.radius());
+		for (LivingEntity living : world.getEntitiesOfClass(LivingEntity.class, area,
+				living -> living.distanceToSqr(pos) <= effect.radius() * effect.radius())) {
+			living.igniteForSeconds(Math.max(1f, effect.durationTicks() / 20f));
 		}
 	}
 }

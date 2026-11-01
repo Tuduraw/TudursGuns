@@ -2,7 +2,6 @@ package com.example.tudursguns.client.mixin;
 
 import com.example.tudursvehiclemod.asset.AddonPaths;
 import com.example.tudursvehiclemod.client.render.AddonTextureLoader;
-import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -14,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Map;
+import net.minecraft.resources.Identifier;
 
 /** Tudur's Vehicle Mod finds a texture in an addon folder (tudursvehiclemod-addons/<pack>/) only under
  * assets/<namespace>/textures/vehicle/ - addon folders aren't resource packs, so nothing else there is
@@ -39,7 +39,7 @@ public abstract class AddonTextureLoaderMixin {
 				try (var files = Files.walk(texturesDir)) {
 					files.filter(file -> file.toString().endsWith(".png")).forEach(file -> {
 						String relative = texturesDir.relativize(file).toString().replace('\\', '/').toLowerCase(Locale.ROOT);
-						Identifier id = Identifier.tryParse(namespace, "textures/" + relative);
+						Identifier id = Identifier.tryBuild(namespace, "textures/" + relative);
 						if (id != null) {
 							INDEX.putIfAbsent(id, file);
 						}

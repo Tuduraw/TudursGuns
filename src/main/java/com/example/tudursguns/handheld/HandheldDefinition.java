@@ -3,8 +3,6 @@ package com.example.tudursguns.handheld;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.item.ItemDisplayContext;
-import net.minecraft.util.Identifier;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -14,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemDisplayContext;
 
 /** One handheld weapon, read from data/<namespace>/handheld/<name>.json.
  *
@@ -46,7 +46,7 @@ public record HandheldDefinition(
 			Codec.STRING.optionalFieldOf("display_name").forGetter(HandheldDefinition::displayName),
 			Identifier.CODEC.optionalFieldOf("model").forGetter(HandheldDefinition::model),
 			Identifier.CODEC.optionalFieldOf("texture").forGetter(HandheldDefinition::texture),
-			Identifier.CODEC.optionalFieldOf("projectile_item", Identifier.ofVanilla("iron_nugget")).forGetter(HandheldDefinition::projectileItem),
+			Identifier.CODEC.optionalFieldOf("projectile_item", Identifier.withDefaultNamespace("iron_nugget")).forGetter(HandheldDefinition::projectileItem),
 			Identifier.CODEC.optionalFieldOf("ammo_item").forGetter(HandheldDefinition::ammoItem),
 			Codec.intRange(1, 1_000_000).optionalFieldOf("rounds_per_ammo_item", 1).forGetter(HandheldDefinition::roundsPerAmmoItem),
 			FireMode.CODEC.optionalFieldOf("fire_mode", FireMode.SEMI).forGetter(HandheldDefinition::fireMode),

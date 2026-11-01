@@ -1,23 +1,23 @@
 package com.example.tudursguns.network;
 
 import com.example.tudursguns.TudursGuns;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
 
 /** C2S: the reload key was pressed. The server decides which held weapon (if any) reloads. */
-public record ReloadRequestPayload() implements CustomPayload {
+public record ReloadRequestPayload() implements CustomPacketPayload {
 
 	public static final ReloadRequestPayload INSTANCE = new ReloadRequestPayload();
 
-	public static final CustomPayload.Id<ReloadRequestPayload> ID =
-			new CustomPayload.Id<>(Identifier.of(TudursGuns.MOD_ID, "reload_request"));
+	public static final CustomPacketPayload.Type<ReloadRequestPayload> ID =
+			new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(TudursGuns.MOD_ID, "reload_request"));
 
-	public static final PacketCodec<RegistryByteBuf, ReloadRequestPayload> CODEC = PacketCodec.unit(INSTANCE);
+	public static final StreamCodec<RegistryFriendlyByteBuf, ReloadRequestPayload> CODEC = StreamCodec.unit(INSTANCE);
 
 	@Override
-	public Id<? extends CustomPayload> getId() {
+	public Type<? extends CustomPacketPayload> type() {
 		return ID;
 	}
 }

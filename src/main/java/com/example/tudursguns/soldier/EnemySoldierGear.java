@@ -7,14 +7,13 @@ import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.registry.ModItems;
 import com.example.tudursguns.weapon.HandheldCombat;
 import com.example.tudursvehiclemod.asset.WeaponStatsLoader;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.random.Random;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.Mob;
 
 /** Kits out an enemy soldier from the definitions' soldier_weight: one weapon, picked with odds in
  * proportion to the weights, and for each armor slot one piece or nothing (the server config's
@@ -29,7 +28,7 @@ public final class EnemySoldierGear {
 	private record Weighted(Identifier id, int weight) {
 	}
 
-	public static void equip(MobEntity soldier, Random random) {
+	public static void equip(Mob soldier, RandomSource random) {
 		TudursGunsConfig.Data config = TudursGunsConfig.get();
 		List<Weighted> weapons = new ArrayList<>();
 		for (Map.Entry<Identifier, HandheldDefinition> entry : ModDefinitions.HANDHELD.server().entrySet()) {
@@ -40,7 +39,7 @@ public final class EnemySoldierGear {
 		}
 		Identifier weapon = pick(weapons, 0, random);
 		if (weapon != null) {
-			soldier.equipStack(EquipmentSlot.MAINHAND, ModItems.weaponStack(weapon));
+			soldier.setItemSlot(EquipmentSlot.MAINHAND, ModItems.weaponStack(weapon));
 		}
 		for (EquipmentSlot slot : ARMOR_SLOTS) {
 			List<Weighted> pieces = new ArrayList<>();
@@ -51,16 +50,16 @@ public final class EnemySoldierGear {
 			}
 			Identifier piece = pick(pieces, config.enemy_soldier_no_armor_weight, random);
 			if (piece != null) {
-				soldier.equipStack(slot, ModItems.armorStack(piece));
+				soldier.setItemSlot(slot, ModItems.armorStack(piece));
 			}
 		}
 		for (EquipmentSlot slot : EquipmentSlot.values()) {
-			soldier.setEquipmentDropChance(slot, config.enemy_soldier_drop_chance);
+			soldier.setDropChance(slot, config.enemy_soldier_drop_chance);
 		}
 	}
 
 	/** One of candidates, in proportion to its weight - or null with odds of noneWeight. */
-	private static Identifier pick(List<Weighted> candidates, int noneWeight, Random random) {
+	private static Identifier pick(List<Weighted> candidates, int noneWeight, RandomSource random) {
 		int total = noneWeight;
 		for (Weighted candidate : candidates) {
 			total += candidate.weight();

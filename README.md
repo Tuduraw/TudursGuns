@@ -13,11 +13,11 @@
 
 ## ビルド
 
-1. 前提MODを `337153f` 以降の状態で、ローカルの Maven に公開します。
+1. 前提MODの Mojang マッピング版([tudursvehiclemod-mojmap](https://github.com/Tuduraw/tudursvehiclemod-mojmap))を、ローカルの Maven に公開します。
    ```
    ./gradlew publishToMavenLocal
    ```
-   前提MODの `gradle.properties` の `mod_version` と、このMODの `gradle.properties` の `tudursvehiclemod_version` を一致させてください(現在はどちらも `1.0.3`)。
+   公開されるバージョンは `<mod_version>-<mod_loader>-<minecraft_version>`(例: `1.1.1-fabric-1.21.11`)です。このMODの `gradle.properties` の `tudursvehiclemod_version` をこれに合わせてください。
 2. このMODをビルドします。
    ```
    ./gradlew build
@@ -782,7 +782,7 @@ Hand Made Guns & Vehicle : EX(1.7.10)のパックを変換するツールを `do
 
 ## 未検証の点
 
-コンパイルは、Minecraft 1.21.11(Yarn `1.21.11+build.4`)、Fabric API `0.139.4+1.21.11`、前提MODのソースに対して確認しています(Mixin の対象メソッドも照合済み)。次の点はゲーム内で確認できていません。
+コンパイルは、Minecraft 1.21.11(Mojang 公式マッピング)、Fabric API `0.139.4+1.21.11`、前提MODのソースに対して確認しています(Mixin の対象メソッドも照合済み)。次の点はゲーム内で確認できていません。
 
 - **表示位置:** 武器・アタッチメント・防具の `display`、一人称の腕、OBJ 防具(人型に着せた図を別途描いて確認しただけで、ゲーム内では未確認)、収録の薬莢・マガジンの模型と出る位置は推測の値です。
 - **投擲物:** 着弾点の表示の軌道が実際の弾と一致するか。跳ね返りを繰り返した後、地面で止まるか(前提MODの `Bound` 次第)。

@@ -4,23 +4,22 @@ import com.example.tudursguns.handheld.GunRecipeDefinition;
 import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.screen.GunCraftingScreenHandler;
 import com.example.tudursguns.weapon.GunCrafting;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Util;
-
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
 import java.util.ArrayList;
 import java.util.List;
 
 /** Recipe list on the left (result icon and name, grouped under category headings), the selected
  * recipe on the right: its ingredients with how many the player has, and a craft button. Drawn with
  * plain rectangles like the weapon workbench - no texture needed. */
-public class GunCraftingScreen extends HandledScreen<GunCraftingScreenHandler> {
+public class GunCraftingScreen extends AbstractContainerScreen<GunCraftingScreenHandler> {
 
 	private static final int PANEL_COLOR = 0xFFC6C6C6;
 	private static final int LIST_COLOR = 0xFF8B8B8B;
@@ -44,19 +43,19 @@ public class GunCraftingScreen extends HandledScreen<GunCraftingScreenHandler> {
 	private int scroll;
 	/** The selected recipe (by id, so a re-sync while the screen is open can't swap it for another). */
 	private Identifier selected;
-	private ButtonWidget craftButton;
+	private Button craftButton;
 
-	public GunCraftingScreen(GunCraftingScreenHandler handler, PlayerInventory inventory, Text title) {
+	public GunCraftingScreen(GunCraftingScreenHandler handler, Inventory inventory, Component title) {
 		super(handler, inventory, title);
-		this.backgroundWidth = 256;
-		this.backgroundHeight = 176;
+		this.imageWidth = 256;
+		this.imageHeight = 176;
 	}
 
 	@Override
 	protected void init() {
 		super.init();
-		this.craftButton = this.addDrawableChild(ButtonWidget.builder(Text.translatable("gui.tudursguns.gun_crafting.craft"), button -> craft())
-				.dimensions(this.x + DETAIL_X, this.y + this.backgroundHeight - 26, this.backgroundWidth - DETAIL_X - 6, 20)
+		this.craftButton = this.addRenderableWidget(Button.builder(Component.translatable("gui.tudursguns.gun_crafting.craft"), button -> craft())
+				.bounds(this.leftPos + DETAIL_X, this.topPos + this.imageHeight - 26, this.imageWidth - DETAIL_X - 6, 20)
 				.build());
 	}
 
@@ -88,39 +87,39 @@ public class GunCraftingScreen extends HandledScreen<GunCraftingScreenHandler> {
 	/** The server is told the recipe's position in the list (see GunCraftingScreenHandler.onButtonClick). */
 	private void craft() {
 		int index = GunCrafting.recipeIds(true).indexOf(this.selected);
-		if (index >= 0 && this.client != null && this.client.interactionManager != null && this.client.player != null
-				&& this.handler.onButtonClick(this.client.player, index)) {
-			this.client.interactionManager.clickButton(this.handler.syncId, index);
+		if (index >= 0 && this.minecraft != null && this.minecraft.gameMode != null && this.minecraft.player != null
+				&& this.menu.clickMenuButton(this.minecraft.player, index)) {
+			this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, index);
 		}
 	}
 
 
 	@Override
-	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
 		GunRecipeDefinition recipe = selectedRecipe();
 		if (this.craftButton != null) {
-			this.craftButton.active = recipe != null && this.client != null && this.client.player != null
-					&& GunCrafting.canCraft(this.client.player, recipe);
+			this.craftButton.active = recipe != null && this.minecraft != null && this.minecraft.player != null
+					&& GunCrafting.canCraft(this.minecraft.player, recipe);
 		}
 		super.render(context, mouseX, mouseY, delta);
 		ItemStack hovered = hoveredStack(mouseX, mouseY);
 		if (!hovered.isEmpty()) {
-			context.drawItemTooltip(this.textRenderer, hovered, mouseX, mouseY);
+			context.setTooltipForNextFrame(this.font, hovered, mouseX, mouseY);
 		}
 	}
 
 	@Override
-	protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY) {
-		int x = this.x;
-		int y = this.y;
-		context.fill(x, y, x + this.backgroundWidth, y + this.backgroundHeight, PANEL_COLOR);
+	protected void renderBg(GuiGraphics context, float delta, int mouseX, int mouseY) {
+		int x = this.leftPos;
+		int y = this.topPos;
+		context.fill(x, y, x + this.imageWidth, y + this.imageHeight, PANEL_COLOR);
 		int listTop = y + LIST_Y;
 		int listBottom = listTop + VISIBLE_ROWS * ROW_HEIGHT;
 		context.fill(x + LIST_X - 1, listTop - 1, x + LIST_X + LIST_WIDTH + 1, listBottom + 1, LIST_COLOR);
 
 		List<Identifier> ids = GunCrafting.recipeIds(true);
 		if (ids.isEmpty()) {
-			context.drawText(this.textRenderer, Text.translatable("gui.tudursguns.gun_crafting.no_recipes"), x + LIST_X + 2, listTop + 4, ROW_TEXT, false);
+			context.drawString(this.font, Component.translatable("gui.tudursguns.gun_crafting.no_recipes"), x + LIST_X + 2, listTop + 4, ROW_TEXT, false);
 			return;
 		}
 		List<Row> rows = rows(ids);
@@ -129,8 +128,8 @@ public class GunCraftingScreen extends HandledScreen<GunCraftingScreenHandler> {
 			Row row = rows.get(this.scroll + i);
 			int rowY = listTop + i * ROW_HEIGHT;
 			if (row.heading() != null) {
-				Text heading = Text.translatableWithFallback("gui.tudursguns.gun_crafting.category." + row.heading(), row.heading());
-				context.drawText(this.textRenderer, heading, x + LIST_X + 2, rowY + 5, HEADING_TEXT, false);
+				Component heading = Component.translatableWithFallback("gui.tudursguns.gun_crafting.category." + row.heading(), row.heading());
+				context.drawString(this.font, heading, x + LIST_X + 2, rowY + 5, HEADING_TEXT, false);
 				continue;
 			}
 			boolean hover = mouseX >= x + LIST_X && mouseX < x + LIST_X + LIST_WIDTH && mouseY >= rowY && mouseY < rowY + ROW_HEIGHT;
@@ -140,43 +139,43 @@ public class GunCraftingScreen extends HandledScreen<GunCraftingScreenHandler> {
 				context.fill(x + LIST_X, rowY, x + LIST_X + LIST_WIDTH, rowY + ROW_HEIGHT, ROW_HOVER);
 			}
 			ItemStack result = ModDefinitions.GUN_RECIPES.client().get(ids.get(row.recipe())).result().createStack();
-			context.drawItem(result, x + LIST_X + 1, rowY + 1);
-			String name = this.textRenderer.trimToWidth(result.getName().getString(), LIST_WIDTH - 22);
-			context.drawText(this.textRenderer, name, x + LIST_X + 20, rowY + 5, ids.get(row.recipe()).equals(this.selected) ? TEXT_COLOR : ROW_TEXT, false);
+			context.renderItem(result, x + LIST_X + 1, rowY + 1);
+			String name = this.font.plainSubstrByWidth(result.getHoverName().getString(), LIST_WIDTH - 22);
+			context.drawString(this.font, name, x + LIST_X + 20, rowY + 5, ids.get(row.recipe()).equals(this.selected) ? TEXT_COLOR : ROW_TEXT, false);
 		}
 
 		GunRecipeDefinition recipe = selectedRecipe();
-		if (recipe == null || this.client == null || this.client.player == null) {
-			context.drawText(this.textRenderer, Text.translatable("gui.tudursguns.gun_crafting.select"), x + DETAIL_X, listTop + 4, TEXT_COLOR, false);
+		if (recipe == null || this.minecraft == null || this.minecraft.player == null) {
+			context.drawString(this.font, Component.translatable("gui.tudursguns.gun_crafting.select"), x + DETAIL_X, listTop + 4, TEXT_COLOR, false);
 			return;
 		}
 		ItemStack result = recipe.result().createStack();
-		context.drawItem(result, x + DETAIL_X, listTop);
-		context.drawStackOverlay(this.textRenderer, result, x + DETAIL_X, listTop);
-		String name = this.textRenderer.trimToWidth(result.getName().getString(), this.backgroundWidth - DETAIL_X - 26);
-		context.drawText(this.textRenderer, name, x + DETAIL_X + 20, listTop + 4, TEXT_COLOR, false);
+		context.renderItem(result, x + DETAIL_X, listTop);
+		context.renderItemDecorations(this.font, result, x + DETAIL_X, listTop);
+		String name = this.font.plainSubstrByWidth(result.getHoverName().getString(), this.imageWidth - DETAIL_X - 26);
+		context.drawString(this.font, name, x + DETAIL_X + 20, listTop + 4, TEXT_COLOR, false);
 		List<GunRecipeDefinition.ItemRef> ingredients = recipe.ingredients();
 		for (int i = 0; i < ingredients.size() && i < VISIBLE_INGREDIENTS; i++) {
 			GunRecipeDefinition.ItemRef ingredient = ingredients.get(i);
 			int rowY = listTop + 22 + i * INGREDIENT_ROW;
 			ItemStack shown = displayed(ingredient);
 			if (!shown.isEmpty()) {
-				context.drawItem(shown, x + DETAIL_X, rowY);
+				context.renderItem(shown, x + DETAIL_X, rowY);
 			}
-			int have = GunCrafting.count(this.client.player, ingredient);
-			boolean enough = this.client.player.isCreative() || have >= ingredient.count();
+			int have = GunCrafting.count(this.minecraft.player, ingredient);
+			boolean enough = this.minecraft.player.isCreative() || have >= ingredient.count();
 			String label = Math.min(have, 9999) + " / " + ingredient.count();
-			context.drawText(this.textRenderer, label, x + DETAIL_X + 20, rowY + 4, enough ? ENOUGH_COLOR : MISSING_COLOR, false);
+			context.drawString(this.font, label, x + DETAIL_X + 20, rowY + 4, enough ? ENOUGH_COLOR : MISSING_COLOR, false);
 		}
 		if (ingredients.size() > VISIBLE_INGREDIENTS) {
-			context.drawText(this.textRenderer, "+" + (ingredients.size() - VISIBLE_INGREDIENTS),
+			context.drawString(this.font, "+" + (ingredients.size() - VISIBLE_INGREDIENTS),
 					x + DETAIL_X + 80, listTop + 22 + (VISIBLE_INGREDIENTS - 1) * INGREDIENT_ROW + 4, TEXT_COLOR, false);
 		}
 	}
 
 	@Override
-	protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
-		context.drawText(this.textRenderer, this.title, this.titleX, this.titleY, TEXT_COLOR, false);
+	protected void renderLabels(GuiGraphics context, int mouseX, int mouseY) {
+		context.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, TEXT_COLOR, false);
 	}
 
 	/** The stack an ingredient is shown as - a tag cycles through its items once a second. */
@@ -185,13 +184,13 @@ public class GunCraftingScreen extends HandledScreen<GunCraftingScreenHandler> {
 		if (stacks.isEmpty()) {
 			return ItemStack.EMPTY;
 		}
-		return stacks.get((int) ((Util.getMeasuringTimeMs() / 1000L) % stacks.size()));
+		return stacks.get((int) ((Util.getMillis() / 1000L) % stacks.size()));
 	}
 
 	/** The result or ingredient under the mouse, for its tooltip. */
 	private ItemStack hoveredStack(int mouseX, int mouseY) {
-		int listTop = this.y + LIST_Y;
-		int left = this.x + DETAIL_X;
+		int listTop = this.topPos + LIST_Y;
+		int left = this.leftPos + DETAIL_X;
 		if (mouseX < left || mouseX >= left + 16) {
 			return ItemStack.EMPTY;
 		}
@@ -212,11 +211,11 @@ public class GunCraftingScreen extends HandledScreen<GunCraftingScreenHandler> {
 	}
 
 	@Override
-	public boolean mouseClicked(Click click, boolean doubled) {
-		int listTop = this.y + LIST_Y;
+	public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
+		int listTop = this.topPos + LIST_Y;
 		int mouseX = (int) click.x();
 		int mouseY = (int) click.y();
-		if (click.button() == 0 && mouseX >= this.x + LIST_X && mouseX < this.x + LIST_X + LIST_WIDTH
+		if (click.button() == 0 && mouseX >= this.leftPos + LIST_X && mouseX < this.leftPos + LIST_X + LIST_WIDTH
 				&& mouseY >= listTop && mouseY < listTop + VISIBLE_ROWS * ROW_HEIGHT) {
 			List<Row> rows = rows(GunCrafting.recipeIds(true));
 			int index = this.scroll + (mouseY - listTop) / ROW_HEIGHT;
@@ -230,7 +229,7 @@ public class GunCraftingScreen extends HandledScreen<GunCraftingScreenHandler> {
 
 	@Override
 	public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-		if (mouseX >= this.x + LIST_X && mouseX < this.x + LIST_X + LIST_WIDTH) {
+		if (mouseX >= this.leftPos + LIST_X && mouseX < this.leftPos + LIST_X + LIST_WIDTH) {
 			this.scroll = Math.max(0, this.scroll - (int) Math.signum(verticalAmount));
 			return true;
 		}

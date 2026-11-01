@@ -13,18 +13,17 @@ import com.example.tudursguns.item.EquipmentItem;
 import com.example.tudursguns.item.HandheldWeaponItem;
 import com.example.tudursguns.item.MineItem;
 import com.example.tudursguns.item.ThrowableItem;
-import net.minecraft.component.ComponentType;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.UseEffectsComponent;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.util.Identifier;
-
 import java.util.function.Function;
+import net.minecraft.core.Registry;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.UseEffects;
 
 /** The item types. Each is one item for every definition of its kind: which definition a stack is
  * comes from a component (tudursguns:weapon, tudursguns:mine, ...), since items can't be registered
@@ -44,31 +43,31 @@ public final class ModItems {
 
 	/** Holding use fires / pulls the pin, so the item is "in use" while it's held down - without this,
 	 * that slows the player like drawing a bow and stops sprinting. */
-	private static final UseEffectsComponent FULL_SPEED_USE =
-			new UseEffectsComponent(true, UseEffectsComponent.DEFAULT.interactVibrations(), 1.0f);
+	private static final UseEffects FULL_SPEED_USE =
+			new UseEffects(true, UseEffects.DEFAULT.interactVibrations(), 1.0f);
 
 	public static void register() {
 		HANDHELD_WEAPON = register("handheld_weapon", HandheldWeaponItem::new,
-				new Item.Settings().maxCount(1).component(DataComponentTypes.USE_EFFECTS, FULL_SPEED_USE));
-		ATTACHMENT = register("attachment", AttachmentItem::new, new Item.Settings().maxCount(16));
+				new Item.Properties().stacksTo(1).component(DataComponents.USE_EFFECTS, FULL_SPEED_USE));
+		ATTACHMENT = register("attachment", AttachmentItem::new, new Item.Properties().stacksTo(16));
 		THROWABLE = register("throwable", ThrowableItem::new,
-				new Item.Settings().maxCount(16).component(DataComponentTypes.USE_EFFECTS, FULL_SPEED_USE));
-		MINE = register("mine", MineItem::new, new Item.Settings().maxCount(8));
+				new Item.Properties().stacksTo(16).component(DataComponents.USE_EFFECTS, FULL_SPEED_USE));
+		MINE = register("mine", MineItem::new, new Item.Properties().stacksTo(8));
 		// Armor and equipment get their stack size, durability and equippable component from each
 		// definition (set on the stack).
-		ARMOR = register("armor", ArmorItem::new, new Item.Settings().maxCount(1));
-		EQUIPMENT = register("equipment", EquipmentItem::new, new Item.Settings().maxCount(1));
-		AMMO = register("ammo", AmmoItem::new, new Item.Settings().maxCount(16));
+		ARMOR = register("armor", ArmorItem::new, new Item.Properties().stacksTo(1));
+		EQUIPMENT = register("equipment", EquipmentItem::new, new Item.Properties().stacksTo(1));
+		AMMO = register("ammo", AmmoItem::new, new Item.Properties().stacksTo(16));
 	}
 
-	private static Item register(String path, Function<Item.Settings, Item> factory, Item.Settings settings) {
-		RegistryKey<Item> key = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(TudursGuns.MOD_ID, path));
-		return Registry.register(Registries.ITEM, key, factory.apply(settings.registryKey(key)));
+	private static Item register(String path, Function<Item.Properties, Item> factory, Item.Properties settings) {
+		ResourceKey<Item> key = ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(TudursGuns.MOD_ID, path));
+		return Registry.register(BuiltInRegistries.ITEM, key, factory.apply(settings.setId(key)));
 	}
 
 	// ---------------------------------------------------------------- stacks
 
-	private static ItemStack defined(Item item, ComponentType<Identifier> component, Identifier id) {
+	private static ItemStack defined(Item item, DataComponentType<Identifier> component, Identifier id) {
 		ItemStack stack = new ItemStack(item);
 		stack.set(component, id);
 		return stack;

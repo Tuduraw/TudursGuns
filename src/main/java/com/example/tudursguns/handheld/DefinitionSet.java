@@ -8,8 +8,6 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
-import net.minecraft.util.Identifier;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -18,6 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import net.minecraft.resources.Identifier;
 
 /** One kind of data-driven definition (data/<namespace>/<kind>/*.json): the server's copy, loaded
  * from data packs and the addons folder, and the client's copy, as last synced by the server.

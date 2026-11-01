@@ -2,8 +2,8 @@ package com.example.tudursguns.client.mixin;
 
 import com.example.tudursguns.client.AimController;
 import com.example.tudursguns.client.TudursGunsClientConfig;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.Entity;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -13,19 +13,19 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 @Mixin(Entity.class)
 public abstract class EntityLookSensitivityMixin {
 
-	@ModifyVariable(method = "changeLookDirection(DD)V", at = @At("HEAD"), argsOnly = true, ordinal = 0)
+	@ModifyVariable(method = "turn(DD)V", at = @At("HEAD"), argsOnly = true, ordinal = 0)
 	private double tudursguns$scaleYawDelta(double cursorDeltaX) {
 		return tudursguns$scale(cursorDeltaX);
 	}
 
-	@ModifyVariable(method = "changeLookDirection(DD)V", at = @At("HEAD"), argsOnly = true, ordinal = 1)
+	@ModifyVariable(method = "turn(DD)V", at = @At("HEAD"), argsOnly = true, ordinal = 1)
 	private double tudursguns$scalePitchDelta(double cursorDeltaY) {
 		return tudursguns$scale(cursorDeltaY);
 	}
 
 	private double tudursguns$scale(double delta) {
 		if (AimController.isScoped() && TudursGunsClientConfig.scaleSensitivityWithZoom()
-				&& (Object) this == MinecraftClient.getInstance().player) {
+				&& (Object) this == Minecraft.getInstance().player) {
 			return delta / Math.max(1f, AimController.magnification());
 		}
 		return delta;

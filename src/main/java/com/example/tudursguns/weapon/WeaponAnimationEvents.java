@@ -6,12 +6,11 @@ import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.registry.ModComponents;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
-
 import java.util.HashMap;
 import java.util.Map;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 /** Records what just happened to a weapon (see AnimationDefinition.Event) on the stack itself, so
  * every client drawing it - the holder in first person, everyone else in third person - plays the
@@ -40,7 +39,7 @@ public final class WeaponAnimationEvents {
 
 	/** Records event on the stack; its sequence's sounds play from the player at their ticks. */
 	public static void trigger(LivingEntity player, ItemStack stack, String event, int duration) {
-		World world = player.getEntityWorld();
+		Level world = player.level();
 		HandheldDefinition def = ModDefinitions.HANDHELD.getServer(stack.get(ModComponents.WEAPON));
 		if (def == null || def.animation().isEmpty()) {
 			return;
@@ -48,19 +47,19 @@ public final class WeaponAnimationEvents {
 		AnimationDefinition animation = def.animation().get();
 		Map<String, Occurrence> events = new HashMap<>(stack.getOrDefault(ModComponents.ANIM_EVENTS, Map.of()));
 		Occurrence last = events.get(event);
-		if (event.endsWith(AnimationDefinition.Event.EMPTY) && last != null && world.getTime() - last.time() < EMPTY_REPEAT_TICKS) {
+		if (event.endsWith(AnimationDefinition.Event.EMPTY) && last != null && world.getGameTime() - last.time() < EMPTY_REPEAT_TICKS) {
 			// Holding the trigger of an empty automatic weapon tries every tick; one click is enough.
 			return;
 		}
 		AnimationDefinition.Sequence sequence = animation.sequences().get(event);
-		if (!world.isClient() && sequence != null) {
+		if (!world.isClientSide() && sequence != null) {
 			double scale = sequence.timeScale(duration);
 			for (AnimationDefinition.SoundCue cue : sequence.sounds()) {
 				DelayedTasks.schedule(player, Math.round(cue.tick() * scale), target ->
-						HandheldCombat.playSound(target, cue.sound(), target.getEyePos(), cue.volume(), cue.pitch(), 0.05f));
+						HandheldCombat.playSound(target, cue.sound(), target.getEyePosition(), cue.volume(), cue.pitch(), 0.05f));
 			}
 		}
-		events.put(event, new Occurrence(world.getTime(), duration));
+		events.put(event, new Occurrence(world.getGameTime(), duration));
 		stack.set(ModComponents.ANIM_EVENTS, Map.copyOf(events));
 
 		if (animation.counters().isEmpty()) {

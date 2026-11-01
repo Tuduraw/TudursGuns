@@ -11,21 +11,21 @@ import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.registry.ModComponents;
 import com.example.tudursguns.weapon.WeaponAnimationEvents;
 import com.example.tudursguns.weapon.WeaponModifiers;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.serialization.MapCodec;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.command.OrderedRenderCommandQueue;
-import net.minecraft.client.render.item.model.special.SpecialModelRenderer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.item.ItemDisplayContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Arm;
-import net.minecraft.util.Identifier;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 import java.util.Map;
 import java.util.function.Consumer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.special.SpecialModelRenderer;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 
 /** Draws a handheld weapon (with its fitted attachments) as its item model.
  *
@@ -39,7 +39,7 @@ import java.util.function.Consumer;
  * takes over). */
 public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandheldModelRenderer.Data> {
 
-	public static final Identifier TYPE_ID = Identifier.of(TudursGuns.MOD_ID, "obj_handheld");
+	public static final Identifier TYPE_ID = Identifier.fromNamespaceAndPath(TudursGuns.MOD_ID, "obj_handheld");
 
 	/** What the renderer needs from the stack. raised / sprintCarry: the entity holding it is in the
 	 * aiming / sprint pose (third-person contexts only - see AimRenderState.entityBeingUpdatedAims). */
@@ -48,7 +48,7 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 	}
 
 	@Override
-	public Data getData(ItemStack stack) {
+	public Data extractArgument(ItemStack stack) {
 		Identifier weaponId = stack.get(ModComponents.WEAPON);
 		return weaponId == null ? null
 				: new Data(weaponId, WeaponModifiers.fitted(stack), AimRenderState.entityBeingUpdatedAims(),
@@ -58,8 +58,8 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 	}
 
 	@Override
-	public void render(Data data, ItemDisplayContext displayContext, MatrixStack matrices,
-			OrderedRenderCommandQueue queue, int light, int overlay, boolean glint, int outlineColor) {
+	public void submit(Data data, ItemDisplayContext displayContext, PoseStack matrices,
+			SubmitNodeCollector queue, int light, int overlay, boolean glint, int outlineColor) {
 		if (data == null) {
 			return;
 		}
@@ -72,7 +72,7 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 			return;
 		}
 		boolean firstPerson = def.aim().isPresent() && isLocalMainHand(displayContext);
-		float tickProgress = MinecraftClient.getInstance().getRenderTickCounter().getTickProgress(true);
+		float tickProgress = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
 		// How far the weapon is raised: the local player's own smooth progress in first person, the
 		// holder's aiming pose (all or nothing) otherwise.
 		float aimProgress = firstPerson
@@ -91,13 +91,13 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 		} else if (data.sprintCarry() && isThirdPersonHand(displayContext)) {
 			transform = def.aim().flatMap(HandheldDefinition.AimSettings::thirdPersonSprinting).orElse(transform);
 		}
-		matrices.push();
+		matrices.pushPose();
 		WeaponModelDrawer.applyTransform(matrices, transform);
 		if (pose != null) {
 			pose.applyRoot(matrices);
 		}
 		WeaponModelDrawer.drawWeapon(queue, matrices, def, data.fitted(), light, overlay, pose);
-		matrices.pop();
+		matrices.popPose();
 	}
 
 	/** The definition's animated pose right now, or null if it has no animation. Motions (sequences)
@@ -106,9 +106,9 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 		if (def.animation().isEmpty()) {
 			return null;
 		}
-		MinecraftClient client = MinecraftClient.getInstance();
-		double now = client.world == null ? 0.0 : client.world.getTime() + tickProgress;
-		return WeaponPose.compute(def.animation().get(), data.events(), data.counters(), now, inHand && client.world != null,
+		Minecraft client = Minecraft.getInstance();
+		double now = client.level == null ? 0.0 : client.level.getGameTime() + tickProgress;
+		return WeaponPose.compute(def.animation().get(), data.events(), data.counters(), now, inHand && client.level != null,
 				aimProgress, data.ammo());
 	}
 
@@ -124,11 +124,11 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 	/** First-person contexts are only ever the local player's; the main hand is the right one unless
 	 * the player is left-handed. */
 	private static boolean isLocalMainHand(ItemDisplayContext displayContext) {
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		if (client.player == null) {
 			return false;
 		}
-		boolean leftHanded = client.player.getMainArm() == Arm.LEFT;
+		boolean leftHanded = client.player.getMainArm() == HumanoidArm.LEFT;
 		return displayContext == (leftHanded ? ItemDisplayContext.FIRST_PERSON_LEFT_HAND : ItemDisplayContext.FIRST_PERSON_RIGHT_HAND);
 	}
 
@@ -143,14 +143,14 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 	}
 
 	private static void renderFirstPerson(HandheldDefinition def, Map<String, Identifier> fitted, WeaponPose pose, float aimProgress,
-			float tickProgress, MatrixStack matrices, OrderedRenderCommandQueue queue, int light, int overlay) {
+			float tickProgress, PoseStack matrices, SubmitNodeCollector queue, int light, int overlay) {
 		if (AimController.isScoped()) {
 			return;
 		}
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		HandheldDefinition.AimSettings aim = def.aim().get();
 		float scale = aim.scale();
-		boolean leftHanded = client.player.getMainArm() == Arm.LEFT;
+		boolean leftHanded = client.player.getMainArm() == HumanoidArm.LEFT;
 
 		float eased = AnimationDefinition.Easing.SMOOTH.apply(aimProgress);
 
@@ -168,7 +168,7 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 
 		// Aiming: no rotation (the model's barrel already points down -Z, the view direction), placed
 		// so the sight is eye_distance straight ahead of the eye - i.e. on the screen centre.
-		WeaponModifiers modifiers = WeaponModifiers.of(client.player.getMainHandStack(), def);
+		WeaponModifiers modifiers = WeaponModifiers.of(client.player.getMainHandItem(), def);
 		Vector3fc sight = modifiers.sightOverride() != null ? modifiers.sightOverride() : aim.sightPosition();
 		Vector3f aimTranslation = new Vector3f(0f, 0f, -aim.eyeDistance())
 				.add(TudursGunsClientConfig.aimOffset())
@@ -177,12 +177,12 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 		Vector3f translation = hipTranslation.lerp(aimTranslation, eased, new Vector3f());
 		Quaternionf rotation = hipQuaternion.slerp(new Quaternionf(), eased, new Quaternionf());
 
-		matrices.push();
+		matrices.pushPose();
 		// Start from the camera-relative frame first-person rendering began with (it follows the view
 		// and carries view bobbing), dropping vanilla's own hand placement and sway.
 		FirstPersonBase.apply(matrices);
 		matrices.translate(translation.x, translation.y, translation.z);
-		matrices.multiply(rotation);
+		matrices.mulPose(rotation);
 		matrices.scale(scale, scale, scale);
 		// The whole weapon's own motion (a tilt for reloading, recoil) - the arms move with it.
 		if (pose != null) {
@@ -193,41 +193,41 @@ public class ObjHandheldModelRenderer implements SpecialModelRenderer<ObjHandhel
 		if (TudursGunsClientConfig.showArms()) {
 			HeldItemRendererInvoker arms = (HeldItemRendererInvoker) ((GameRendererAccessor) client.gameRenderer).tudursguns$getFirstPersonRenderer();
 			aim.rightArm().ifPresent(transform -> drawArm(arms, matrices, queue, light, transform,
-					TudursGunsClientConfig.rightArmOffset(), leftHanded ? Arm.LEFT : Arm.RIGHT, pose, AnimationDefinition.RIGHT_ARM));
+					TudursGunsClientConfig.rightArmOffset(), leftHanded ? HumanoidArm.LEFT : HumanoidArm.RIGHT, pose, AnimationDefinition.RIGHT_ARM));
 			aim.leftArm().ifPresent(transform -> drawArm(arms, matrices, queue, light, transform,
-					TudursGunsClientConfig.leftArmOffset(), leftHanded ? Arm.RIGHT : Arm.LEFT, pose, AnimationDefinition.LEFT_ARM));
+					TudursGunsClientConfig.leftArmOffset(), leftHanded ? HumanoidArm.RIGHT : HumanoidArm.LEFT, pose, AnimationDefinition.LEFT_ARM));
 		}
-		matrices.pop();
+		matrices.popPose();
 	}
 
-	private static void drawArm(HeldItemRendererInvoker arms, MatrixStack matrices, OrderedRenderCommandQueue queue, int light,
-			HandheldDefinition.DisplayTransform transform, Vector3f offset, Arm arm, WeaponPose pose, String part) {
-		matrices.push();
+	private static void drawArm(HeldItemRendererInvoker arms, PoseStack matrices, SubmitNodeCollector queue, int light,
+			HandheldDefinition.DisplayTransform transform, Vector3f offset, HumanoidArm arm, WeaponPose pose, String part) {
+		matrices.pushPose();
 		if (pose != null) {
 			pose.applyChain(matrices, part);
 		}
 		matrices.translate(offset.x, offset.y, offset.z);
 		WeaponModelDrawer.applyTransform(matrices, transform);
 		arms.tudursguns$renderArm(matrices, queue, light, arm);
-		matrices.pop();
+		matrices.popPose();
 	}
 
 	@Override
-	public void collectVertices(Consumer<Vector3fc> consumer) {
+	public void getExtents(Consumer<Vector3fc> consumer) {
 		WeaponModelDrawer.unitCube(consumer);
 	}
 
 	public record Unbaked() implements SpecialModelRenderer.Unbaked {
 
-		public static final MapCodec<Unbaked> CODEC = MapCodec.unit(new Unbaked());
+		public static final MapCodec<com.example.tudursguns.client.render.ObjHandheldModelRenderer.Unbaked> CODEC = MapCodec.unit(new com.example.tudursguns.client.render.ObjHandheldModelRenderer.Unbaked());
 
 		@Override
-		public MapCodec<Unbaked> getCodec() {
+		public MapCodec<com.example.tudursguns.client.render.ObjHandheldModelRenderer.Unbaked> type() {
 			return CODEC;
 		}
 
 		@Override
-		public SpecialModelRenderer<?> bake(SpecialModelRenderer.BakeContext context) {
+		public SpecialModelRenderer<?> bake(SpecialModelRenderer.BakingContext context) {
 			return new ObjHandheldModelRenderer();
 		}
 	}

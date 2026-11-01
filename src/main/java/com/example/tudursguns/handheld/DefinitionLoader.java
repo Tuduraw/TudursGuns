@@ -6,10 +6,9 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
-import net.minecraft.resource.Resource;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
 import java.io.BufferedReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
@@ -39,20 +38,20 @@ public class DefinitionLoader<T> implements SimpleSynchronousResourceReloadListe
 
 	@Override
 	public Identifier getFabricId() {
-		return Identifier.of(TudursGuns.MOD_ID, this.directory + "_definitions");
+		return Identifier.fromNamespaceAndPath(TudursGuns.MOD_ID, this.directory + "_definitions");
 	}
 
 	@Override
-	public void reload(ResourceManager manager) {
+	public void onResourceManagerReload(ResourceManager manager) {
 		Map<Identifier, T> loaded = new LinkedHashMap<>();
 
 		for (Map.Entry<Identifier, Resource> entry :
-				manager.findResources(this.directory, id -> id.getPath().endsWith(SUFFIX)).entrySet()) {
+				manager.listResources(this.directory, id -> id.getPath().endsWith(SUFFIX)).entrySet()) {
 			Identifier fileId = entry.getKey();
 			String path = fileId.getPath();
-			Identifier id = Identifier.of(fileId.getNamespace(),
+			Identifier id = Identifier.fromNamespaceAndPath(fileId.getNamespace(),
 					path.substring(this.directory.length() + 1, path.length() - SUFFIX.length()));
-			try (Reader reader = entry.getValue().getReader()) {
+			try (Reader reader = entry.getValue().openAsReader()) {
 				parseInto(loaded, id, reader, fileId.toString());
 			} catch (Exception e) {
 				TudursGuns.LOGGER.error("Failed to read {} definition {}", this.directory, fileId, e);
@@ -85,7 +84,7 @@ public class DefinitionLoader<T> implements SimpleSynchronousResourceReloadListe
 				try (var files = Files.walk(kindDir)) {
 					for (Path jsonFile : (Iterable<Path>) files.filter(p -> p.toString().endsWith(SUFFIX))::iterator) {
 						String relative = kindDir.relativize(jsonFile).toString().replace('\\', '/');
-						Identifier id = Identifier.of(namespace, relative.substring(0, relative.length() - SUFFIX.length()));
+						Identifier id = Identifier.fromNamespaceAndPath(namespace, relative.substring(0, relative.length() - SUFFIX.length()));
 						try (BufferedReader reader = Files.newBufferedReader(jsonFile, StandardCharsets.UTF_8)) {
 							parseInto(loaded, id, reader, jsonFile.toString());
 						} catch (Exception e) {

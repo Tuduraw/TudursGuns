@@ -3,12 +3,11 @@ package com.example.tudursguns.handheld;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.item.ItemDisplayContext;
-import net.minecraft.util.Identifier;
-
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemDisplayContext;
 
 /** One piece of support equipment (data/<namespace>/equipment/<name>.json): binoculars, first aid,
  * repair kit, defuse kit, detonator, mine detector or laser designator, by type - see the README for

@@ -11,37 +11,36 @@ import com.example.tudursguns.soldier.SoldierWaypoint;
 import com.example.tudursvehiclemod.block.DroneRouteBookWaypoint;
 import com.example.tudursvehiclemod.item.DroneRouteBookItem;
 import com.example.tudursvehiclemod.item.ModComponents;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.FoodComponent;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.Inventories;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.NamedScreenHandlerFactory;
-import net.minecraft.screen.PropertyDelegate;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.ScreenHandlerContext;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.storage.ReadView;
-import net.minecraft.storage.WriteView;
-import net.minecraft.text.Text;
-import net.minecraft.util.ItemScatterer;
-import net.minecraft.util.Uuids;
-import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3i;
-import net.minecraft.world.World;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.core.Vec3i;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.world.Container;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.Containers;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 /** A soldier post: sends out one soldier (FriendlySoldierEntity) with the weapon and armor in its
  * slots, feeds it from its food slots, and sends another after one is killed.
@@ -58,7 +57,7 @@ import java.util.UUID;
  *   book's, like a Drone Center: its absolute points (plus the book's offset) become points relative
  *   to the post, and editing the route writes them back into the book. The book has no wait times;
  *   those stay the post's, by point number. Taking the book out keeps its route as the post's own. */
-public class SoldierPostBlockEntity extends BlockEntity implements Inventory, NamedScreenHandlerFactory {
+public class SoldierPostBlockEntity extends BlockEntity implements Container, MenuProvider {
 
 	public static final int WEAPON_SLOT = 0;
 	public static final int ARMOR_SLOT_START = 1;
@@ -91,7 +90,7 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 	public static final int PROPERTY_ROUTE_FROM_BOOK = 7;
 	public static final int PROPERTY_COUNT = 8;
 
-	private final DefaultedList<ItemStack> items = DefaultedList.ofSize(SIZE, ItemStack.EMPTY);
+	private final NonNullList<ItemStack> items = NonNullList.withSize(SIZE, ItemStack.EMPTY);
 	private boolean active;
 	/** The post's own route; with a book in, only its wait times are used. */
 	private List<SoldierWaypoint> route = List.of();
@@ -105,12 +104,12 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 	/** Ticks until another soldier may be sent; respawnDue: the next one costs soldier_respawn_food. */
 	private int respawnTicks;
 	private boolean respawnDue;
-	private BlockPos lastSeen = BlockPos.ORIGIN;
+	private BlockPos lastSeen = BlockPos.ZERO;
 	private int missingTicks;
 	private SoldierState state = SoldierState.STANDBY;
 	private float soldierHealth;
 
-	private final PropertyDelegate properties = new PropertyDelegate() {
+	private final ContainerData properties = new ContainerData() {
 		@Override
 		public int get(int index) {
 			return switch (index) {
@@ -131,7 +130,7 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 		}
 
 		@Override
-		public int size() {
+		public int getCount() {
 			return PROPERTY_COUNT;
 		}
 	};
@@ -143,7 +142,7 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 	// ---------------------------------------------------------------- what the soldier asks
 
 	public boolean isSoldier(FriendlySoldierEntity entity) {
-		return entity.getUuid().equals(this.soldier);
+		return entity.getUUID().equals(this.soldier);
 	}
 
 	public boolean isActive() {
@@ -161,19 +160,19 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 		}
 		ItemStack book = this.items.get(BOOK_SLOT);
 		String data = book.get(ModComponents.DRONE_ROUTE_WAYPOINTS) + "|" + book.get(ModComponents.DRONE_ROUTE_OFFSET);
-		if (!data.equals(this.bookRouteData) || !this.getPos().equals(this.bookRoutePos)) {
+		if (!data.equals(this.bookRouteData) || !this.getBlockPos().equals(this.bookRoutePos)) {
 			Vec3i offset = DroneRouteBookItem.tudursvehiclemod$getOffset(book);
 			List<SoldierWaypoint> relative = new ArrayList<>();
 			for (DroneRouteBookWaypoint point : DroneRouteBookItem.tudursvehiclemod$getWaypoints(book)) {
 				if (relative.size() >= MAX_WAYPOINTS) {
 					break;
 				}
-				relative.add(new SoldierWaypoint(point.x() + offset.getX() - this.getPos().getX(), point.y() + offset.getY() - this.getPos().getY(),
-						point.z() + offset.getZ() - this.getPos().getZ(), 0).clamped());
+				relative.add(new SoldierWaypoint(point.x() + offset.getX() - this.getBlockPos().getX(), point.y() + offset.getY() - this.getBlockPos().getY(),
+						point.z() + offset.getZ() - this.getBlockPos().getZ(), 0).clamped());
 			}
 			this.bookRoute = relative;
 			this.bookRouteData = data;
-			this.bookRoutePos = this.getPos();
+			this.bookRoutePos = this.getBlockPos();
 		}
 		List<SoldierWaypoint> withWaits = new ArrayList<>(this.bookRoute.size());
 		for (int i = 0; i < this.bookRoute.size(); i++) {
@@ -198,8 +197,8 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 	public void equip(FriendlySoldierEntity entity) {
 		for (int i = 0; i < EQUIPMENT_SLOTS.length; i++) {
 			ItemStack stack = this.items.get(WEAPON_SLOT + i);
-			if (entity.getEquippedStack(EQUIPMENT_SLOTS[i]) != stack) {
-				entity.equipStack(EQUIPMENT_SLOTS[i], stack);
+			if (entity.getItemBySlot(EQUIPMENT_SLOTS[i]) != stack) {
+				entity.setItemSlot(EQUIPMENT_SLOTS[i], stack);
 			}
 		}
 	}
@@ -215,7 +214,7 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 		if (isSoldier(entity)) {
 			entity.discard();
 			this.soldier = null;
-			this.markDirty();
+			this.setChanged();
 		}
 	}
 
@@ -223,23 +222,23 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 		this.soldier = null;
 		this.respawnTicks = TudursGunsConfig.get().soldier_respawn_ticks;
 		this.respawnDue = true;
-		if (this.world instanceof ServerWorld serverWorld) {
+		if (this.level instanceof ServerLevel serverWorld) {
 			for (int i = ARMOR_SLOT_START; i < FOOD_SLOT_START; i++) {
 				ItemStack armor = this.items.get(i);
-				if (armor.isDamageable()) {
-					armor.damage(Math.max(1, Math.round(armor.getMaxDamage() * DEATH_WEAR)), serverWorld, null, item -> {
+				if (armor.isDamageableItem()) {
+					armor.hurtAndBreak(Math.max(1, Math.round(armor.getMaxDamage() * DEATH_WEAR)), serverWorld, null, item -> {
 					});
 				}
 			}
 		}
-		this.markDirty();
+		this.setChanged();
 	}
 
 	// ---------------------------------------------------------------- what the player sets
 
 	public void toggleActive() {
 		this.active = !this.active;
-		this.markDirty();
+		this.setChanged();
 	}
 
 	/** Route and engage range, brought into range (they come from a client). With a book in, the
@@ -251,12 +250,12 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 			Vec3i offset = DroneRouteBookItem.tudursvehiclemod$getOffset(book);
 			List<DroneRouteBookWaypoint> absolute = new ArrayList<>();
 			for (SoldierWaypoint point : this.route) {
-				BlockPos at = point.absolute(this.getPos()).subtract(offset);
+				BlockPos at = point.absolute(this.getBlockPos()).subtract(offset);
 				absolute.add(DroneRouteBookWaypoint.createDefault(at.getX(), at.getY(), at.getZ()));
 			}
 			DroneRouteBookItem.tudursvehiclemod$setWaypoints(book, absolute);
 		}
-		this.markDirty();
+		this.setChanged();
 	}
 
 	/** Before the book slot changes: the book's route (if any) becomes the post's own. */
@@ -268,18 +267,18 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 
 	private void applyRoute(List<SoldierWaypoint> route, int engageRange) {
 		this.route = route.stream().limit(MAX_WAYPOINTS).map(SoldierWaypoint::clamped).toList();
-		this.engageRange = MathHelper.clamp(engageRange, MIN_ENGAGE_RANGE, MAX_ENGAGE_RANGE);
+		this.engageRange = Mth.clamp(engageRange, MIN_ENGAGE_RANGE, MAX_ENGAGE_RANGE);
 	}
 
 	// ---------------------------------------------------------------- ticking
 
-	public static void tick(World world, BlockPos pos, BlockState state, SoldierPostBlockEntity post) {
-		if (world instanceof ServerWorld serverWorld) {
+	public static void tick(Level world, BlockPos pos, BlockState state, SoldierPostBlockEntity post) {
+		if (world instanceof ServerLevel serverWorld) {
 			post.serverTick(serverWorld);
 		}
 	}
 
-	private void serverTick(ServerWorld world) {
+	private void serverTick(ServerLevel world) {
 		eat();
 		this.state = findState(world);
 		this.food = Math.max(0f, this.food - this.state.foodPerTick());
@@ -290,8 +289,8 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 				trySend(world);
 			}
 		}
-		if (world.getTime() % 20 == 0) {
-			this.markDirty();
+		if (world.getGameTime() % 20 == 0) {
+			this.setChanged();
 		}
 	}
 
@@ -299,27 +298,27 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 	private void eat() {
 		for (int i = FOOD_SLOT_START; i < FOOD_SLOT_START + FOOD_SLOTS; i++) {
 			ItemStack stack = this.items.get(i);
-			FoodComponent food = stack.get(DataComponentTypes.FOOD);
+			FoodProperties food = stack.get(DataComponents.FOOD);
 			while (food != null && !stack.isEmpty() && this.food + food.nutrition() <= MAX_FOOD) {
 				this.food = Math.min(MAX_FOOD, this.food + food.nutrition() + food.saturation());
-				stack.decrement(1);
+				stack.shrink(1);
 			}
 		}
 	}
 
-	private SoldierState findState(ServerWorld world) {
+	private SoldierState findState(ServerLevel world) {
 		if (this.soldier == null) {
 			this.soldierHealth = 0f;
 			return this.respawnDue ? SoldierState.DOWN : SoldierState.STANDBY;
 		}
 		if (world.getEntity(this.soldier) instanceof FriendlySoldierEntity entity && entity.isAlive()) {
-			this.lastSeen = entity.getBlockPos();
+			this.lastSeen = entity.blockPosition();
 			this.missingTicks = 0;
 			this.soldierHealth = entity.getHealth();
 			return entity.state();
 		}
 		// Not found: fine if it's somewhere unloaded; gone if it's missing from where it was last seen.
-		if (world.shouldTickEntityAt(this.lastSeen) && ++this.missingTicks > LOST_TICKS) {
+		if (world.isPositionEntityTicking(this.lastSeen) && ++this.missingTicks > LOST_TICKS) {
 			this.missingTicks = 0;
 			lose();
 			return SoldierState.DOWN;
@@ -327,37 +326,37 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 		return SoldierState.AWAY;
 	}
 
-	private void trySend(ServerWorld world) {
+	private void trySend(ServerLevel world) {
 		float cost = this.respawnDue ? TudursGunsConfig.get().soldier_respawn_food : 0f;
 		if (!HandheldWeaponItem.isWeapon(this.items.get(WEAPON_SLOT)) || this.food <= cost) {
 			return;
 		}
-		FriendlySoldierEntity entity = ModEntityTypes.SOLDIER.create(world, SpawnReason.MOB_SUMMONED);
+		FriendlySoldierEntity entity = ModEntityTypes.SOLDIER.create(world, EntitySpawnReason.MOB_SUMMONED);
 		if (entity == null) {
 			return;
 		}
-		BlockPos pos = this.getPos();
-		entity.refreshPositionAndAngles(pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, world.getRandom().nextFloat() * 360f, 0f);
-		if (!world.isSpaceEmpty(entity)) {
+		BlockPos pos = this.getBlockPos();
+		entity.snapTo(pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, world.getRandom().nextFloat() * 360f, 0f);
+		if (!world.noCollision(entity)) {
 			return;
 		}
 		entity.setPost(pos);
-		entity.setPersistent();
+		entity.setPersistenceRequired();
 		equip(entity);
-		world.spawnEntity(entity);
-		this.soldier = entity.getUuid();
-		this.lastSeen = entity.getBlockPos();
+		world.addFreshEntity(entity);
+		this.soldier = entity.getUUID();
+		this.lastSeen = entity.blockPosition();
 		this.missingTicks = 0;
 		this.food -= cost;
 		this.respawnDue = false;
-		this.markDirty();
+		this.setChanged();
 	}
 
 	/** Broken: the gear drops (which also takes it off the soldier) and the soldier is gone. */
 	@Override
-	public void onBlockReplaced(BlockPos pos, BlockState oldState) {
-		if (this.world instanceof ServerWorld world) {
-			ItemScatterer.spawn(world, pos, this);
+	public void preRemoveSideEffects(BlockPos pos, BlockState oldState) {
+		if (this.level instanceof ServerLevel world) {
+			Containers.dropContents(world, pos, this);
 			if (this.soldier != null) {
 				Entity entity = world.getEntity(this.soldier);
 				if (entity != null) {
@@ -370,49 +369,49 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 	// ---------------------------------------------------------------- screen
 
 	@Override
-	public Text getDisplayName() {
-		return Text.translatable("container.tudursguns.soldier_post");
+	public Component getDisplayName() {
+		return Component.translatable("container.tudursguns.soldier_post");
 	}
 
 	@Override
-	public ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
-		return new SoldierPostScreenHandler(syncId, playerInventory, this, this.properties, ScreenHandlerContext.create(this.world, this.getPos()));
+	public AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player player) {
+		return new SoldierPostScreenHandler(syncId, playerInventory, this, this.properties, ContainerLevelAccess.create(this.level, this.getBlockPos()));
 	}
 
 	// ---------------------------------------------------------------- saving
 
 	@Override
-	protected void writeData(WriteView view) {
-		super.writeData(view);
-		Inventories.writeData(view, this.items);
+	protected void saveAdditional(ValueOutput view) {
+		super.saveAdditional(view);
+		ContainerHelper.saveAllItems(view, this.items);
 		view.putBoolean("active", this.active);
-		view.put("route", SoldierWaypoint.CODEC.listOf(), this.route);
+		view.store("route", SoldierWaypoint.CODEC.listOf(), this.route);
 		view.putInt("engage_range", this.engageRange);
 		view.putFloat("food", this.food);
-		view.putNullable("soldier", Uuids.INT_STREAM_CODEC, this.soldier);
+		view.storeNullable("soldier", UUIDUtil.CODEC, this.soldier);
 		view.putInt("respawn_ticks", this.respawnTicks);
 		view.putBoolean("respawn_due", this.respawnDue);
-		view.put("last_seen", BlockPos.CODEC, this.lastSeen);
+		view.store("last_seen", BlockPos.CODEC, this.lastSeen);
 	}
 
 	@Override
-	protected void readData(ReadView view) {
-		super.readData(view);
+	protected void loadAdditional(ValueInput view) {
+		super.loadAdditional(view);
 		this.items.clear();
-		Inventories.readData(view, this.items);
-		this.active = view.getBoolean("active", false);
-		applyRoute(view.read("route", SoldierWaypoint.CODEC.listOf()).orElse(List.of()), view.getInt("engage_range", DEFAULT_ENGAGE_RANGE));
-		this.food = MathHelper.clamp(view.getFloat("food", 0f), 0f, MAX_FOOD);
-		this.soldier = view.read("soldier", Uuids.INT_STREAM_CODEC).orElse(null);
-		this.respawnTicks = view.getInt("respawn_ticks", 0);
-		this.respawnDue = view.getBoolean("respawn_due", false);
-		this.lastSeen = view.read("last_seen", BlockPos.CODEC).orElse(this.getPos());
+		ContainerHelper.loadAllItems(view, this.items);
+		this.active = view.getBooleanOr("active", false);
+		applyRoute(view.read("route", SoldierWaypoint.CODEC.listOf()).orElse(List.of()), view.getIntOr("engage_range", DEFAULT_ENGAGE_RANGE));
+		this.food = Mth.clamp(view.getFloatOr("food", 0f), 0f, MAX_FOOD);
+		this.soldier = view.read("soldier", UUIDUtil.CODEC).orElse(null);
+		this.respawnTicks = view.getIntOr("respawn_ticks", 0);
+		this.respawnDue = view.getBooleanOr("respawn_due", false);
+		this.lastSeen = view.read("last_seen", BlockPos.CODEC).orElse(this.getBlockPos());
 	}
 
 	// ---------------------------------------------------------------- Inventory
 
 	@Override
-	public int size() {
+	public int getContainerSize() {
 		return SIZE;
 	}
 
@@ -422,46 +421,46 @@ public class SoldierPostBlockEntity extends BlockEntity implements Inventory, Na
 	}
 
 	@Override
-	public ItemStack getStack(int slot) {
+	public ItemStack getItem(int slot) {
 		return this.items.get(slot);
 	}
 
 	@Override
-	public ItemStack removeStack(int slot, int amount) {
+	public ItemStack removeItem(int slot, int amount) {
 		keepBookRoute(slot);
-		ItemStack removed = Inventories.splitStack(this.items, slot, amount);
+		ItemStack removed = ContainerHelper.removeItem(this.items, slot, amount);
 		if (!removed.isEmpty()) {
-			this.markDirty();
+			this.setChanged();
 		}
 		return removed;
 	}
 
 	/** Emptied through split rather than swapped out, so the soldier wearing it loses it too. */
 	@Override
-	public ItemStack removeStack(int slot) {
+	public ItemStack removeItemNoUpdate(int slot) {
 		keepBookRoute(slot);
 		ItemStack stack = this.items.get(slot);
-		this.markDirty();
+		this.setChanged();
 		return stack.isEmpty() ? ItemStack.EMPTY : stack.split(stack.getCount());
 	}
 
 	@Override
-	public void setStack(int slot, ItemStack stack) {
+	public void setItem(int slot, ItemStack stack) {
 		// A swapped-out stack stays on the soldier only until its next tick puts the new one on (equip).
 		if (stack != this.items.get(slot)) {
 			keepBookRoute(slot);
 		}
 		this.items.set(slot, stack);
-		this.markDirty();
+		this.setChanged();
 	}
 
 	@Override
-	public boolean canPlayerUse(PlayerEntity player) {
-		return Inventory.canPlayerUse(this, player);
+	public boolean stillValid(Player player) {
+		return Container.stillValidBlockEntity(this, player);
 	}
 
 	@Override
-	public void clear() {
+	public void clearContent() {
 		this.items.clear();
 	}
 }

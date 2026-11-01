@@ -2,15 +2,14 @@ package com.example.tudursguns.weapon;
 
 import com.example.tudursguns.handheld.GunRecipeDefinition;
 import com.example.tudursguns.handheld.ModDefinitions;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Identifier;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
 /** The gun crafting table's recipes (GunRecipeDefinition): the order they're listed in, whether a
  * player has what one needs, and making it. Works on both sides: the list order is the same on each
@@ -30,17 +29,17 @@ public final class GunCrafting {
 	}
 
 	/** How many of an ingredient the player has. */
-	public static int count(PlayerEntity player, GunRecipeDefinition.ItemRef ref) {
+	public static int count(Player player, GunRecipeDefinition.ItemRef ref) {
 		return AmmoSupply.countMatching(player, ref::matches);
 	}
 
 	/** Whether every ingredient can be taken (the same stack isn't counted twice for two ingredients). */
-	public static boolean canCraft(PlayerEntity player, GunRecipeDefinition recipe) {
+	public static boolean canCraft(Player player, GunRecipeDefinition recipe) {
 		return player.isCreative() || take(player, recipe, true);
 	}
 
 	/** Takes the ingredients and gives the result. Returns false (and changes nothing) if something's missing. */
-	public static boolean craft(PlayerEntity player, GunRecipeDefinition recipe) {
+	public static boolean craft(Player player, GunRecipeDefinition recipe) {
 		ItemStack result = recipe.result().createStack();
 		if (result.isEmpty()) {
 			return false;
@@ -51,21 +50,21 @@ public final class GunCrafting {
 			}
 			take(player, recipe, false);
 		}
-		player.getInventory().offerOrDrop(result);
+		player.getInventory().placeItemBackInInventory(result);
 		return true;
 	}
 
 	/** simulate: only check, against counts of a copy of the inventory. */
-	private static boolean take(PlayerEntity player, GunRecipeDefinition recipe, boolean simulate) {
-		PlayerInventory inventory = player.getInventory();
-		int[] left = new int[inventory.size()];
+	private static boolean take(Player player, GunRecipeDefinition recipe, boolean simulate) {
+		Inventory inventory = player.getInventory();
+		int[] left = new int[inventory.getContainerSize()];
 		for (int slot = 0; slot < left.length; slot++) {
-			left[slot] = inventory.getStack(slot).getCount();
+			left[slot] = inventory.getItem(slot).getCount();
 		}
 		for (GunRecipeDefinition.ItemRef ingredient : recipe.ingredients()) {
 			int needed = ingredient.count();
 			for (int slot = 0; slot < left.length && needed > 0; slot++) {
-				ItemStack stack = inventory.getStack(slot);
+				ItemStack stack = inventory.getItem(slot);
 				if (left[slot] <= 0 || !ingredient.matches(stack)) {
 					continue;
 				}
@@ -73,7 +72,7 @@ public final class GunCrafting {
 				left[slot] -= taken;
 				needed -= taken;
 				if (!simulate) {
-					stack.decrement(taken);
+					stack.shrink(taken);
 				}
 			}
 			if (needed > 0) {

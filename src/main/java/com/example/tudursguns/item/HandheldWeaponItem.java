@@ -8,21 +8,20 @@ import com.example.tudursguns.weapon.Firing;
 import com.example.tudursguns.weapon.HandheldCombat;
 import com.example.tudursguns.weapon.WeaponModifiers;
 import com.example.tudursvehiclemod.asset.WeaponStats;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.World;
-
 import java.util.function.Consumer;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 /** The one item every handheld weapon is. Which weapon a stack is comes from its tudursguns:weapon
  * component (a HandheldDefinition id) - the same "one type, data-defined variants" approach Tudur's
@@ -35,13 +34,13 @@ public class HandheldWeaponItem extends DefinedItem<HandheldDefinition> {
 
 	private static final int MAX_USE_TICKS = 72000;
 
-	public HandheldWeaponItem(Settings settings) {
+	public HandheldWeaponItem(Properties settings) {
 		super(settings, ModDefinitions.HANDHELD, ModComponents.WEAPON);
 	}
 
 	/** A weapon stack that names its definition. */
 	public static boolean isWeapon(ItemStack stack) {
-		return stack.getItem() instanceof HandheldWeaponItem && stack.contains(ModComponents.WEAPON);
+		return stack.getItem() instanceof HandheldWeaponItem && stack.has(ModComponents.WEAPON);
 	}
 
 	/** The stack's definition on the server, or null. */
@@ -50,24 +49,24 @@ public class HandheldWeaponItem extends DefinedItem<HandheldDefinition> {
 	}
 
 	@Override
-	public ActionResult use(World world, PlayerEntity user, Hand hand) {
+	public InteractionResult use(Level world, Player user, InteractionHand hand) {
 		if (user.getVehicle() != null) {
-			return ActionResult.PASS;
+			return InteractionResult.PASS;
 		}
-		ItemStack stack = user.getStackInHand(hand);
-		if (!stack.contains(ModComponents.WEAPON)) {
-			return ActionResult.PASS;
+		ItemStack stack = user.getItemInHand(hand);
+		if (!stack.has(ModComponents.WEAPON)) {
+			return InteractionResult.PASS;
 		}
 		// In its fire delay (a bolt being worked, a launcher between shots) use doesn't raise the weapon:
 		// it couldn't fire anyway. Both sides see the delay on the stack, so they agree.
-		if (HandheldCombat.isCoolingDown(stack, world.getTime())) {
-			return ActionResult.PASS;
+		if (HandheldCombat.isCoolingDown(stack, world.getGameTime())) {
+			return InteractionResult.PASS;
 		}
 		// Every mode keeps the item "in use" while the key is held: AUTO fires from usageTick(),
 		// lock-on weapons track from usageTick() and fire from onStoppedUsing(), and SEMI simply
 		// doesn't fire again until the key is released and pressed again.
-		user.setCurrentHand(hand);
-		if (user instanceof ServerPlayerEntity player) {
+		user.startUsingItem(hand);
+		if (user instanceof ServerPlayer player) {
 			HandheldDefinition base = serverDefinition(stack);
 			if (base != null) {
 				HandheldCombat.startRaisingForUse(player);
@@ -84,16 +83,16 @@ public class HandheldWeaponItem extends DefinedItem<HandheldDefinition> {
 				}
 			}
 		}
-		return ActionResult.CONSUME;
+		return InteractionResult.CONSUME;
 	}
 
 	@Override
-	public void usageTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
-		if (!(user instanceof ServerPlayerEntity player)) {
+	public void onUseTick(Level world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
+		if (!(user instanceof ServerPlayer player)) {
 			return;
 		}
 		if (player.getVehicle() != null) {
-			player.stopUsingItem();
+			player.releaseUsingItem();
 			return;
 		}
 		HandheldDefinition base = serverDefinition(stack);
@@ -106,20 +105,20 @@ public class HandheldWeaponItem extends DefinedItem<HandheldDefinition> {
 		if (HandheldCombat.requiresLock(stats.weaponType())) {
 			HandheldCombat.updateLock(player, stats);
 		} else if (def.fireMode() == HandheldDefinition.FireMode.AUTO && HandheldCombat.isRaised(player, base)) {
-			HandheldCombat.tryFire(player, stack, player.getActiveHand(), def, stats, null);
+			HandheldCombat.tryFire(player, stack, player.getUsedItemHand(), def, stats, null);
 		}
 	}
 
 	@Override
-	public boolean onStoppedUsing(ItemStack stack, World world, LivingEntity user, int remainingUseTicks) {
-		if (user instanceof ServerPlayerEntity player) {
+	public boolean releaseUsing(ItemStack stack, Level world, LivingEntity user, int remainingUseTicks) {
+		if (user instanceof ServerPlayer player) {
 			HandheldDefinition base = serverDefinition(stack);
 			if (base != null) {
 				Firing firing = Firing.of(stack, base);
 				if (HandheldCombat.requiresLock(firing.stats().weaponType())) {
 					var target = HandheldCombat.completedLockTarget(player);
 					if (target != null && HandheldCombat.isRaised(player, base)) {
-						HandheldCombat.tryFire(player, stack, player.getActiveHand(), firing.definition(), firing.stats(), target);
+						HandheldCombat.tryFire(player, stack, player.getUsedItemHand(), firing.definition(), firing.stats(), target);
 					}
 				}
 			}
@@ -130,13 +129,13 @@ public class HandheldWeaponItem extends DefinedItem<HandheldDefinition> {
 	}
 
 	@Override
-	public int getMaxUseTime(ItemStack stack, LivingEntity user) {
+	public int getUseDuration(ItemStack stack, LivingEntity user) {
 		return MAX_USE_TICKS;
 	}
 
 	@Override
-	public void inventoryTick(ItemStack stack, ServerWorld world, Entity entity, EquipmentSlot slot) {
-		if (!(entity instanceof ServerPlayerEntity player)) {
+	public void inventoryTick(ItemStack stack, ServerLevel world, Entity entity, EquipmentSlot slot) {
+		if (!(entity instanceof ServerPlayer player)) {
 			return;
 		}
 		HandheldDefinition base = serverDefinition(stack);
@@ -150,27 +149,27 @@ public class HandheldWeaponItem extends DefinedItem<HandheldDefinition> {
 		HandheldCombat.tickBurst(player, stack, firing.definition(), firing.stats());
 		HandheldCombat.syncMeleeDamage(stack, base);
 		// A lock only lasts while this weapon is actually being held down.
-		if (HandheldCombat.hasLockState(player) && !(player.isUsingItem() && player.getActiveItem().getItem() instanceof HandheldWeaponItem)) {
+		if (HandheldCombat.hasLockState(player) && !(player.isUsingItem() && player.getUseItem().getItem() instanceof HandheldWeaponItem)) {
 			HandheldCombat.clearLock(player);
 		}
 	}
 
 	@Override
-	protected void appendDetails(ItemStack stack, HandheldDefinition def, Consumer<Text> textConsumer) {
-		if (stack.contains(ModComponents.ALT_AMMO) || stack.getOrDefault(ModComponents.ALT_SELECTED, false)) {
-			textConsumer.accept(Text.translatable("tooltip.tudursguns.underbarrel_ammo", stack.getOrDefault(ModComponents.ALT_AMMO, 0))
-					.formatted(Formatting.GRAY));
+	protected void appendDetails(ItemStack stack, HandheldDefinition def, Consumer<Component> textConsumer) {
+		if (stack.has(ModComponents.ALT_AMMO) || stack.getOrDefault(ModComponents.ALT_SELECTED, false)) {
+			textConsumer.accept(Component.translatable("tooltip.tudursguns.underbarrel_ammo", stack.getOrDefault(ModComponents.ALT_AMMO, 0))
+					.withStyle(ChatFormatting.GRAY));
 		}
 		WeaponSummary weapon = ModDefinitions.HANDHELD.weapon(stack.get(ModComponents.WEAPON));
 		int magazineSize = weapon == null ? 0 : WeaponModifiers.of(stack, def).magazineSize(weapon.magazineSize());
 		if (magazineSize > 0) {
-			textConsumer.accept(Text.translatable("tooltip.tudursguns.ammo",
-					stack.getOrDefault(ModComponents.AMMO, 0), magazineSize).formatted(Formatting.GRAY));
+			textConsumer.accept(Component.translatable("tooltip.tudursguns.ammo",
+					stack.getOrDefault(ModComponents.AMMO, 0), magazineSize).withStyle(ChatFormatting.GRAY));
 		}
 		def.movement().appendTooltip(textConsumer);
 		for (Identifier attachmentId : WeaponModifiers.fitted(stack).values()) {
 			String name = ModDefinitions.ATTACHMENTS.name(attachmentId);
-			textConsumer.accept(Text.literal("+ " + (name != null ? name : attachmentId.toString())).formatted(Formatting.BLUE));
+			textConsumer.accept(Component.literal("+ " + (name != null ? name : attachmentId.toString())).withStyle(ChatFormatting.BLUE));
 		}
 	}
 }

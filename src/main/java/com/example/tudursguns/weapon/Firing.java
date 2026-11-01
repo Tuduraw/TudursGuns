@@ -7,12 +7,11 @@ import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.registry.ModComponents;
 import com.example.tudursvehiclemod.asset.WeaponStats;
 import com.example.tudursvehiclemod.asset.WeaponStatsLoader;
-import net.minecraft.component.ComponentType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Identifier;
-
 import java.util.Map;
 import java.util.Optional;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemStack;
 
 /** What a weapon stack fires right now: its own weapon, or - with an underbarrel launcher fitted and
  * selected - the launcher's. The launcher is presented as a HandheldDefinition of its own (weapon
@@ -57,7 +56,7 @@ public record Firing(HandheldDefinition definition, WeaponStats stats) {
 	}
 
 	/** Where the rounds of whatever is selected are counted. */
-	public static ComponentType<Integer> ammoComponent(ItemStack stack) {
+	public static DataComponentType<Integer> ammoComponent(ItemStack stack) {
 		return stack.getOrDefault(ModComponents.ALT_SELECTED, false) ? ModComponents.ALT_AMMO : ModComponents.AMMO;
 	}
 }

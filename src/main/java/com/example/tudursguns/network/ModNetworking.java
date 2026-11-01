@@ -12,13 +12,12 @@ import net.fabricmc.fabric.api.networking.v1.EntityTrackingEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.item.ItemStack;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.Vec3d;
-
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,24 +41,24 @@ public final class ModNetworking {
 
 		ServerPlayNetworking.registerGlobalReceiver(AimKeyPayload.ID, (payload, context) ->
 				context.server().execute(() -> {
-					ServerPlayerEntity player = context.player();
+					ServerPlayer player = context.player();
 					if (HandheldCombat.setAimKeyHeld(player, payload.held())) {
 						PlayerAimPayload broadcast = new PlayerAimPayload(player.getId(), payload.held());
-						for (ServerPlayerEntity tracking : PlayerLookup.tracking(player)) {
+						for (ServerPlayer tracking : PlayerLookup.tracking(player)) {
 							ServerPlayNetworking.send(tracking, broadcast);
 						}
 					}
 				}));
 		// A player who starts seeing someone already aiming needs to be told.
 		EntityTrackingEvents.START_TRACKING.register((trackedEntity, player) -> {
-			if (trackedEntity instanceof ServerPlayerEntity tracked && HandheldCombat.isAimKeyHeld(tracked)) {
+			if (trackedEntity instanceof ServerPlayer tracked && HandheldCombat.isAimKeyHeld(tracked)) {
 				ServerPlayNetworking.send(player, new PlayerAimPayload(tracked.getId(), true));
 			}
 		});
 
 		ServerPlayNetworking.registerGlobalReceiver(ReloadRequestPayload.ID, (payload, context) ->
 				context.server().execute(() -> {
-					ServerPlayerEntity player = context.player();
+					ServerPlayer player = context.player();
 					HeldWeapon held = heldWeapon(player);
 					if (held != null && player.getVehicle() == null) {
 						HandheldCombat.startReload(player, held.stack(), held.definition(), held.stats(), true);
@@ -68,16 +67,16 @@ public final class ModNetworking {
 
 		ServerPlayNetworking.registerGlobalReceiver(SwitchUnderbarrelRequestPayload.ID, (payload, context) ->
 				context.server().execute(() -> {
-					ServerPlayerEntity player = context.player();
+					ServerPlayer player = context.player();
 					HeldWeapon held = heldWeapon(player);
 					if (held != null && !HandheldCombat.toggleUnderbarrel(player, held.stack(), held.base())) {
-						player.sendMessage(Text.translatable("message.tudursguns.underbarrel.none"), true);
+						player.displayClientMessage(Component.translatable("message.tudursguns.underbarrel.none"), true);
 					}
 				}));
 
 		ServerPlayNetworking.registerGlobalReceiver(SwitchModeRequestPayload.ID, (payload, context) ->
 				context.server().execute(() -> {
-					ServerPlayerEntity player = context.player();
+					ServerPlayer player = context.player();
 					HeldWeapon held = heldWeapon(player);
 					if (held != null) {
 						HandheldCombat.cycleMode(player, held.stack(), held.stats());
@@ -86,11 +85,11 @@ public final class ModNetworking {
 
 		ServerPlayNetworking.registerGlobalReceiver(SoldierRoutePayload.ID, (payload, context) ->
 				context.server().execute(() -> {
-					ServerPlayerEntity player = context.player();
-					if (player.squaredDistanceTo(Vec3d.ofCenter(payload.pos())) <= SOLDIER_POST_REACH * SOLDIER_POST_REACH
-							&& player.getEntityWorld().getBlockEntity(payload.pos()) instanceof SoldierPostBlockEntity post) {
+					ServerPlayer player = context.player();
+					if (player.distanceToSqr(Vec3.atCenterOf(payload.pos())) <= SOLDIER_POST_REACH * SOLDIER_POST_REACH
+							&& player.level().getBlockEntity(payload.pos()) instanceof SoldierPostBlockEntity post) {
 						post.setRoute(payload.route(), payload.engageRange());
-						player.openHandledScreen(post);
+						player.openMenu(post);
 					}
 				}));
 	}
@@ -103,9 +102,9 @@ public final class ModNetworking {
 	}
 
 	/** The weapon in the main hand, else the off hand. */
-	private static HeldWeapon heldWeapon(ServerPlayerEntity player) {
-		for (Hand hand : Hand.values()) {
-			ItemStack stack = player.getStackInHand(hand);
+	private static HeldWeapon heldWeapon(ServerPlayer player) {
+		for (InteractionHand hand : InteractionHand.values()) {
+			ItemStack stack = player.getItemInHand(hand);
 			if (stack.getItem() instanceof HandheldWeaponItem) {
 				HandheldDefinition def = HandheldWeaponItem.serverDefinition(stack);
 				if (def != null) {
@@ -127,7 +126,7 @@ public final class ModNetworking {
 		return payloads;
 	}
 
-	public static void syncDefinitions(ServerPlayerEntity player) {
+	public static void syncDefinitions(ServerPlayer player) {
 		for (SyncDefinitionsPayload payload : syncPayloads()) {
 			ServerPlayNetworking.send(player, payload);
 		}
@@ -135,7 +134,7 @@ public final class ModNetworking {
 
 	public static void syncDefinitionsToAll(MinecraftServer server) {
 		List<SyncDefinitionsPayload> payloads = syncPayloads();
-		for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+		for (ServerPlayer player : server.getPlayerList().getPlayers()) {
 			for (SyncDefinitionsPayload payload : payloads) {
 				ServerPlayNetworking.send(player, payload);
 			}

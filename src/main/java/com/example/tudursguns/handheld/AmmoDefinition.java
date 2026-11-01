@@ -2,11 +2,10 @@ package com.example.tudursguns.handheld;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.item.ItemDisplayContext;
-import net.minecraft.util.Identifier;
-
 import java.util.Map;
 import java.util.Optional;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemDisplayContext;
 
 /** A kind of ammunition item (a magazine, a clip, a box of shells), read from
  * data/<namespace>/ammo/<name>.json. A weapon whose definition names it ("ammo") reloads from these

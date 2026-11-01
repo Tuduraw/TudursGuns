@@ -7,21 +7,20 @@ import com.example.tudursguns.handheld.WeaponSummary;
 import com.example.tudursguns.item.ThrowableItem;
 import com.example.tudursguns.registry.ModComponents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.DrawStyle;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.RaycastContext;
-import net.minecraft.world.debug.gizmo.GizmoDrawing;
-
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.gizmos.GizmoStyle;
+import net.minecraft.gizmos.Gizmos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -42,28 +41,28 @@ public final class ThrowGuide {
 	private static final int SIMULATION_INTERVAL_TICKS = 2;
 
 	private static int tickCounter;
-	private static List<Vec3d> arc = List.of();
-	private static Vec3d impact;
+	private static List<Vec3> arc = List.of();
+	private static Vec3 impact;
 	private static float ringRadius;
 
 	public static void register() {
-		HudElementRegistry.addLast(Identifier.of(TudursGuns.MOD_ID, "throw_fuse"), ThrowGuide::renderFuse);
+		HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(TudursGuns.MOD_ID, "throw_fuse"), ThrowGuide::renderFuse);
 	}
 
-	private static ItemStack heldThrowable(PlayerEntity player) {
+	private static ItemStack heldThrowable(Player player) {
 		if (player.isUsingItem()) {
-			ItemStack active = player.getActiveItem();
-			if (active.getItem() instanceof ThrowableItem && active.contains(ModComponents.THROWABLE)) {
+			ItemStack active = player.getUseItem();
+			if (active.getItem() instanceof ThrowableItem && active.has(ModComponents.THROWABLE)) {
 				return active;
 			}
 		}
 		return null;
 	}
 
-	public static void tick(MinecraftClient client) {
+	public static void tick(Minecraft client) {
 		tickCounter++;
-		PlayerEntity player = client.player;
-		ItemStack stack = player == null || client.world == null || player.getVehicle() != null ? null : heldThrowable(player);
+		Player player = client.player;
+		ItemStack stack = player == null || client.level == null || player.getVehicle() != null ? null : heldThrowable(player);
 		Identifier id = stack == null ? null : stack.get(ModComponents.THROWABLE);
 		ThrowableDefinition def = ModDefinitions.THROWABLES.getAny(id);
 		WeaponSummary weapon = ModDefinitions.THROWABLES.weapon(id);
@@ -78,42 +77,42 @@ public final class ThrowGuide {
 		if (arc.size() < 2) {
 			return;
 		}
-		try (var scope = client.newGizmoScope()) {
+		try (var scope = client.collectPerTickGizmos()) {
 			for (int i = 1; i < arc.size(); i++) {
 				if (i % 2 == 1) {
-					GizmoDrawing.line(arc.get(i - 1), arc.get(i), ARC_COLOR, 2.0f);
+					Gizmos.line(arc.get(i - 1), arc.get(i), ARC_COLOR, 2.0f);
 				}
 			}
 			if (impact != null) {
-				GizmoDrawing.circle(impact.add(0, 0.05, 0), ringRadius, DrawStyle.stroked(RING_COLOR));
+				Gizmos.circle(impact.add(0, 0.05, 0), ringRadius, GizmoStyle.stroke(RING_COLOR));
 			}
 		}
 	}
 
-	private static void simulate(MinecraftClient client, PlayerEntity player, ThrowableDefinition def, double gravity) {
+	private static void simulate(Minecraft client, Player player, ThrowableDefinition def, double gravity) {
 		boolean underhand = AimController.isAimKeyHeldRaw(client);
-		Vec3d look = player.getRotationVec(1.0f);
-		Vec3d direction = underhand
-				? Vec3d.fromPolar(MathHelper.clamp(player.getPitch() + 20f, -90f, 90f), player.getYaw())
+		Vec3 look = player.getViewVector(1.0f);
+		Vec3 direction = underhand
+				? Vec3.directionFromRotation(Mth.clamp(player.getXRot() + 20f, -90f, 90f), player.getYRot())
 				: look;
-		Vec3d velocity = direction.multiply(underhand ? def.underhandVelocity() : def.throwVelocity()).add(player.getVelocity());
-		Vec3d position = player.getEyePos().add(look.multiply(0.4)).add(0, -0.1, 0);
-		List<Vec3d> points = new ArrayList<>();
+		Vec3 velocity = direction.scale(underhand ? def.underhandVelocity() : def.throwVelocity()).add(player.getDeltaMovement());
+		Vec3 position = player.getEyePosition().add(look.scale(0.4)).add(0, -0.1, 0);
+		List<Vec3> points = new ArrayList<>();
 		points.add(position);
-		Vec3d hitPos = null;
+		Vec3 hitPos = null;
 		for (int tick = 0; tick < MAX_TICKS; tick++) {
 			velocity = velocity.add(0, -gravity, 0);
-			Vec3d next = position.add(velocity);
-			BlockHitResult hit = client.world.raycast(new RaycastContext(position, next,
-					RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.ANY, player));
+			Vec3 next = position.add(velocity);
+			BlockHitResult hit = client.level.clip(new ClipContext(position, next,
+					ClipContext.Block.COLLIDER, ClipContext.Fluid.ANY, player));
 			if (hit.getType() != HitResult.Type.MISS) {
-				hitPos = hit.getPos();
+				hitPos = hit.getLocation();
 				points.add(hitPos);
 				break;
 			}
 			points.add(next);
 			position = next;
-			velocity = velocity.multiply(0.99);
+			velocity = velocity.scale(0.99);
 		}
 		arc = points;
 		impact = hitPos;
@@ -121,26 +120,26 @@ public final class ThrowGuide {
 	}
 
 	/** Seconds left before a cooking throwable goes off in hand, and whether it'll be lobbed underhand. */
-	private static void renderFuse(DrawContext context, RenderTickCounter tickCounter) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		PlayerEntity player = client.player;
+	private static void renderFuse(GuiGraphics context, DeltaTracker tickCounter) {
+		Minecraft client = Minecraft.getInstance();
+		Player player = client.player;
 		ItemStack stack = player == null || player.getVehicle() != null ? null : heldThrowable(player);
 		ThrowableDefinition def = stack == null ? null : ModDefinitions.THROWABLES.getAny(stack.get(ModComponents.THROWABLE));
 		if (def == null) {
 			return;
 		}
-		int x = context.getScaledWindowWidth() / 2 + 12;
-		int y = context.getScaledWindowHeight() / 2 + 8;
+		int x = context.guiWidth() / 2 + 12;
+		int y = context.guiHeight() / 2 + 8;
 		if (def.cooks()) {
-			int left = Math.max(0, def.fuseTicks() - player.getItemUseTime());
+			int left = Math.max(0, def.fuseTicks() - player.getTicksUsingItem());
 			float seconds = left / 20f;
 			int color = seconds < 1.5f ? 0xFFFF4040 : 0xFFFFFFFF;
-			Text text = Text.translatable("hud.tudursguns.fuse", String.format(Locale.ROOT, "%.1f", seconds));
-			context.drawTextWithShadow(client.textRenderer, text, x, y, color);
-			y += client.textRenderer.fontHeight + 2;
+			Component text = Component.translatable("hud.tudursguns.fuse", String.format(Locale.ROOT, "%.1f", seconds));
+			context.drawString(client.font, text, x, y, color);
+			y += client.font.lineHeight + 2;
 		}
 		if (AimController.isAimKeyHeldRaw(client)) {
-			context.drawTextWithShadow(client.textRenderer, Text.translatable("hud.tudursguns.underhand"), x, y, 0xFFC0C0C0);
+			context.drawString(client.font, Component.translatable("hud.tudursguns.underhand"), x, y, 0xFFC0C0C0);
 		}
 	}
 }

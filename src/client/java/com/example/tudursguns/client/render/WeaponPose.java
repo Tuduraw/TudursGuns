@@ -2,7 +2,7 @@ package com.example.tudursguns.client.render;
 
 import com.example.tudursguns.handheld.AnimationDefinition;
 import com.example.tudursguns.weapon.WeaponAnimationEvents;
-import net.minecraft.client.util.math.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -167,12 +167,12 @@ public final class WeaponPose {
 	}
 
 	/** The whole weapon's own offset (tilting, recoil). Applied once, before the weapon and arms. */
-	public void applyRoot(MatrixStack matrices) {
+	public void applyRoot(PoseStack matrices) {
 		applyLocal(matrices, AnimationDefinition.ROOT);
 	}
 
 	/** Every offset from just below the root down to part (the root itself is already applied). */
-	public void applyChain(MatrixStack matrices, String part) {
+	public void applyChain(PoseStack matrices, String part) {
 		List<String> chain = new ArrayList<>();
 		String current = part;
 		while (current != null && !AnimationDefinition.ROOT.equals(current) && chain.size() < 16 && !chain.contains(current)) {
@@ -184,7 +184,7 @@ public final class WeaponPose {
 		}
 	}
 
-	private void applyLocal(MatrixStack matrices, String part) {
+	private void applyLocal(PoseStack matrices, String part) {
 		Vector3f translation = this.translations.get(part);
 		Quaternionf rotation = this.rotations.get(part);
 		if (translation == null && rotation == null) {
@@ -196,7 +196,7 @@ public final class WeaponPose {
 		}
 		if (rotation != null) {
 			matrices.translate(pivot.x, pivot.y, pivot.z);
-			matrices.multiply(rotation);
+			matrices.mulPose(rotation);
 			matrices.translate(-pivot.x, -pivot.y, -pivot.z);
 		}
 	}

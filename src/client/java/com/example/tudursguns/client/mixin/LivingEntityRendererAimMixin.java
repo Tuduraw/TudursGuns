@@ -3,10 +3,10 @@ package com.example.tudursguns.client.mixin;
 import com.example.tudursguns.client.AimController;
 import com.example.tudursguns.client.render.AimRenderState;
 import com.example.tudursguns.soldier.Soldier;
-import net.minecraft.client.render.entity.LivingEntityRenderer;
-import net.minecraft.client.render.entity.state.LivingEntityRenderState;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -19,14 +19,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(LivingEntityRenderer.class)
 public abstract class LivingEntityRendererAimMixin {
 
-	@Inject(method = "updateRenderState(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;F)V", at = @At("HEAD"))
+	@Inject(method = "extractRenderState(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;F)V", at = @At("HEAD"))
 	private void tudursguns$beginEntity(LivingEntity entity, LivingEntityRenderState state, float tickProgress, CallbackInfo ci) {
-		AimRenderState.setEntityBeingUpdatedAims(entity instanceof PlayerEntity player ? AimController.isAiming(player)
+		AimRenderState.setEntityBeingUpdatedAims(entity instanceof Player player ? AimController.isAiming(player)
 				: entity instanceof Soldier soldier && soldier.isAimingWeapon());
-		AimRenderState.setEntityBeingUpdatedSprintCarries(entity instanceof PlayerEntity player && AimController.isSprintCarrying(player));
+		AimRenderState.setEntityBeingUpdatedSprintCarries(entity instanceof Player player && AimController.isSprintCarrying(player));
 	}
 
-	@Inject(method = "updateRenderState(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;F)V", at = @At("TAIL"))
+	@Inject(method = "extractRenderState(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;F)V", at = @At("TAIL"))
 	private void tudursguns$markAiming(LivingEntity entity, LivingEntityRenderState state, float tickProgress, CallbackInfo ci) {
 		state.setData(AimRenderState.AIMING, AimRenderState.entityBeingUpdatedAims() ? Boolean.TRUE : null);
 		state.setData(AimRenderState.SPRINT_CARRY, AimRenderState.entityBeingUpdatedSprintCarries() ? Boolean.TRUE : null);

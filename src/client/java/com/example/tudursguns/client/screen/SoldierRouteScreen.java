@@ -4,13 +4,12 @@ import com.example.tudursguns.block.SoldierPostBlockEntity;
 import com.example.tudursguns.network.SoldierRoutePayload;
 import com.example.tudursguns.soldier.SoldierWaypoint;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,13 +28,13 @@ public class SoldierRouteScreen extends Screen {
 	/** Points as {x, y, z, wait seconds}. */
 	private final List<int[]> points = new ArrayList<>();
 	private int index;
-	private TextFieldWidget[] pointFields;
-	private TextFieldWidget rangeField;
+	private EditBox[] pointFields;
+	private EditBox rangeField;
 	/** True while the fields are being filled in from the current point (not edited by the player). */
 	private boolean filling;
 
 	public SoldierRouteScreen(SoldierRoutePayload payload) {
-		super(Text.translatable("gui.tudursguns.soldier_route.title"));
+		super(Component.translatable("gui.tudursguns.soldier_route.title"));
 		this.post = payload.pos();
 		this.original = payload;
 		for (SoldierWaypoint point : payload.route()) {
@@ -48,39 +47,39 @@ public class SoldierRouteScreen extends Screen {
 		int centerX = this.width / 2;
 		int top = this.height / 2 - 80;
 
-		this.addDrawableChild(ButtonWidget.builder(Text.literal("<"), button -> page(-1)).dimensions(centerX - 100, top + 20, 20, 20).build());
-		this.addDrawableChild(ButtonWidget.builder(Text.literal(">"), button -> page(1)).dimensions(centerX + 80, top + 20, 20, 20).build());
+		this.addRenderableWidget(Button.builder(Component.literal("<"), button -> page(-1)).bounds(centerX - 100, top + 20, 20, 20).build());
+		this.addRenderableWidget(Button.builder(Component.literal(">"), button -> page(1)).bounds(centerX + 80, top + 20, 20, 20).build());
 
-		this.pointFields = new TextFieldWidget[4];
+		this.pointFields = new EditBox[4];
 		for (int i = 0; i < 4; i++) {
 			final int component = i;
-			TextFieldWidget field = new TextFieldWidget(this.textRenderer, centerX - 100 + i * 52, top + 58, FIELD_WIDTH, 18, Text.empty());
+			EditBox field = new EditBox(this.font, centerX - 100 + i * 52, top + 58, FIELD_WIDTH, 18, Component.empty());
 			field.setMaxLength(5);
-			field.setTextPredicate(text -> text.matches(component == 3 ? "\\d*" : "-?\\d*"));
-			field.setChangedListener(text -> {
+			field.setFilter(text -> text.matches(component == 3 ? "\\d*" : "-?\\d*"));
+			field.setResponder(text -> {
 				if (!this.filling && this.index < this.points.size()) {
 					this.points.get(this.index)[component] = parse(text, 0);
 				}
 			});
-			this.pointFields[i] = this.addDrawableChild(field);
+			this.pointFields[i] = this.addRenderableWidget(field);
 		}
-		this.addDrawableChild(ButtonWidget.builder(Text.translatable("gui.tudursguns.soldier_route.here"), button -> setHere())
-				.dimensions(centerX - 100, top + 82, 64, 20).build());
-		this.addDrawableChild(ButtonWidget.builder(Text.translatable("gui.tudursguns.soldier_route.add"), button -> add())
-				.dimensions(centerX - 32, top + 82, 64, 20).build());
-		this.addDrawableChild(ButtonWidget.builder(Text.translatable("gui.tudursguns.soldier_route.remove"), button -> remove())
-				.dimensions(centerX + 36, top + 82, 64, 20).build());
+		this.addRenderableWidget(Button.builder(Component.translatable("gui.tudursguns.soldier_route.here"), button -> setHere())
+				.bounds(centerX - 100, top + 82, 64, 20).build());
+		this.addRenderableWidget(Button.builder(Component.translatable("gui.tudursguns.soldier_route.add"), button -> add())
+				.bounds(centerX - 32, top + 82, 64, 20).build());
+		this.addRenderableWidget(Button.builder(Component.translatable("gui.tudursguns.soldier_route.remove"), button -> remove())
+				.bounds(centerX + 36, top + 82, 64, 20).build());
 
-		this.rangeField = new TextFieldWidget(this.textRenderer, centerX + 56, top + 114, FIELD_WIDTH, 18, Text.empty());
+		this.rangeField = new EditBox(this.font, centerX + 56, top + 114, FIELD_WIDTH, 18, Component.empty());
 		this.rangeField.setMaxLength(3);
-		this.rangeField.setTextPredicate(text -> text.matches("\\d*"));
-		this.rangeField.setText(Integer.toString(this.original.engageRange()));
-		this.addDrawableChild(this.rangeField);
+		this.rangeField.setFilter(text -> text.matches("\\d*"));
+		this.rangeField.setValue(Integer.toString(this.original.engageRange()));
+		this.addRenderableWidget(this.rangeField);
 
-		this.addDrawableChild(ButtonWidget.builder(Text.translatable("gui.tudursguns.soldier_route.save"), button -> send(true))
-				.dimensions(centerX - 100, top + 144, 98, 20).build());
-		this.addDrawableChild(ButtonWidget.builder(Text.translatable("gui.cancel"), button -> send(false))
-				.dimensions(centerX + 2, top + 144, 98, 20).build());
+		this.addRenderableWidget(Button.builder(Component.translatable("gui.tudursguns.soldier_route.save"), button -> send(true))
+				.bounds(centerX - 100, top + 144, 98, 20).build());
+		this.addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), button -> send(false))
+				.bounds(centerX + 2, top + 144, 98, 20).build());
 		fill();
 	}
 
@@ -93,10 +92,10 @@ public class SoldierRouteScreen extends Screen {
 
 	/** Where the player stands, relative to the post. */
 	private int[] here() {
-		if (this.client == null || this.client.player == null) {
+		if (this.minecraft == null || this.minecraft.player == null) {
 			return new int[]{0, 1, 0, 0};
 		}
-		BlockPos at = this.client.player.getBlockPos().subtract(this.post);
+		BlockPos at = this.minecraft.player.blockPosition().subtract(this.post);
 		return new int[]{at.getX(), at.getY(), at.getZ(), 0};
 	}
 
@@ -134,7 +133,7 @@ public class SoldierRouteScreen extends Screen {
 		this.filling = true;
 		boolean any = !this.points.isEmpty();
 		for (int i = 0; i < 4; i++) {
-			this.pointFields[i].setText(any ? Integer.toString(this.points.get(this.index)[i]) : "");
+			this.pointFields[i].setValue(any ? Integer.toString(this.points.get(this.index)[i]) : "");
 			this.pointFields[i].setEditable(any);
 		}
 		this.filling = false;
@@ -147,10 +146,10 @@ public class SoldierRouteScreen extends Screen {
 			for (int[] point : this.points) {
 				route.add(new SoldierWaypoint(point[0], point[1], point[2], point[3] * 20).clamped());
 			}
-			payload = new SoldierRoutePayload(this.post, route, parse(this.rangeField.getText(), this.original.engageRange()));
+			payload = new SoldierRoutePayload(this.post, route, parse(this.rangeField.getValue(), this.original.engageRange()));
 		}
 		ClientPlayNetworking.send(payload);
-		this.close();
+		this.onClose();
 	}
 
 	private static int parse(String text, int fallback) {
@@ -162,26 +161,26 @@ public class SoldierRouteScreen extends Screen {
 	}
 
 	@Override
-	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
 		super.render(context, mouseX, mouseY, delta);
 		int centerX = this.width / 2;
 		int top = this.height / 2 - 80;
-		context.drawCenteredTextWithShadow(this.textRenderer, this.title, centerX, top, TEXT_COLOR);
-		Text page = this.points.isEmpty()
-				? Text.translatable("gui.tudursguns.soldier_route.empty")
-				: Text.translatable("gui.tudursguns.soldier_route.point", this.index + 1, this.points.size());
-		context.drawCenteredTextWithShadow(this.textRenderer, page, centerX, top + 26, TEXT_COLOR);
-		String[] labels = {"X", "Y", "Z", Text.translatable("gui.tudursguns.soldier_route.wait").getString()};
+		context.drawCenteredString(this.font, this.title, centerX, top, TEXT_COLOR);
+		Component page = this.points.isEmpty()
+				? Component.translatable("gui.tudursguns.soldier_route.empty")
+				: Component.translatable("gui.tudursguns.soldier_route.point", this.index + 1, this.points.size());
+		context.drawCenteredString(this.font, page, centerX, top + 26, TEXT_COLOR);
+		String[] labels = {"X", "Y", "Z", Component.translatable("gui.tudursguns.soldier_route.wait").getString()};
 		for (int i = 0; i < 4; i++) {
-			context.drawTextWithShadow(this.textRenderer, labels[i], centerX - 100 + i * 52, top + 47, LABEL_COLOR);
+			context.drawString(this.font, labels[i], centerX - 100 + i * 52, top + 47, LABEL_COLOR);
 		}
-		context.drawTextWithShadow(this.textRenderer, Text.translatable("gui.tudursguns.soldier_route.relative"), centerX - 100, top + 104, LABEL_COLOR);
-		context.drawTextWithShadow(this.textRenderer, Text.translatable("gui.tudursguns.soldier_route.engage_range",
+		context.drawString(this.font, Component.translatable("gui.tudursguns.soldier_route.relative"), centerX - 100, top + 104, LABEL_COLOR);
+		context.drawString(this.font, Component.translatable("gui.tudursguns.soldier_route.engage_range",
 				SoldierPostBlockEntity.MIN_ENGAGE_RANGE, SoldierPostBlockEntity.MAX_ENGAGE_RANGE), centerX - 100, top + 119, TEXT_COLOR);
 	}
 
 	@Override
-	public boolean shouldPause() {
+	public boolean isPauseScreen() {
 		return false;
 	}
 }

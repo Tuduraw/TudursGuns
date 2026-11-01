@@ -53,6 +53,6 @@
 | リスク | 対策 |
 |---|---|
 | 配布: 前提MODの成果物が Maven Local にしか公開されていない(group は `com.example.tudursvehiclemod`) | 開発時は `publishToMavenLocal` を使う。将来的には前提MOD側で公開 Maven か CurseMaven を用意する |
-| バージョン固定: Minecraft 1.21.11 と Yarn `1.21.11+build.4` を完全に揃える必要がある | 本MODも同じ値に固定する。`fabric.mod.json` で `tudursvehiclemod` のバージョン範囲を明記する |
+| バージョン固定: 前提MODと同じ Minecraft のバージョンに揃える必要がある(マッピングは前提MODと同じく Mojang 公式。jar は中間名で参照し合うため、マッピングが違っても動作する) | 本MODも同じ値に固定する。`fabric.mod.json` で `tudursvehiclemod` のバージョン範囲を明記する |
 | 内部APIの変更: `tudursvehiclemod$` 付きのメソッドや private メソッド(`@Invoker` で呼ぶ補給処理)は将来変わりうる | 前提MODと同時に更新する |
-| 次のMinecraftバージョンでのマッピング移行: Yarn の提供は 1.21.11 が最後 | 前提MODと同時に移行する |
+| 次のMinecraftバージョンでのマッピング移行: Yarn の提供は 1.21.11 が最後 | 移行済み(`docs/MOJMAP.md`) |

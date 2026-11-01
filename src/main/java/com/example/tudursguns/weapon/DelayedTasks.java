@@ -1,12 +1,11 @@
 package com.example.tudursguns.weapon;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.registry.RegistryKey;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.World;
-
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -19,7 +18,7 @@ public final class DelayedTasks {
 	private DelayedTasks() {
 	}
 
-	private record Task(RegistryKey<World> world, UUID entity, long due, Consumer<LivingEntity> run) {
+	private record Task(ResourceKey<Level> world, UUID entity, long due, Consumer<LivingEntity> run) {
 	}
 
 	private static final List<Task> TASKS = new ArrayList<>();
@@ -29,8 +28,8 @@ public final class DelayedTasks {
 		if (delayTicks <= 0) {
 			task.accept(entity);
 		} else {
-			World world = entity.getEntityWorld();
-			TASKS.add(new Task(world.getRegistryKey(), entity.getUuid(), world.getTime() + delayTicks, task));
+			Level world = entity.level();
+			TASKS.add(new Task(world.dimension(), entity.getUUID(), world.getGameTime() + delayTicks, task));
 		}
 	}
 
@@ -41,12 +40,12 @@ public final class DelayedTasks {
 		}
 		List<Runnable> due = new ArrayList<>();
 		TASKS.removeIf(task -> {
-			ServerWorld world = server.getWorld(task.world());
+			ServerLevel world = server.getLevel(task.world());
 			Entity entity = world == null ? null : world.getEntity(task.entity());
 			if (!(entity instanceof LivingEntity living) || !living.isAlive()) {
 				return true;
 			}
-			if (world.getTime() < task.due()) {
+			if (world.getGameTime() < task.due()) {
 				return false;
 			}
 			due.add(() -> task.run().accept(living));

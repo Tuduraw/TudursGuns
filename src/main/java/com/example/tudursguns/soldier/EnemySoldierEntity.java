@@ -1,72 +1,72 @@
 package com.example.tudursguns.soldier;
 
 import com.example.tudursguns.TudursGunsConfig;
-import net.minecraft.entity.EntityData;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.ai.goal.ActiveTargetGoal;
-import net.minecraft.entity.ai.goal.LookAroundGoal;
-import net.minecraft.entity.ai.goal.LookAtEntityGoal;
-import net.minecraft.entity.ai.goal.MeleeAttackGoal;
-import net.minecraft.entity.ai.goal.RevengeGoal;
-import net.minecraft.entity.ai.goal.SwimGoal;
-import net.minecraft.entity.ai.goal.WanderAroundFarGoal;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.mob.HostileEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.LocalDifficulty;
-import net.minecraft.world.ServerWorldAccess;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.AABB;
 
 /** A hostile soldier that roams like any monster and attacks players and posted soldiers with the
  * gear it spawned with (EnemySoldierGear). Its rounds are endless - it reloads when its magazine is
  * empty. Spawns naturally unless the server config turns that off. */
-public class EnemySoldierEntity extends HostileEntity implements Soldier {
+public class EnemySoldierEntity extends Monster implements Soldier {
 
-	private static final TrackedData<Boolean> AIMING = DataTracker.registerData(EnemySoldierEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+	private static final EntityDataAccessor<Boolean> AIMING = SynchedEntityData.defineId(EnemySoldierEntity.class, EntityDataSerializers.BOOLEAN);
 
-	public EnemySoldierEntity(EntityType<? extends EnemySoldierEntity> type, World world) {
+	public EnemySoldierEntity(EntityType<? extends EnemySoldierEntity> type, Level world) {
 		super(type, world);
 	}
 
-	public static DefaultAttributeContainer.Builder createAttributes() {
-		return HostileEntity.createHostileAttributes()
-				.add(EntityAttributes.MAX_HEALTH, 20.0)
-				.add(EntityAttributes.MOVEMENT_SPEED, 0.25)
-				.add(EntityAttributes.FOLLOW_RANGE, 48.0)
-				.add(EntityAttributes.ATTACK_DAMAGE, 3.0);
+	public static AttributeSupplier.Builder createAttributes() {
+		return Monster.createMonsterAttributes()
+				.add(Attributes.MAX_HEALTH, 20.0)
+				.add(Attributes.MOVEMENT_SPEED, 0.25)
+				.add(Attributes.FOLLOW_RANGE, 48.0)
+				.add(Attributes.ATTACK_DAMAGE, 3.0);
 	}
 
 	@Override
-	protected void initDataTracker(DataTracker.Builder builder) {
-		super.initDataTracker(builder);
-		builder.add(AIMING, false);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		super.defineSynchedData(builder);
+		builder.define(AIMING, false);
 	}
 
 	@Override
-	protected void initGoals() {
-		this.goalSelector.add(0, new SwimGoal(this));
-		this.goalSelector.add(2, new SoldierWeaponGoal<>(this, 1.0));
+	protected void registerGoals() {
+		this.goalSelector.addGoal(0, new FloatGoal(this));
+		this.goalSelector.addGoal(2, new SoldierWeaponGoal<>(this, 1.0));
 		// Unarmed (no weapon had a soldier_weight): fists.
-		this.goalSelector.add(3, new MeleeAttackGoal(this, 1.0, false));
-		this.goalSelector.add(5, new WanderAroundFarGoal(this, 0.8));
-		this.goalSelector.add(6, new LookAtEntityGoal(this, PlayerEntity.class, 8f));
-		this.goalSelector.add(7, new LookAroundGoal(this));
-		this.targetSelector.add(1, new RevengeGoal(this));
-		this.targetSelector.add(2, new ActiveTargetGoal<>(this, PlayerEntity.class, true));
-		this.targetSelector.add(3, new ActiveTargetGoal<>(this, FriendlySoldierEntity.class, true));
+		this.goalSelector.addGoal(3, new MeleeAttackGoal(this, 1.0, false));
+		this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8));
+		this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8f));
+		this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
+		this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+		this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
+		this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, FriendlySoldierEntity.class, true));
 	}
 
 	@Override
-	public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, EntityData entityData) {
-		EntityData data = super.initialize(world, difficulty, spawnReason, entityData);
+	public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficulty, EntitySpawnReason spawnReason, SpawnGroupData entityData) {
+		SpawnGroupData data = super.finalizeSpawn(world, difficulty, spawnReason, entityData);
 		EnemySoldierGear.equip(this, world.getRandom());
 		return data;
 	}
@@ -74,33 +74,33 @@ public class EnemySoldierEntity extends HostileEntity implements Soldier {
 	/** Staying put unless the server config lets them despawn. (Mobs that can't despawn don't count
 	 * against the monster cap, so natural spawns are limited by canSpawn's density check instead.) */
 	@Override
-	public boolean cannotDespawn() {
-		return !TudursGunsConfig.get().enemy_soldier_despawn || super.cannotDespawn();
+	public boolean requiresCustomPersistence() {
+		return !TudursGunsConfig.get().enemy_soldier_despawn || super.requiresCustomPersistence();
 	}
 
 	/** Spawn rule: where monsters spawn (in the dark), and - for natural spawns - not where
 	 * enemy_soldier_density_max enemy soldiers are already within enemy_soldier_density_radius. */
-	public static boolean canSpawn(EntityType<EnemySoldierEntity> type, ServerWorldAccess world, SpawnReason reason, BlockPos pos, Random random) {
-		if (!HostileEntity.canSpawnInDark(type, world, reason, pos, random)) {
+	public static boolean canSpawn(EntityType<EnemySoldierEntity> type, ServerLevelAccessor world, EntitySpawnReason reason, BlockPos pos, RandomSource random) {
+		if (!Monster.checkMonsterSpawnRules(type, world, reason, pos, random)) {
 			return false;
 		}
-		if (reason != SpawnReason.NATURAL && reason != SpawnReason.CHUNK_GENERATION) {
+		if (reason != EntitySpawnReason.NATURAL && reason != EntitySpawnReason.CHUNK_GENERATION) {
 			return true;
 		}
 		TudursGunsConfig.Data config = TudursGunsConfig.get();
-		int nearby = world.getEntitiesByClass(EnemySoldierEntity.class, new Box(pos).expand(config.enemy_soldier_density_radius),
+		int nearby = world.getEntitiesOfClass(EnemySoldierEntity.class, new AABB(pos).inflate(config.enemy_soldier_density_radius),
 				EnemySoldierEntity::isAlive).size();
 		return nearby < config.enemy_soldier_density_max;
 	}
 
 	@Override
 	public boolean isAimingWeapon() {
-		return this.dataTracker.get(AIMING);
+		return this.entityData.get(AIMING);
 	}
 
 	@Override
 	public void setAimingWeapon(boolean aiming) {
-		this.dataTracker.set(AIMING, aiming);
+		this.entityData.set(AIMING, aiming);
 	}
 
 	@Override

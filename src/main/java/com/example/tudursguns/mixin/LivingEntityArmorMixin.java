@@ -1,9 +1,9 @@
 package com.example.tudursguns.mixin;
 
 import com.example.tudursguns.armor.ArmorEffects;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityArmorMixin {
 
-	@Inject(method = "modifyAppliedDamage(Lnet/minecraft/entity/damage/DamageSource;F)F", at = @At("RETURN"), cancellable = true)
+	@Inject(method = "getDamageAfterMagicAbsorb(Lnet/minecraft/world/damagesource/DamageSource;F)F", at = @At("RETURN"), cancellable = true)
 	private void tudursguns$armorProtection(DamageSource source, float amount, CallbackInfoReturnable<Float> cir) {
 		float modified = ArmorEffects.modifyDamage((LivingEntity) (Object) this, source, cir.getReturnValueF());
 		if (modified != cir.getReturnValueF()) {
@@ -26,7 +26,7 @@ public abstract class LivingEntityArmorMixin {
 		}
 	}
 
-	@Inject(method = "getAttackDistanceScalingFactor(Lnet/minecraft/entity/Entity;)D", at = @At("RETURN"), cancellable = true)
+	@Inject(method = "getVisibilityPercent(Lnet/minecraft/world/entity/Entity;)D", at = @At("RETURN"), cancellable = true)
 	private void tudursguns$camouflage(Entity entity, CallbackInfoReturnable<Double> cir) {
 		double multiplier = ArmorEffects.detectionMultiplier((LivingEntity) (Object) this);
 		if (multiplier != 1.0) {

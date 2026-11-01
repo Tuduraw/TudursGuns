@@ -1,18 +1,18 @@
 package com.example.tudursguns.network;
 
 import com.example.tudursguns.TudursGuns;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
 
 /** S2C: another player (by entity id) started or stopped holding the aim key. */
-public record PlayerAimPayload(int entityId, boolean held) implements CustomPayload {
+public record PlayerAimPayload(int entityId, boolean held) implements CustomPacketPayload {
 
-	public static final CustomPayload.Id<PlayerAimPayload> ID =
-			new CustomPayload.Id<>(Identifier.of(TudursGuns.MOD_ID, "player_aim"));
+	public static final CustomPacketPayload.Type<PlayerAimPayload> ID =
+			new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(TudursGuns.MOD_ID, "player_aim"));
 
-	public static final PacketCodec<RegistryByteBuf, PlayerAimPayload> CODEC = PacketCodec.of(
+	public static final StreamCodec<RegistryFriendlyByteBuf, PlayerAimPayload> CODEC = StreamCodec.ofMember(
 			(value, buf) -> {
 				buf.writeVarInt(value.entityId());
 				buf.writeBoolean(value.held());
@@ -21,7 +21,7 @@ public record PlayerAimPayload(int entityId, boolean held) implements CustomPayl
 	);
 
 	@Override
-	public Id<? extends CustomPayload> getId() {
+	public Type<? extends CustomPacketPayload> type() {
 		return ID;
 	}
 }

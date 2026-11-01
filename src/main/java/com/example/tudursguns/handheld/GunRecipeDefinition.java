@@ -4,17 +4,16 @@ import com.example.tudursguns.registry.ModComponents;
 import com.example.tudursguns.registry.ModItems;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.util.Identifier;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 /** A recipe of the gun crafting table, read from data/<namespace>/gun_recipe/<name>.json - in a data
  * pack, or in an addon pack under tudursvehiclemod-addons/ (so a weapon pack brings its own recipes
@@ -55,31 +54,31 @@ public record GunRecipeDefinition(ItemRef result, List<ItemRef> ingredients, Opt
 				return false;
 			}
 			if (this.item.isPresent()) {
-				return stack.isOf(Registries.ITEM.get(this.item.get()));
+				return stack.is(BuiltInRegistries.ITEM.getValue(this.item.get()));
 			}
 			if (this.tag.isPresent()) {
-				return stack.isIn(TagKey.of(RegistryKeys.ITEM, this.tag.get()));
+				return stack.is(TagKey.create(Registries.ITEM, this.tag.get()));
 			}
 			if (this.weapon.isPresent()) {
-				return stack.isOf(ModItems.HANDHELD_WEAPON) && this.weapon.get().equals(stack.get(ModComponents.WEAPON));
+				return stack.is(ModItems.HANDHELD_WEAPON) && this.weapon.get().equals(stack.get(ModComponents.WEAPON));
 			}
 			if (this.attachment.isPresent()) {
-				return stack.isOf(ModItems.ATTACHMENT) && this.attachment.get().equals(stack.get(ModComponents.ATTACHMENT));
+				return stack.is(ModItems.ATTACHMENT) && this.attachment.get().equals(stack.get(ModComponents.ATTACHMENT));
 			}
 			if (this.ammo.isPresent()) {
-				return stack.isOf(ModItems.AMMO) && this.ammo.get().equals(stack.get(ModComponents.AMMO_TYPE));
+				return stack.is(ModItems.AMMO) && this.ammo.get().equals(stack.get(ModComponents.AMMO_TYPE));
 			}
 			if (this.throwable.isPresent()) {
-				return stack.isOf(ModItems.THROWABLE) && this.throwable.get().equals(stack.get(ModComponents.THROWABLE));
+				return stack.is(ModItems.THROWABLE) && this.throwable.get().equals(stack.get(ModComponents.THROWABLE));
 			}
 			if (this.mine.isPresent()) {
-				return stack.isOf(ModItems.MINE) && this.mine.get().equals(stack.get(ModComponents.MINE));
+				return stack.is(ModItems.MINE) && this.mine.get().equals(stack.get(ModComponents.MINE));
 			}
 			if (this.armor.isPresent()) {
-				return stack.isOf(ModItems.ARMOR) && this.armor.get().equals(stack.get(ModComponents.ARMOR));
+				return stack.is(ModItems.ARMOR) && this.armor.get().equals(stack.get(ModComponents.ARMOR));
 			}
 			if (this.equipment.isPresent()) {
-				return stack.isOf(ModItems.EQUIPMENT) && this.equipment.get().equals(stack.get(ModComponents.EQUIPMENT));
+				return stack.is(ModItems.EQUIPMENT) && this.equipment.get().equals(stack.get(ModComponents.EQUIPMENT));
 			}
 			return false;
 		}
@@ -88,7 +87,7 @@ public record GunRecipeDefinition(ItemRef result, List<ItemRef> ingredients, Opt
 		public List<ItemStack> displayStacks() {
 			List<ItemStack> stacks = new ArrayList<>();
 			if (this.tag.isPresent()) {
-				for (RegistryEntry<Item> entry : Registries.ITEM.iterateEntries(TagKey.of(RegistryKeys.ITEM, this.tag.get()))) {
+				for (Holder<Item> entry : BuiltInRegistries.ITEM.getTagOrEmpty(TagKey.create(Registries.ITEM, this.tag.get()))) {
 					stacks.add(new ItemStack(entry, this.count));
 				}
 				return stacks;
@@ -103,7 +102,7 @@ public record GunRecipeDefinition(ItemRef result, List<ItemRef> ingredients, Opt
 		/** The stack this makes (a result) - empty for a tag. A weapon comes with a full magazine when
 		 * its weapon file is known on this side. */
 		public ItemStack createStack() {
-			ItemStack stack = this.item.map(id -> new ItemStack(Registries.ITEM.get(id)))
+			ItemStack stack = this.item.map(id -> new ItemStack(BuiltInRegistries.ITEM.getValue(id)))
 					.or(() -> this.weapon.map(ModItems::weaponStack))
 					.or(() -> this.attachment.map(ModItems::attachmentStack))
 					.or(() -> this.ammo.map(ModItems::ammoStack))
@@ -113,7 +112,7 @@ public record GunRecipeDefinition(ItemRef result, List<ItemRef> ingredients, Opt
 					.or(() -> this.equipment.map(ModItems::equipmentStack))
 					.orElse(ItemStack.EMPTY);
 			if (!stack.isEmpty()) {
-				stack.setCount(Math.min(this.count, stack.getMaxCount()));
+				stack.setCount(Math.min(this.count, stack.getMaxStackSize()));
 			}
 			return stack;
 		}

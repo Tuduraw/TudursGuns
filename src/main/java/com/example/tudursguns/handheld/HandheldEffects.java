@@ -5,11 +5,11 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.util.Identifier;
 import org.joml.Vector3f;
 
 import java.util.Locale;
 import java.util.Optional;
+import net.minecraft.resources.Identifier;
 
 /** The "effects" object of a handheld definition: the muzzle flash, spent cartridges and empty
  * magazines. Each can be false (none), true (the defaults), an object (missing keys take the
@@ -117,12 +117,12 @@ public record HandheldEffects(Optional<MuzzleFlash> muzzleFlash, Optional<Ejecti
 
 		/** The OBJ: model, else the built-in one for type. */
 		public Identifier modelId() {
-			return this.model.orElseGet(() -> Identifier.of(TudursGuns.MOD_ID, "models/obj/" + builtInName() + ".obj"));
+			return this.model.orElseGet(() -> Identifier.fromNamespaceAndPath(TudursGuns.MOD_ID, "models/obj/" + builtInName() + ".obj"));
 		}
 
 		/** The texture: texture, else the built-in models' shared one. */
 		public Identifier textureId() {
-			return this.texture.orElseGet(() -> Identifier.of(TudursGuns.MOD_ID, "textures/vehicle/tg_ejected.png"));
+			return this.texture.orElseGet(() -> Identifier.fromNamespaceAndPath(TudursGuns.MOD_ID, "textures/vehicle/tg_ejected.png"));
 		}
 
 		private String builtInName() {

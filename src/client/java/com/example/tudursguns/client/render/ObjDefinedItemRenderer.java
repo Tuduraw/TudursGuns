@@ -10,20 +10,20 @@ import com.example.tudursguns.handheld.MineDefinition;
 import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.handheld.ThrowableDefinition;
 import com.example.tudursguns.registry.ModComponents;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import com.mojang.serialization.MapCodec;
-import net.minecraft.client.render.command.OrderedRenderCommandQueue;
-import net.minecraft.client.render.item.model.special.SpecialModelRenderer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.item.ItemDisplayContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.RotationAxis;
 import org.joml.Vector3fc;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.special.SpecialModelRenderer;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 
 /** Draws a data-defined item (one item model type per Kind: tudursguns:obj_attachment, obj_mine, ...)
  * from its definition's OBJ model, texture and display transforms, or its flat icon.
@@ -51,11 +51,11 @@ public class ObjDefinedItemRenderer implements SpecialModelRenderer<Identifier> 
 		AMMO("obj_ammo");
 
 		public final Identifier typeId;
-		public final MapCodec<Unbaked> codec;
+		public final MapCodec<com.example.tudursguns.client.render.ObjDefinedItemRenderer.Unbaked> codec;
 
 		Kind(String path) {
-			this.typeId = Identifier.of(TudursGuns.MOD_ID, path);
-			this.codec = MapCodec.unit(new Unbaked(this));
+			this.typeId = Identifier.fromNamespaceAndPath(TudursGuns.MOD_ID, path);
+			this.codec = MapCodec.unit(new com.example.tudursguns.client.render.ObjDefinedItemRenderer.Unbaked(this));
 		}
 
 		Identifier idOf(ItemStack stack) {
@@ -106,13 +106,13 @@ public class ObjDefinedItemRenderer implements SpecialModelRenderer<Identifier> 
 	}
 
 	@Override
-	public Identifier getData(ItemStack stack) {
+	public Identifier extractArgument(ItemStack stack) {
 		return this.kind.idOf(stack);
 	}
 
 	@Override
-	public void render(Identifier id, ItemDisplayContext displayContext, MatrixStack matrices,
-			OrderedRenderCommandQueue queue, int light, int overlay, boolean glint, int outlineColor) {
+	public void submit(Identifier id, ItemDisplayContext displayContext, PoseStack matrices,
+			SubmitNodeCollector queue, int light, int overlay, boolean glint, int outlineColor) {
 		Look look = id == null ? null : this.kind.look(id);
 		if (look == null) {
 			return;
@@ -120,44 +120,44 @@ public class ObjDefinedItemRenderer implements SpecialModelRenderer<Identifier> 
 		// A flat icon in inventories - or everywhere, when there's no model.
 		boolean noModel = look.model().isEmpty() || look.texture().isEmpty();
 		if (look.icon().isPresent() && (displayContext == ItemDisplayContext.GUI || noModel)) {
-			matrices.push();
+			matrices.pushPose();
 			if (displayContext != ItemDisplayContext.GUI) {
 				WeaponModelDrawer.applyTransform(matrices, look.display().getOrDefault(displayContext, HandheldDefinition.DisplayTransform.IDENTITY));
 			}
 			WeaponModelDrawer.drawIcon(queue, matrices, look.icon().get(), light, overlay);
-			matrices.pop();
+			matrices.popPose();
 			return;
 		}
 		if (noModel) {
 			return;
 		}
-		matrices.push();
+		matrices.pushPose();
 		if (this.kind == Kind.ARMOR && displayContext == ItemDisplayContext.HEAD) {
 			// Vanilla draws a head-slot item with its front towards -Z (like a carved pumpkin's face);
 			// OBJ armor is modelled with +Z forward (as for "worn"), so turn it round the item's centre.
 			matrices.translate(0.5, 0.0, 0.5);
-			matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180f));
+			matrices.mulPose(Axis.YP.rotationDegrees(180f));
 			matrices.translate(-0.5, 0.0, -0.5);
 		}
 		WeaponModelDrawer.applyTransform(matrices, look.display().getOrDefault(displayContext, HandheldDefinition.DisplayTransform.IDENTITY));
 		WeaponModelDrawer.drawObj(queue, matrices, look.model().get(), look.texture().get(), Set.of(), light, overlay);
-		matrices.pop();
+		matrices.popPose();
 	}
 
 	@Override
-	public void collectVertices(Consumer<Vector3fc> consumer) {
+	public void getExtents(Consumer<Vector3fc> consumer) {
 		WeaponModelDrawer.unitCube(consumer);
 	}
 
 	public record Unbaked(Kind kind) implements SpecialModelRenderer.Unbaked {
 
 		@Override
-		public MapCodec<Unbaked> getCodec() {
+		public MapCodec<com.example.tudursguns.client.render.ObjDefinedItemRenderer.Unbaked> type() {
 			return this.kind.codec;
 		}
 
 		@Override
-		public SpecialModelRenderer<?> bake(SpecialModelRenderer.BakeContext context) {
+		public SpecialModelRenderer<?> bake(SpecialModelRenderer.BakingContext context) {
 			return new ObjDefinedItemRenderer(this.kind);
 		}
 	}

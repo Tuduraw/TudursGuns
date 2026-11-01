@@ -1,13 +1,13 @@
 package com.example.tudursguns.mixin;
 
-import net.minecraft.entity.ai.goal.ActiveTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 /** What an ActiveTargetGoal hunts - SoldierEnemies looks for monsters that hunt players. */
-@Mixin(ActiveTargetGoal.class)
+@Mixin(NearestAttackableTargetGoal.class)
 public interface ActiveTargetGoalAccessor {
 
-	@Accessor("targetClass")
+	@Accessor("targetType")
 	Class<?> tudursguns$getTargetClass();
 }

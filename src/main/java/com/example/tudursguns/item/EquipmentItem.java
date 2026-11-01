@@ -4,22 +4,21 @@ import com.example.tudursguns.handheld.EquipmentDefinition;
 import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.registry.ModComponents;
 import com.example.tudursguns.weapon.EquipmentActions;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.world.World;
-
 import java.util.Locale;
 import java.util.function.Consumer;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 /** The one item every piece of support equipment is; which one comes from its tudursguns:equipment
  * component. What it does is in EquipmentDefinition / EquipmentActions; the binoculars' view, the
@@ -28,7 +27,7 @@ public class EquipmentItem extends DefinedItem<EquipmentDefinition> {
 
 	private static final int HOLD_TICKS = 72000;
 
-	public EquipmentItem(Settings settings) {
+	public EquipmentItem(Properties settings) {
 		super(settings, ModDefinitions.EQUIPMENT, ModComponents.EQUIPMENT);
 	}
 
@@ -37,43 +36,43 @@ public class EquipmentItem extends DefinedItem<EquipmentDefinition> {
 	}
 
 	@Override
-	public ActionResult use(World world, PlayerEntity user, Hand hand) {
-		ItemStack stack = user.getStackInHand(hand);
+	public InteractionResult use(Level world, Player user, InteractionHand hand) {
+		ItemStack stack = user.getItemInHand(hand);
 		EquipmentDefinition def = definition(stack);
 		if (def == null || user.getVehicle() != null) {
-			return ActionResult.PASS;
+			return InteractionResult.PASS;
 		}
 		if (def.type() == EquipmentDefinition.Type.DETONATOR) {
-			if (user instanceof ServerPlayerEntity player) {
+			if (user instanceof ServerPlayer player) {
 				EquipmentActions.detonate(player, stack, hand, def);
 			}
-			return ActionResult.SUCCESS;
+			return InteractionResult.SUCCESS;
 		}
 		if (!def.isHeld()) {
-			return ActionResult.PASS;
+			return InteractionResult.PASS;
 		}
-		user.setCurrentHand(hand);
-		return ActionResult.CONSUME;
+		user.startUsingItem(hand);
+		return InteractionResult.CONSUME;
 	}
 
 	@Override
-	public int getMaxUseTime(ItemStack stack, LivingEntity user) {
+	public int getUseDuration(ItemStack stack, LivingEntity user) {
 		EquipmentDefinition def = definition(stack);
 		return def != null && def.type() == EquipmentDefinition.Type.FIRST_AID ? def.useTicks() : HOLD_TICKS;
 	}
 
 	@Override
-	public void usageTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
-		if (!(user instanceof ServerPlayerEntity player)) {
+	public void onUseTick(Level world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
+		if (!(user instanceof ServerPlayer player)) {
 			return;
 		}
 		EquipmentDefinition def = definition(stack);
 		if (def == null || player.getVehicle() != null) {
-			player.stopUsingItem();
+			player.releaseUsingItem();
 			return;
 		}
-		int ticksUsed = getMaxUseTime(stack, user) - remainingUseTicks;
-		Hand hand = player.getActiveHand();
+		int ticksUsed = getUseDuration(stack, user) - remainingUseTicks;
+		InteractionHand hand = player.getUsedItemHand();
 		boolean keepGoing = switch (def.type()) {
 			case REPAIR_KIT -> EquipmentActions.repairTick(player, stack, hand, def, ticksUsed);
 			case DEFUSE_KIT -> EquipmentActions.defuseTick(player, stack, hand, def);
@@ -84,22 +83,22 @@ public class EquipmentItem extends DefinedItem<EquipmentDefinition> {
 			default -> true;
 		};
 		if (!keepGoing) {
-			player.stopUsingItem();
+			player.releaseUsingItem();
 		}
 	}
 
 	@Override
-	public ItemStack finishUsing(ItemStack stack, World world, LivingEntity user) {
+	public ItemStack finishUsingItem(ItemStack stack, Level world, LivingEntity user) {
 		EquipmentDefinition def = definition(stack);
-		if (def != null && def.type() == EquipmentDefinition.Type.FIRST_AID && user instanceof ServerPlayerEntity player) {
-			EquipmentActions.firstAid(player, stack, player.getActiveHand(), def);
+		if (def != null && def.type() == EquipmentDefinition.Type.FIRST_AID && user instanceof ServerPlayer player) {
+			EquipmentActions.firstAid(player, stack, player.getUsedItemHand(), def);
 		}
 		return stack;
 	}
 
 	@Override
-	public boolean onStoppedUsing(ItemStack stack, World world, LivingEntity user, int remainingUseTicks) {
-		if (user instanceof ServerPlayerEntity player) {
+	public boolean releaseUsing(ItemStack stack, Level world, LivingEntity user, int remainingUseTicks) {
+		if (user instanceof ServerPlayer player) {
 			EquipmentActions.clearLaser(player);
 			EquipmentActions.stopDefusing(player);
 		}
@@ -109,7 +108,7 @@ public class EquipmentItem extends DefinedItem<EquipmentDefinition> {
 	/** Server side: stack size and durability follow the definition (see ArmorEffects.applyComponents
 	 * for why this is done here). */
 	@Override
-	public void inventoryTick(ItemStack stack, ServerWorld world, Entity entity, EquipmentSlot slot) {
+	public void inventoryTick(ItemStack stack, ServerLevel world, Entity entity, EquipmentSlot slot) {
 		EquipmentDefinition def = definition(stack);
 		if (def != null) {
 			applyComponents(stack, def);
@@ -118,22 +117,22 @@ public class EquipmentItem extends DefinedItem<EquipmentDefinition> {
 
 	public static void applyComponents(ItemStack stack, EquipmentDefinition def) {
 		if (def.uses() > 0) {
-			setIfChanged(stack, DataComponentTypes.MAX_STACK_SIZE, 1);
-			setIfChanged(stack, DataComponentTypes.MAX_DAMAGE, def.uses());
-			if (!stack.contains(DataComponentTypes.DAMAGE)) {
-				stack.set(DataComponentTypes.DAMAGE, 0);
+			setIfChanged(stack, DataComponents.MAX_STACK_SIZE, 1);
+			setIfChanged(stack, DataComponents.MAX_DAMAGE, def.uses());
+			if (!stack.has(DataComponents.DAMAGE)) {
+				stack.set(DataComponents.DAMAGE, 0);
 			}
 		} else {
-			stack.remove(DataComponentTypes.MAX_DAMAGE);
-			stack.remove(DataComponentTypes.DAMAGE);
-			setIfChanged(stack, DataComponentTypes.MAX_STACK_SIZE, def.maxStack());
+			stack.remove(DataComponents.MAX_DAMAGE);
+			stack.remove(DataComponents.DAMAGE);
+			setIfChanged(stack, DataComponents.MAX_STACK_SIZE, def.maxStack());
 		}
 	}
 
 	@Override
-	protected void appendDetails(ItemStack stack, EquipmentDefinition def, Consumer<Text> textConsumer) {
-		textConsumer.accept(Text.translatable("tooltip.tudursguns.equipment." + def.type().name().toLowerCase(Locale.ROOT))
-				.formatted(Formatting.GRAY));
+	protected void appendDetails(ItemStack stack, EquipmentDefinition def, Consumer<Component> textConsumer) {
+		textConsumer.accept(Component.translatable("tooltip.tudursguns.equipment." + def.type().name().toLowerCase(Locale.ROOT))
+				.withStyle(ChatFormatting.GRAY));
 		def.movement().appendTooltip(textConsumer);
 	}
 }
