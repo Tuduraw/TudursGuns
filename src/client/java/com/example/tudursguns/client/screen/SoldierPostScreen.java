@@ -19,7 +19,6 @@ import net.minecraft.world.item.ItemStack;
 public class SoldierPostScreen extends AbstractContainerScreen<SoldierPostScreenHandler> {
 
 	private static final int PANEL_COLOR = 0xFFC6C6C6;
-	private static final int SLOT_COLOR = 0xFF8B8B8B;
 	private static final int TEXT_COLOR = 0xFF404040;
 	private static final int STATUS_X = 52;
 	private static final int LINE_HEIGHT = 11;
@@ -63,7 +62,7 @@ public class SoldierPostScreen extends AbstractContainerScreen<SoldierPostScreen
 	protected void renderBg(GuiGraphics context, float delta, int mouseX, int mouseY) {
 		context.fill(this.leftPos, this.topPos, this.leftPos + this.imageWidth, this.topPos + this.imageHeight, PANEL_COLOR);
 		for (Slot slot : this.menu.slots) {
-			context.fill(this.leftPos + slot.x - 1, this.topPos + slot.y - 1, this.leftPos + slot.x + 17, this.topPos + slot.y + 17, SLOT_COLOR);
+			SlotBackground.draw(context, this.leftPos + slot.x, this.topPos + slot.y);
 		}
 		// A faded route book marks the book slot while it's empty.
 		Slot book = this.menu.slots.get(SoldierPostBlockEntity.BOOK_SLOT);
@@ -71,7 +70,7 @@ public class SoldierPostScreen extends AbstractContainerScreen<SoldierPostScreen
 			int bookX = this.leftPos + book.x;
 			int bookY = this.topPos + book.y;
 			context.renderItem(new ItemStack(ModItems.DRONE_ROUTE_BOOK), bookX, bookY);
-			context.fill(bookX, bookY, bookX + 16, bookY + 16, SLOT_COLOR & 0xB0FFFFFF);
+			context.fill(bookX, bookY, bookX + 16, bookY + 16, SlotBackground.FILL & 0xB0FFFFFF);
 		}
 	}
 

@@ -13,9 +13,6 @@ import net.minecraft.world.inventory.Slot;
 public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkbenchScreenHandler> {
 
 	private static final int PANEL_COLOR = 0xFFC6C6C6;
-	private static final int SLOT_FILL = 0xFF8B8B8B;
-	private static final int SLOT_SHADOW = 0xFF373737;
-	private static final int SLOT_HIGHLIGHT = 0xFFFFFFFF;
 	private static final int TEXT_COLOR = 0xFF404040;
 
 	public WeaponWorkbenchScreen(WeaponWorkbenchScreenHandler handler, Inventory inventory, Component title) {
@@ -33,7 +30,7 @@ public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkben
 
 		for (Slot slot : this.menu.slots) {
 			if (slot.isActive()) {
-				drawSlot(context, x + slot.x, y + slot.y);
+				SlotBackground.draw(context, x + slot.x, y + slot.y);
 			}
 		}
 		List<String> names = this.menu.slotNames();
@@ -54,16 +51,5 @@ public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkben
 	/** gui.tudursguns.slot.<name> if the language file has it, else the raw slot name. */
 	private static Component slotLabel(String slotName) {
 		return Component.translatableWithFallback("gui.tudursguns.slot." + slotName, slotName);
-	}
-
-	/** One 18x18 recessed slot around a Slot's own coordinate. */
-	private static void drawSlot(GuiGraphics context, int slotX, int slotY) {
-		int x = slotX - 1;
-		int y = slotY - 1;
-		context.fill(x, y, x + 18, y + 18, SLOT_FILL);
-		context.fill(x, y, x + 18, y + 1, SLOT_SHADOW);
-		context.fill(x, y, x + 1, y + 18, SLOT_SHADOW);
-		context.fill(x, y + 17, x + 18, y + 18, SLOT_HIGHLIGHT);
-		context.fill(x + 17, y, x + 18, y + 18, SLOT_HIGHLIGHT);
 	}
 }

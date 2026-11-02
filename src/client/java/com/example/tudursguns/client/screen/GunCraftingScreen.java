@@ -37,7 +37,7 @@ public class GunCraftingScreen extends AbstractContainerScreen<GunCraftingScreen
 	private static final int ROW_HEIGHT = 18;
 	private static final int VISIBLE_ROWS = 8;
 	private static final int DETAIL_X = 128;
-	private static final int INGREDIENT_ROW = 17;
+	private static final int INGREDIENT_ROW = 18;
 	private static final int VISIBLE_INGREDIENTS = 6;
 
 	private int scroll;
@@ -150,6 +150,7 @@ public class GunCraftingScreen extends AbstractContainerScreen<GunCraftingScreen
 			return;
 		}
 		ItemStack result = recipe.result().createStack();
+		SlotBackground.draw(context, x + DETAIL_X, listTop);
 		context.renderItem(result, x + DETAIL_X, listTop);
 		context.renderItemDecorations(this.font, result, x + DETAIL_X, listTop);
 		String name = this.font.plainSubstrByWidth(result.getHoverName().getString(), this.imageWidth - DETAIL_X - 26);
@@ -159,6 +160,7 @@ public class GunCraftingScreen extends AbstractContainerScreen<GunCraftingScreen
 			GunRecipeDefinition.ItemRef ingredient = ingredients.get(i);
 			int rowY = listTop + 22 + i * INGREDIENT_ROW;
 			ItemStack shown = displayed(ingredient);
+			SlotBackground.draw(context, x + DETAIL_X, rowY);
 			if (!shown.isEmpty()) {
 				context.renderItem(shown, x + DETAIL_X, rowY);
 			}
