@@ -1,5 +1,7 @@
 package com.example.tudursguns.client;
 
+import net.minecraft.client.model.HumanoidModel;
+
 import com.example.tudursguns.TudursGuns;
 import com.example.tudursguns.client.hud.HandheldHud;
 import com.example.tudursguns.client.hud.ScopeOverlay;
@@ -27,6 +29,7 @@ import com.example.tudursguns.network.SwitchUnderbarrelRequestPayload;
 import com.example.tudursguns.network.SyncDefinitionsPayload;
 import com.example.tudursguns.registry.ModEntityTypes;
 import com.example.tudursguns.registry.ModScreenHandlers;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -36,62 +39,60 @@ import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRendererRegistrationCallback;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.HandledScreens;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.render.entity.LivingEntityRenderer;
-import net.minecraft.client.render.entity.model.BipedEntityModel;
-import net.minecraft.client.render.item.model.special.SpecialModelTypes;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.resource.ResourceType;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.renderer.special.SpecialModelRenderers;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.world.entity.player.Player;
 import org.lwjgl.glfw.GLFW;
 
 public class TudursGunsClient implements ClientModInitializer {
 
-	private static KeyBinding reloadKey;
-	private static KeyBinding switchModeKey;
-	private static KeyBinding underbarrelKey;
+	private static KeyMapping reloadKey;
+	private static KeyMapping switchModeKey;
+	private static KeyMapping underbarrelKey;
 
 	@Override
 	public void onInitializeClient() {
 		TudursGunsClientConfig.load();
 		// F3+T also re-reads config/tudursguns-client.json, for adjusting offsets without restarting.
-		ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(new SimpleSynchronousResourceReloadListener() {
+		ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new SimpleSynchronousResourceReloadListener() {
 			@Override
 			public Identifier getFabricId() {
-				return Identifier.of(TudursGuns.MOD_ID, "client_config");
+				return Identifier.fromNamespaceAndPath(TudursGuns.MOD_ID, "client_config");
 			}
 
 			@Override
-			public void reload(ResourceManager manager) {
+			public void onResourceManagerReload(ResourceManager manager) {
 				TudursGunsClientConfig.load();
 			}
 		});
 
-		SpecialModelTypes.ID_MAPPER.put(ObjHandheldModelRenderer.TYPE_ID, ObjHandheldModelRenderer.Unbaked.CODEC);
+		SpecialModelRenderers.ID_MAPPER.put(ObjHandheldModelRenderer.TYPE_ID, ObjHandheldModelRenderer.Unbaked.CODEC);
 		EntityRendererRegistry.register(ModEntityTypes.SMOKE_CLOUD, InvisibleEntityRenderer::new);
 		EntityRendererRegistry.register(ModEntityTypes.SMOKE_DECOY, InvisibleEntityRenderer::new);
 		EntityRendererRegistry.register(ModEntityTypes.LASER_SPOT, InvisibleEntityRenderer::new);
 		EntityRendererRegistry.register(ModEntityTypes.MINE, MineEntityRenderer::new);
 		EntityRendererRegistry.register(ModEntityTypes.SOLDIER,
-				context -> new SoldierRenderer<>(context, Identifier.of(TudursGuns.MOD_ID, "textures/entity/soldier.png")));
+				context -> new SoldierRenderer<>(context, Identifier.fromNamespaceAndPath(TudursGuns.MOD_ID, "textures/entity/soldier.png")));
 		EntityRendererRegistry.register(ModEntityTypes.ENEMY_SOLDIER,
-				context -> new SoldierRenderer<>(context, Identifier.of(TudursGuns.MOD_ID, "textures/entity/enemy_soldier.png")));
+				context -> new SoldierRenderer<>(context, Identifier.fromNamespaceAndPath(TudursGuns.MOD_ID, "textures/entity/enemy_soldier.png")));
 		for (ObjDefinedItemRenderer.Kind kind : ObjDefinedItemRenderer.Kind.values()) {
-			SpecialModelTypes.ID_MAPPER.put(kind.typeId, kind.codec);
+			SpecialModelRenderers.ID_MAPPER.put(kind.typeId, kind.codec);
 		}
 		// OBJ armor on anything drawn with a humanoid model (players, armor stands, zombies, ...).
 		LivingEntityFeatureRendererRegistrationCallback.EVENT.register((entityType, entityRenderer, helper, context) -> {
-			if (entityRenderer.getModel() instanceof BipedEntityModel<?>) {
+			if (entityRenderer.getModel() instanceof HumanoidModel<?>) {
 				registerArmorFeature(helper, entityRenderer);
 			}
 		});
-		HandledScreens.register(ModScreenHandlers.WEAPON_WORKBENCH, WeaponWorkbenchScreen::new);
-		HandledScreens.register(ModScreenHandlers.GUN_CRAFTING, GunCraftingScreen::new);
-		HandledScreens.register(ModScreenHandlers.SOLDIER_POST, SoldierPostScreen::new);
+		MenuScreens.register(ModScreenHandlers.WEAPON_WORKBENCH, WeaponWorkbenchScreen::new);
+		MenuScreens.register(ModScreenHandlers.GUN_CRAFTING, GunCraftingScreen::new);
+		MenuScreens.register(ModScreenHandlers.SOLDIER_POST, SoldierPostScreen::new);
 		ClientPlayNetworking.registerGlobalReceiver(SoldierRoutePayload.ID, (payload, context) ->
 				context.client().execute(() -> context.client().setScreen(new SoldierRouteScreen(payload))));
 
@@ -122,18 +123,18 @@ public class TudursGunsClient implements ClientModInitializer {
 
 		// Defaults chosen to stay clear of both vanilla and Tudur's Vehicle Mod bindings
 		// (R is its weapon switch, and several of its keys work on foot too).
-		KeyBinding.Category category = KeyBinding.Category.create(Identifier.of(TudursGuns.MOD_ID, "handheld"));
-		reloadKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-				"key.tudursguns.reload", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_Z, category));
-		switchModeKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-				"key.tudursguns.switch_mode", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_I, category));
+		KeyMapping.Category category = KeyMapping.Category.register(Identifier.fromNamespaceAndPath(TudursGuns.MOD_ID, "handheld"));
+		reloadKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+				"key.tudursguns.reload", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Z, category));
+		switchModeKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+				"key.tudursguns.switch_mode", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_I, category));
 		// X is vanilla's "load hotbar" (creative only, unbound in survival use) - rebindable as usual.
-		underbarrelKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-				"key.tudursguns.switch_underbarrel", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_X, category));
+		underbarrelKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+				"key.tudursguns.switch_underbarrel", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_X, category));
 		// Left Alt is also Tudur's Vehicle Mod's free-look key, but that only matters while riding,
 		// and weapons can't be aimed while riding - AimController reads the key directly for this reason.
-		AimController.setAimKey(KeyBindingHelper.registerKeyBinding(new KeyBinding(
-				"key.tudursguns.aim", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_ALT, category)));
+		AimController.setAimKey(KeyBindingHelper.registerKeyBinding(new KeyMapping(
+				"key.tudursguns.aim", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_ALT, category)));
 
 		ClientTickEvents.END_CLIENT_TICK.register(TudursGunsClient::onEndTick);
 
@@ -151,25 +152,25 @@ public class TudursGunsClient implements ClientModInitializer {
 		helper.register(new ObjArmorFeatureRenderer(renderer));
 	}
 
-	private static void onEndTick(MinecraftClient client) {
+	private static void onEndTick(Minecraft client) {
 		AimController.tick(client);
 		ThrowGuide.tick(client);
 		VisionOverlay.tick();
 		GearClient.tick(client);
 		RecoilController.tick(client);
 		boolean reload = false;
-		while (reloadKey.wasPressed()) {
+		while (reloadKey.consumeClick()) {
 			reload = true;
 		}
 		boolean switchMode = false;
-		while (switchModeKey.wasPressed()) {
+		while (switchModeKey.consumeClick()) {
 			switchMode = true;
 		}
 		boolean switchUnderbarrel = false;
-		while (underbarrelKey.wasPressed()) {
+		while (underbarrelKey.consumeClick()) {
 			switchUnderbarrel = true;
 		}
-		PlayerEntity player = client.player;
+		Player player = client.player;
 		if (player == null || player.getVehicle() != null || HandheldHud.heldWeapon(player) == null) {
 			return;
 		}

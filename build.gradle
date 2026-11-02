@@ -28,12 +28,12 @@ loom {
 
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+	mappings loom.officialMojangMappings()
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-	// The base mod. Must be built from the SAME Minecraft/Yarn versions declared above, or the
-	// class and method names this mod compiles against won't exist at runtime.
+	// The base mod (tudursvehiclemod-mojmap, published with ./gradlew publishToMavenLocal). Loom remaps it
+	// to the mappings above, so it must be built for the same Minecraft version.
 	modImplementation "com.example.tudursvehiclemod:tudursvehiclemod:${project.tudursvehiclemod_version}"
 }
 

@@ -15,7 +15,7 @@ public final class AimRenderState {
 
 	/** Whether the living entity whose render state is currently being built is aiming. Set at the
 	 * start of every LivingEntityRenderer.updateRenderState; the held items are resolved later in the
-	 * same call (so ObjHandheldModelRenderer.getData can read it), before the next entity starts.
+	 * same call (so ObjHandheldModelRenderer.extractArgument can read it), before the next entity starts.
 	 * Render thread only. */
 	private static boolean entityBeingUpdatedAims;
 	private static boolean entityBeingUpdatedSprintCarries;

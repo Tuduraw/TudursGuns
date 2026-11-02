@@ -4,12 +4,12 @@ import com.example.tudursguns.handheld.AttachmentDefinition;
 import com.example.tudursguns.handheld.HandheldDefinition;
 import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.registry.ModComponents;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Identifier;
 import org.joml.Vector3f;
 
 import java.util.Map;
 import java.util.Optional;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemStack;
 
 /** The combined effect of the attachments fitted to one weapon stack. Multipliers multiply together
  * and bonuses add up; only attachments the weapon's own definition accepts in that slot count.

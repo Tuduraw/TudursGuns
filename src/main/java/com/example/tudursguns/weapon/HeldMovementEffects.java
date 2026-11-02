@@ -13,17 +13,16 @@ import com.example.tudursguns.item.HandheldWeaponItem;
 import com.example.tudursguns.item.MineItem;
 import com.example.tudursguns.item.ThrowableItem;
 import com.example.tudursguns.registry.ModComponents;
-import net.minecraft.entity.attribute.EntityAttributeInstance;
-import net.minecraft.entity.attribute.EntityAttributeModifier;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-
 import java.util.Map;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 /** Applies HeldMovement: every tick, each player's walking speed gets one temporary modifier (same
  * kind as armor's movement_speed - a fraction of the total speed) worth everything they hold: both
@@ -34,21 +33,21 @@ public final class HeldMovementEffects {
 	private HeldMovementEffects() {
 	}
 
-	private static final Identifier MODIFIER_ID = Identifier.of(TudursGuns.MOD_ID, "held_item_movement");
+	private static final Identifier MODIFIER_ID = Identifier.fromNamespaceAndPath(TudursGuns.MOD_ID, "held_item_movement");
 
-	public static void tickWorld(ServerWorld world) {
-		for (ServerPlayerEntity player : world.getPlayers()) {
+	public static void tickWorld(ServerLevel world) {
+		for (ServerPlayer player : world.players()) {
 			apply(player, player.isSpectator() ? 0f : total(player));
 		}
 	}
 
-	private static float total(ServerPlayerEntity player) {
+	private static float total(ServerPlayer player) {
 		boolean aiming = HandheldCombat.isAimKeyHeld(player)
-				|| (player.isUsingItem() && player.getActiveHand() == Hand.MAIN_HAND
-						&& player.getActiveItem().getItem() instanceof HandheldWeaponItem);
+				|| (player.isUsingItem() && player.getUsedItemHand() == InteractionHand.MAIN_HAND
+						&& player.getUseItem().getItem() instanceof HandheldWeaponItem);
 		float total = 0f;
-		for (Hand hand : Hand.values()) {
-			total += contribution(player.getStackInHand(hand), aiming && hand == Hand.MAIN_HAND);
+		for (InteractionHand hand : InteractionHand.values()) {
+			total += contribution(player.getItemInHand(hand), aiming && hand == InteractionHand.MAIN_HAND);
 		}
 		return Math.max(-1f, total);
 	}
@@ -85,23 +84,23 @@ public final class HeldMovementEffects {
 		return movement == null ? 0f : movement.speed();
 	}
 
-	private static void apply(ServerPlayerEntity player, float value) {
-		EntityAttributeInstance speed = player.getAttributeInstance(EntityAttributes.MOVEMENT_SPEED);
+	private static void apply(ServerPlayer player, float value) {
+		AttributeInstance speed = player.getAttribute(Attributes.MOVEMENT_SPEED);
 		if (speed == null) {
 			return;
 		}
-		EntityAttributeModifier current = speed.getModifier(MODIFIER_ID);
+		AttributeModifier current = speed.getModifier(MODIFIER_ID);
 		if (value == 0f) {
 			if (current != null) {
 				speed.removeModifier(MODIFIER_ID);
 			}
 			return;
 		}
-		if (current == null || current.value() != value) {
+		if (current == null || current.amount() != value) {
 			if (current != null) {
 				speed.removeModifier(MODIFIER_ID);
 			}
-			speed.addTemporaryModifier(new EntityAttributeModifier(MODIFIER_ID, value, EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+			speed.addTransientModifier(new AttributeModifier(MODIFIER_ID, value, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
 		}
 	}
 }

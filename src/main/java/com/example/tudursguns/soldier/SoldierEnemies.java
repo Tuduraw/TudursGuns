@@ -3,15 +3,15 @@ package com.example.tudursguns.soldier;
 import com.example.tudursguns.TudursGunsConfig;
 import com.example.tudursguns.mixin.ActiveTargetGoalAccessor;
 import com.example.tudursguns.mixin.MobEntityAccessor;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ai.goal.ActiveTargetGoal;
-import net.minecraft.entity.ai.goal.GoalSelector;
-import net.minecraft.entity.ai.goal.PrioritizedGoal;
-import net.minecraft.entity.mob.Angerable;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.mob.Monster;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.NeutralMob;
+import net.minecraft.world.entity.ai.goal.GoalSelector;
+import net.minecraft.world.entity.ai.goal.WrappedGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.player.Player;
 
 /** Makes monsters go for posted soldiers as they go for players: every monster that hunts players
  * with an ActiveTargetGoal (zombies, skeletons, spiders, creepers...) gets a second one, at the same
@@ -24,31 +24,31 @@ public final class SoldierEnemies {
 	}
 
 	/** Marks the goal this class adds, so it's added only once. */
-	private static final class TargetSoldierGoal extends ActiveTargetGoal<FriendlySoldierEntity> {
-		TargetSoldierGoal(MobEntity mob) {
+	private static final class TargetSoldierGoal extends NearestAttackableTargetGoal<FriendlySoldierEntity> {
+		TargetSoldierGoal(Mob mob) {
 			super(mob, FriendlySoldierEntity.class, true);
 		}
 	}
 
 	/** ServerEntityEvents.ENTITY_LOAD */
-	public static void onEntityLoad(Entity entity, ServerWorld world) {
-		if (!TudursGunsConfig.get().monsters_target_soldiers || !(entity instanceof MobEntity mob) || !(mob instanceof Monster)
-				|| mob instanceof Angerable || mob instanceof EnemySoldierEntity) {
+	public static void onEntityLoad(Entity entity, ServerLevel world) {
+		if (!TudursGunsConfig.get().monsters_target_soldiers || !(entity instanceof Mob mob) || !(mob instanceof Enemy)
+				|| mob instanceof NeutralMob || mob instanceof EnemySoldierEntity) {
 			return;
 		}
 		GoalSelector targets = ((MobEntityAccessor) mob).tudursguns$getTargetSelector();
 		int priority = -1;
-		for (PrioritizedGoal goal : targets.getGoals()) {
+		for (WrappedGoal goal : targets.getAvailableGoals()) {
 			if (goal.getGoal() instanceof TargetSoldierGoal) {
 				return;
 			}
-			if (goal.getGoal() instanceof ActiveTargetGoal<?> active
-					&& ((ActiveTargetGoalAccessor) active).tudursguns$getTargetClass() == PlayerEntity.class) {
+			if (goal.getGoal() instanceof NearestAttackableTargetGoal<?> active
+					&& ((ActiveTargetGoalAccessor) active).tudursguns$getTargetClass() == Player.class) {
 				priority = goal.getPriority();
 			}
 		}
 		if (priority >= 0) {
-			targets.add(priority, new TargetSoldierGoal(mob));
+			targets.addGoal(priority, new TargetSoldierGoal(mob));
 		}
 	}
 }

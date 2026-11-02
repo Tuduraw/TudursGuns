@@ -2,8 +2,8 @@ package com.example.tudursguns.handheld;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
-import net.minecraft.item.ItemDisplayContext;
 import net.minecraft.util.Util;
+import net.minecraft.world.item.ItemDisplayContext;
 import org.joml.Vector3f;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public final class DefinitionCodecs {
 
 	/** [x, y, z] as a JSON array of three numbers. */
 	public static final Codec<Vector3f> VECTOR_3F = Codec.FLOAT.listOf().comapFlatMap(
-			list -> Util.decodeFixedLengthList(list, 3).map(xyz -> new Vector3f(xyz.get(0), xyz.get(1), xyz.get(2))),
+			list -> Util.fixedSize(list, 3).map(xyz -> new Vector3f(xyz.get(0), xyz.get(1), xyz.get(2))),
 			vector -> List.of(vector.x(), vector.y(), vector.z()));
 
 	/** An enum written as its lower-case name; anything unknown reads as fallback. */

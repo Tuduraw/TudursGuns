@@ -13,15 +13,15 @@ import com.example.tudursguns.weapon.HandheldCombat;
 import com.example.tudursguns.weapon.WeaponModifiers;
 import com.example.tudursvehiclemod.asset.WeaponStatsLoader;
 import com.example.tudursvehiclemod.entity.AbstractVehicleEntity;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 /** Once a second:
  * - Players within PLAYER_RADIUS get the magazine of every handheld weapon they carry filled (no
@@ -42,30 +42,30 @@ public class AmmoBoxBlockEntity extends BlockEntity {
 		super(ModBlockEntities.AMMO_BOX, pos, state);
 	}
 
-	public static void tick(World world, BlockPos pos, BlockState state, AmmoBoxBlockEntity blockEntity) {
-		if (world instanceof ServerWorld serverWorld && (serverWorld.getTime() + pos.hashCode()) % INTERVAL_TICKS == 0) {
+	public static void tick(Level world, BlockPos pos, BlockState state, AmmoBoxBlockEntity blockEntity) {
+		if (world instanceof ServerLevel serverWorld && (serverWorld.getGameTime() + pos.hashCode()) % INTERVAL_TICKS == 0) {
 			blockEntity.supply(serverWorld);
 		}
 	}
 
-	private void supply(ServerWorld world) {
-		Vec3d center = Vec3d.ofCenter(this.getPos());
-		for (ServerPlayerEntity player : world.getPlayers(candidate -> !candidate.isSpectator()
+	private void supply(ServerLevel world) {
+		Vec3 center = Vec3.atCenterOf(this.getBlockPos());
+		for (ServerPlayer player : world.getPlayers(candidate -> !candidate.isSpectator()
 				&& !HandheldCombat.isInAction(candidate)
-				&& candidate.squaredDistanceTo(center) <= PLAYER_RADIUS * PLAYER_RADIUS)) {
+				&& candidate.distanceToSqr(center) <= PLAYER_RADIUS * PLAYER_RADIUS)) {
 			var inventory = player.getInventory();
-			for (int slot = 0; slot < inventory.size(); slot++) {
-				refill(inventory.getStack(slot));
+			for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+				refill(inventory.getItem(slot));
 			}
 		}
-		for (AbstractVehicleEntity vehicle : world.getEntitiesByClass(AbstractVehicleEntity.class,
-				new Box(this.getPos()).expand(VEHICLE_RADIUS),
-				vehicle -> EquipmentActions.isSuppliable(vehicle) && vehicle.squaredDistanceTo(center) <= VEHICLE_RADIUS * VEHICLE_RADIUS)) {
+		for (AbstractVehicleEntity vehicle : world.getEntitiesOfClass(AbstractVehicleEntity.class,
+				new AABB(this.getBlockPos()).inflate(VEHICLE_RADIUS),
+				vehicle -> EquipmentActions.isSuppliable(vehicle) && vehicle.distanceToSqr(center) <= VEHICLE_RADIUS * VEHICLE_RADIUS)) {
 			((AbstractVehicleEntityAccessor) vehicle).tudursguns$receiveAmmoSupply();
 		}
-		for (FriendlySoldierEntity soldier : world.getEntitiesByClass(FriendlySoldierEntity.class, new Box(this.getPos()).expand(VEHICLE_RADIUS),
-				soldier -> soldier.getTarget() == null && soldier.squaredDistanceTo(center) <= VEHICLE_RADIUS * VEHICLE_RADIUS)) {
-			refill(soldier.getMainHandStack());
+		for (FriendlySoldierEntity soldier : world.getEntitiesOfClass(FriendlySoldierEntity.class, new AABB(this.getBlockPos()).inflate(VEHICLE_RADIUS),
+				soldier -> soldier.getTarget() == null && soldier.distanceToSqr(center) <= VEHICLE_RADIUS * VEHICLE_RADIUS)) {
+			refill(soldier.getMainHandItem());
 		}
 	}
 

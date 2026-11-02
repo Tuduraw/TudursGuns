@@ -2,7 +2,7 @@ package com.example.tudursguns.mixin;
 
 import com.example.tudursguns.entity.CosmeticProjectile;
 import com.example.tudursvehiclemod.entity.projectile.VehicleProjectileEntity;
-import net.minecraft.entity.Entity;
+import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -27,7 +27,7 @@ public abstract class VehicleProjectileMixin implements CosmeticProjectile {
 		return this.tudursguns$cosmetic;
 	}
 
-	@Inject(method = "canHit(Lnet/minecraft/entity/Entity;)Z", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "canHitEntity(Lnet/minecraft/world/entity/Entity;)Z", at = @At("HEAD"), cancellable = true)
 	private void tudursguns$hitNothing(Entity entity, CallbackInfoReturnable<Boolean> cir) {
 		if (this.tudursguns$cosmetic) {
 			cir.setReturnValue(false);

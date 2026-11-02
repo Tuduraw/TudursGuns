@@ -9,10 +9,8 @@ import com.example.tudursvehiclemod.client.render.DitherCutoutLayers;
 import com.example.tudursvehiclemod.client.render.ObjModel;
 import com.example.tudursvehiclemod.client.render.ObjModelLoader;
 import com.example.tudursvehiclemod.client.render.VehicleEntityRenderer;
-import net.minecraft.client.render.command.OrderedRenderCommandQueue;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.RotationAxis;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -21,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.resources.Identifier;
 
 /** Draws OBJ models and flat icons through Tudur's Vehicle Mod's OBJ loader and render layer. */
 public final class WeaponModelDrawer {
@@ -36,7 +36,7 @@ public final class WeaponModelDrawer {
 	 * for none). The pose's root offset is NOT applied here - the caller applies it first (in first
 	 * person the arms follow it too). Every group belonging to a part is drawn at that part's chain of
 	 * offsets; the rest move with the root. */
-	public static void drawWeapon(OrderedRenderCommandQueue queue, MatrixStack matrices, HandheldDefinition def,
+	public static void drawWeapon(SubmitNodeCollector queue, PoseStack matrices, HandheldDefinition def,
 			Map<String, Identifier> fitted, int light, int overlay, WeaponPose pose) {
 		if (def.model().isEmpty() || def.texture().isEmpty()) {
 			return;
@@ -56,10 +56,10 @@ public final class WeaponModelDrawer {
 				if (AnimationDefinition.ROOT.equals(part.getKey()) || part.getValue().groups().isEmpty()) {
 					continue;
 				}
-				matrices.push();
+				matrices.pushPose();
 				pose.applyChain(matrices, part.getKey());
 				drawGroups(queue, matrices, def.model().get(), def.texture().get(), part.getValue().groups(), hidden, light, overlay);
-				matrices.pop();
+				matrices.popPose();
 			}
 		}
 		for (Map.Entry<String, Identifier> entry : fitted.entrySet()) {
@@ -74,17 +74,17 @@ public final class WeaponModelDrawer {
 			} else if (attachment != null && attachment.texture().isPresent()) {
 				texture = attachment.texture().get();
 			}
-			matrices.push();
+			matrices.pushPose();
 			if (pose != null && mount.part().isPresent()) {
 				pose.applyChain(matrices, mount.part().get());
 			}
 			applyTransform(matrices, mount.transform());
 			drawObj(queue, matrices, mount.model().get(), texture, Set.of(), light, overlay);
-			matrices.pop();
+			matrices.popPose();
 		}
 	}
 
-	public static void drawObj(OrderedRenderCommandQueue queue, MatrixStack matrices, Identifier modelId, Identifier texture,
+	public static void drawObj(SubmitNodeCollector queue, PoseStack matrices, Identifier modelId, Identifier texture,
 			Set<String> hiddenGroups, int light, int overlay) {
 		ObjModel model = ObjModelLoader.get(modelId).orElse(null);
 		if (model == null) {
@@ -128,13 +128,13 @@ public final class WeaponModelDrawer {
 
 	/** A flat picture filling the item's unit square (an item icon), textured with texture - a PNG
 	 * found the same way as model textures (resource packs, or textures/vehicle/ in an addon folder). */
-	public static void drawIcon(OrderedRenderCommandQueue queue, MatrixStack matrices, Identifier texture, int light, int overlay) {
+	public static void drawIcon(SubmitNodeCollector queue, PoseStack matrices, Identifier texture, int light, int overlay) {
 		VehicleEntityRenderer.renderTriangles(queue, matrices, DitherCutoutLayers.entityDitherCutout(texture),
 				iconQuad().getTriangles(), light, overlay, 0xFFFFFFFF);
 	}
 
 	/** Only the named groups of a model (skipping hidden ones), one after another. */
-	public static void drawGroups(OrderedRenderCommandQueue queue, MatrixStack matrices, Identifier modelId, Identifier texture,
+	public static void drawGroups(SubmitNodeCollector queue, PoseStack matrices, Identifier modelId, Identifier texture,
 			List<String> groups, Set<String> hiddenGroups, int light, int overlay) {
 		ObjModel model = ObjModelLoader.get(modelId).orElse(null);
 		if (model == null) {
@@ -153,11 +153,11 @@ public final class WeaponModelDrawer {
 	}
 
 	/** Translate, then rotate X, Y, Z (degrees), then scale. */
-	public static void applyTransform(MatrixStack matrices, HandheldDefinition.DisplayTransform transform) {
+	public static void applyTransform(PoseStack matrices, HandheldDefinition.DisplayTransform transform) {
 		matrices.translate(transform.translation().x(), transform.translation().y(), transform.translation().z());
-		matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(transform.rotation().x()));
-		matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(transform.rotation().y()));
-		matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(transform.rotation().z()));
+		matrices.mulPose(Axis.XP.rotationDegrees(transform.rotation().x()));
+		matrices.mulPose(Axis.YP.rotationDegrees(transform.rotation().y()));
+		matrices.mulPose(Axis.ZP.rotationDegrees(transform.rotation().z()));
 		matrices.scale(transform.scale().x(), transform.scale().y(), transform.scale().z());
 	}
 }

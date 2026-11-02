@@ -1,36 +1,36 @@
 package com.example.tudursguns.client.render;
 
-import net.minecraft.client.render.entity.BipedEntityRenderer;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.render.entity.feature.ArmorFeatureRenderer;
-import net.minecraft.client.render.entity.model.BipedEntityModel;
-import net.minecraft.client.render.entity.model.EntityModelLayers;
-import net.minecraft.client.render.entity.model.EquipmentModelData;
-import net.minecraft.client.render.entity.state.BipedEntityRenderState;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.model.geom.ModelLayers;
+import net.minecraft.client.renderer.entity.ArmorModelSet;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
+import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
+import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.Mob;
 
 /** Soldiers (posted and enemy) - the player model, with a skin of their own, vanilla armor and the
  * held weapon (OBJ armor is added for every humanoid renderer, see TudursGunsClient). */
-public class SoldierRenderer<T extends MobEntity> extends BipedEntityRenderer<T, BipedEntityRenderState, BipedEntityModel<BipedEntityRenderState>> {
+public class SoldierRenderer<T extends Mob> extends HumanoidMobRenderer<T, HumanoidRenderState, HumanoidModel<HumanoidRenderState>> {
 
 	private final Identifier texture;
 
-	public SoldierRenderer(EntityRendererFactory.Context context, Identifier texture) {
-		super(context, new BipedEntityModel<>(context.getPart(EntityModelLayers.PLAYER)), 0.5f);
+	public SoldierRenderer(EntityRendererProvider.Context context, Identifier texture) {
+		super(context, new HumanoidModel<>(context.bakeLayer(ModelLayers.PLAYER)), 0.5f);
 		this.texture = texture;
-		this.addFeature(new ArmorFeatureRenderer<>(this,
-				EquipmentModelData.mapToEntityModel(EntityModelLayers.PLAYER_EQUIPMENT, context.getEntityModels(), BipedEntityModel::new),
+		this.addLayer(new HumanoidArmorLayer<>(this,
+				ArmorModelSet.bake(ModelLayers.PLAYER_ARMOR, context.getModelSet(), HumanoidModel::new),
 				context.getEquipmentRenderer()));
 	}
 
 	@Override
-	public BipedEntityRenderState createRenderState() {
-		return new BipedEntityRenderState();
+	public HumanoidRenderState createRenderState() {
+		return new HumanoidRenderState();
 	}
 
 	@Override
-	public Identifier getTexture(BipedEntityRenderState state) {
+	public Identifier getTextureLocation(HumanoidRenderState state) {
 		return this.texture;
 	}
 }

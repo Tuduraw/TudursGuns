@@ -23,7 +23,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.minecraft.resource.ResourceType;
+import net.minecraft.server.packs.PackType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +44,7 @@ public class TudursGuns implements ModInitializer {
 		ModItemGroups.register();
 		ModNetworking.register();
 
-		ResourceManagerHelper serverData = ResourceManagerHelper.get(ResourceType.SERVER_DATA);
+		ResourceManagerHelper serverData = ResourceManagerHelper.get(PackType.SERVER_DATA);
 		for (DefinitionSet<?> set : ModDefinitions.ALL) {
 			serverData.registerReloadListener(set.loader());
 		}
@@ -68,10 +68,10 @@ public class TudursGuns implements ModInitializer {
 			}
 		});
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
-			HandheldCombat.forget(handler.player.getUuid());
-			ThrowableCombat.forget(handler.player.getUuid());
-			EquipmentActions.forget(handler.player.getUuid());
-			ArmorEffects.forget(handler.player.getUuid());
+			HandheldCombat.forget(handler.player.getUUID());
+			ThrowableCombat.forget(handler.player.getUUID());
+			EquipmentActions.forget(handler.player.getUUID());
+			ArmorEffects.forget(handler.player.getUUID());
 		});
 	}
 }

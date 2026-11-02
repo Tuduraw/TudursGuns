@@ -1,17 +1,17 @@
 package com.example.tudursguns.client.render;
 
-import net.minecraft.client.render.command.OrderedRenderCommandQueue;
-import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.render.entity.state.EntityRenderState;
-import net.minecraft.client.render.state.CameraRenderState;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.Entity;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.world.entity.Entity;
 
 /** Draws nothing - for entities with no look of their own (smoke cloud, lock-on decoys, laser spot). */
 public final class InvisibleEntityRenderer<T extends Entity> extends EntityRenderer<T, EntityRenderState> {
 
-	public InvisibleEntityRenderer(EntityRendererFactory.Context context) {
+	public InvisibleEntityRenderer(EntityRendererProvider.Context context) {
 		super(context);
 	}
 
@@ -21,6 +21,6 @@ public final class InvisibleEntityRenderer<T extends Entity> extends EntityRende
 	}
 
 	@Override
-	public void render(EntityRenderState state, MatrixStack matrices, OrderedRenderCommandQueue queue, CameraRenderState cameraState) {
+	public void submit(EntityRenderState state, PoseStack matrices, SubmitNodeCollector queue, CameraRenderState cameraState) {
 	}
 }

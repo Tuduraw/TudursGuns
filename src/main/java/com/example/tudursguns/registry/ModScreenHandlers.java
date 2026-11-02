@@ -4,27 +4,27 @@ import com.example.tudursguns.TudursGuns;
 import com.example.tudursguns.screen.GunCraftingScreenHandler;
 import com.example.tudursguns.screen.SoldierPostScreenHandler;
 import com.example.tudursguns.screen.WeaponWorkbenchScreenHandler;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.resource.featuretoggle.FeatureSet;
-import net.minecraft.screen.ScreenHandlerType;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.flag.FeatureFlagSet;
+import net.minecraft.world.inventory.MenuType;
 
 public final class ModScreenHandlers {
 
 	private ModScreenHandlers() {
 	}
 
-	public static ScreenHandlerType<WeaponWorkbenchScreenHandler> WEAPON_WORKBENCH;
-	public static ScreenHandlerType<GunCraftingScreenHandler> GUN_CRAFTING;
-	public static ScreenHandlerType<SoldierPostScreenHandler> SOLDIER_POST;
+	public static MenuType<WeaponWorkbenchScreenHandler> WEAPON_WORKBENCH;
+	public static MenuType<GunCraftingScreenHandler> GUN_CRAFTING;
+	public static MenuType<SoldierPostScreenHandler> SOLDIER_POST;
 
 	public static void register() {
-		WEAPON_WORKBENCH = Registry.register(Registries.SCREEN_HANDLER, Identifier.of(TudursGuns.MOD_ID, "weapon_workbench"),
-				new ScreenHandlerType<>(WeaponWorkbenchScreenHandler::new, FeatureSet.empty()));
-		GUN_CRAFTING = Registry.register(Registries.SCREEN_HANDLER, Identifier.of(TudursGuns.MOD_ID, "gun_crafting_table"),
-				new ScreenHandlerType<>(GunCraftingScreenHandler::new, FeatureSet.empty()));
-		SOLDIER_POST = Registry.register(Registries.SCREEN_HANDLER, Identifier.of(TudursGuns.MOD_ID, "soldier_post"),
-				new ScreenHandlerType<>(SoldierPostScreenHandler::new, FeatureSet.empty()));
+		WEAPON_WORKBENCH = Registry.register(BuiltInRegistries.MENU, Identifier.fromNamespaceAndPath(TudursGuns.MOD_ID, "weapon_workbench"),
+				new MenuType<>(WeaponWorkbenchScreenHandler::new, FeatureFlagSet.of()));
+		GUN_CRAFTING = Registry.register(BuiltInRegistries.MENU, Identifier.fromNamespaceAndPath(TudursGuns.MOD_ID, "gun_crafting_table"),
+				new MenuType<>(GunCraftingScreenHandler::new, FeatureFlagSet.of()));
+		SOLDIER_POST = Registry.register(BuiltInRegistries.MENU, Identifier.fromNamespaceAndPath(TudursGuns.MOD_ID, "soldier_post"),
+				new MenuType<>(SoldierPostScreenHandler::new, FeatureFlagSet.of()));
 	}
 }

@@ -3,12 +3,12 @@ package com.example.tudursguns.handheld;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.item.ItemDisplayContext;
-import net.minecraft.util.Identifier;
 import org.joml.Vector3f;
 
 import java.util.Map;
 import java.util.Optional;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemDisplayContext;
 
 /** One attachment (scope, silencer, magazine, bayonet, ...), read from
  * data/<namespace>/attachment/<name>.json.
@@ -82,7 +82,7 @@ public record AttachmentDefinition(
 
 		public static final Codec<Underbarrel> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 				Codec.STRING.fieldOf("weapon").forGetter(Underbarrel::weapon),
-				Identifier.CODEC.optionalFieldOf("projectile_item", Identifier.ofVanilla("iron_nugget")).forGetter(Underbarrel::projectileItem),
+				Identifier.CODEC.optionalFieldOf("projectile_item", Identifier.withDefaultNamespace("iron_nugget")).forGetter(Underbarrel::projectileItem),
 				Identifier.CODEC.optionalFieldOf("ammo_item").forGetter(Underbarrel::ammoItem),
 				Codec.intRange(1, 1_000_000).optionalFieldOf("rounds_per_ammo_item", 1).forGetter(Underbarrel::roundsPerAmmoItem),
 				Codec.STRING.optionalFieldOf("reload_sound").forGetter(Underbarrel::reloadSound),
@@ -95,7 +95,7 @@ public record AttachmentDefinition(
 	 * over the screen while looking through (defaults to the spyglass's). */
 	public record Zoom(float min, float max, float defaultMagnification, float step, Optional<Identifier> overlay) {
 
-		public static final Identifier DEFAULT_OVERLAY = Identifier.ofVanilla("textures/misc/spyglass_scope.png");
+		public static final Identifier DEFAULT_OVERLAY = Identifier.withDefaultNamespace("textures/misc/spyglass_scope.png");
 
 		public static final Codec<Zoom> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 				Codec.floatRange(1.0f, 100.0f).optionalFieldOf("min", 2.0f).forGetter(Zoom::min),

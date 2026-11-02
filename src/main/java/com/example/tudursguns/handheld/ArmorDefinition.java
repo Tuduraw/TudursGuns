@@ -2,12 +2,11 @@ package com.example.tudursguns.handheld;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.item.ItemDisplayContext;
-import net.minecraft.util.Identifier;
-
 import java.util.Map;
 import java.util.Optional;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ItemDisplayContext;
 
 /** One piece of armor (data/<namespace>/armor/<name>.json; keys in the README). It is worn through
  * vanilla's equippable component (see ArmorEffects.applyComponents) and looks like a vanilla 2D

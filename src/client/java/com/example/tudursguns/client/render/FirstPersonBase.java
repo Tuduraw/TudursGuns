@@ -1,6 +1,6 @@
 package com.example.tudursguns.client.render;
 
-import net.minecraft.client.util.math.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
@@ -17,22 +17,22 @@ public final class FirstPersonBase {
 	private static final Matrix3f NORMAL = new Matrix3f();
 	private static boolean captured;
 
-	public static void capture(MatrixStack matrices) {
-		MatrixStack.Entry entry = matrices.peek();
-		POSITION.set(entry.getPositionMatrix());
-		NORMAL.set(entry.getNormalMatrix());
+	public static void capture(PoseStack matrices) {
+		PoseStack.Pose entry = matrices.last();
+		POSITION.set(entry.pose());
+		NORMAL.set(entry.normal());
 		captured = true;
 	}
 
 	/** Replaces the top of the stack with the captured base (identity if nothing was captured). */
-	public static void apply(MatrixStack matrices) {
-		MatrixStack.Entry entry = matrices.peek();
+	public static void apply(PoseStack matrices) {
+		PoseStack.Pose entry = matrices.last();
 		if (captured) {
-			entry.getPositionMatrix().set(POSITION);
-			entry.getNormalMatrix().set(NORMAL);
+			entry.pose().set(POSITION);
+			entry.normal().set(NORMAL);
 		} else {
-			entry.getPositionMatrix().identity();
-			entry.getNormalMatrix().identity();
+			entry.pose().identity();
+			entry.normal().identity();
 		}
 	}
 }

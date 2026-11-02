@@ -10,11 +10,11 @@
 
 ## ビルド
 
-1. 前提MODを `337153f` 以降の状態で、ローカルの Maven に公開します。
+1. 前提MODの Mojang マッピング版([tudursvehiclemod-mojmap](https://github.com/Tuduraw/tudursvehiclemod-mojmap))を、ローカルの Maven に公開します。
    ```
    ./gradlew publishToMavenLocal
    ```
-   前提MODの `gradle.properties` の `mod_version` と、このMODの `gradle.properties` の `tudursvehiclemod_version` を一致させてください(現在はどちらも `1.0.3`)。
+   公開されるバージョンは `<mod_version>-<mod_loader>-<minecraft_version>`(例: `1.1.1-fabric-1.21.11`)です。このMODの `gradle.properties` の `tudursvehiclemod_version` をこれに合わせてください。
 2. このMODをビルドします。
    ```
    ./gradlew build

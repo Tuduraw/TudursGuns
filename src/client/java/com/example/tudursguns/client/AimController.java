@@ -12,15 +12,15 @@ import com.example.tudursguns.network.AimKeyPayload;
 import com.example.tudursguns.registry.ModComponents;
 import com.example.tudursguns.weapon.WeaponModifiers;
 import com.example.tudursvehiclemod.client.TvMissileControlState;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.Set;
@@ -37,7 +37,7 @@ public final class AimController {
 	private AimController() {
 	}
 
-	private static KeyBinding aimKey;
+	private static KeyMapping aimKey;
 
 	private static boolean aiming;
 	private static boolean scoped;
@@ -60,7 +60,7 @@ public final class AimController {
 	/** Entity ids of OTHER players currently holding their aim key (from PlayerAimPayload). */
 	private static final Set<Integer> REMOTE_AIM_KEY = ConcurrentHashMap.newKeySet();
 
-	public static void setAimKey(KeyBinding key) {
+	public static void setAimKey(KeyMapping key) {
 		aimKey = key;
 	}
 
@@ -123,8 +123,8 @@ public final class AimController {
 
 	/** Whether this player carries their weapon in the sprint pose (sprinting with a weapon in the main
 	 * hand, not aiming). Other players' sprinting is synced by vanilla. */
-	public static boolean isSprintCarrying(PlayerEntity player) {
-		return player.isSprinting() && player.getVehicle() == null && HandheldWeaponItem.isWeapon(player.getMainHandStack()) && !isAiming(player);
+	public static boolean isSprintCarrying(Player player) {
+		return player.isSprinting() && player.getVehicle() == null && HandheldWeaponItem.isWeapon(player.getMainHandItem()) && !isAiming(player);
 	}
 
 	/** 0 = lowered at the hip, 1 = fully raised; interpolated for the frame. */
@@ -134,40 +134,40 @@ public final class AimController {
 
 	/** Whether this player should be drawn in the raised pose - the local player from this tick's
 	 * state, anyone else from their synced aim key or vanilla "using item" state. */
-	public static boolean isAiming(PlayerEntity player) {
-		MinecraftClient client = MinecraftClient.getInstance();
+	public static boolean isAiming(Player player) {
+		Minecraft client = Minecraft.getInstance();
 		if (player == client.player) {
 			return aiming;
 		}
-		if (player.getVehicle() != null || !HandheldWeaponItem.isWeapon(player.getMainHandStack())) {
+		if (player.getVehicle() != null || !HandheldWeaponItem.isWeapon(player.getMainHandItem())) {
 			return false;
 		}
 		return REMOTE_AIM_KEY.contains(player.getId())
-				|| (player.isUsingItem() && player.getActiveHand() == Hand.MAIN_HAND);
+				|| (player.isUsingItem() && player.getUsedItemHand() == InteractionHand.MAIN_HAND);
 	}
 
 	/** Read straight from the keyboard/mouse rather than KeyBinding.isPressed(): Left Alt is also
 	 * bound by Tudur's Vehicle Mod (free look while riding), and a key only reaches one binding. */
-	private static boolean isAimKeyDown(MinecraftClient client) {
+	private static boolean isAimKeyDown(Minecraft client) {
 		if (aimKey == null || aimKey.isUnbound()) {
 			return false;
 		}
-		InputUtil.Key key = KeyBindingHelper.getBoundKeyOf(aimKey);
-		long window = client.getWindow().getHandle();
-		if (key.getCategory() == InputUtil.Type.MOUSE) {
-			return GLFW.glfwGetMouseButton(window, key.getCode()) == GLFW.GLFW_PRESS;
+		InputConstants.Key key = KeyBindingHelper.getBoundKeyOf(aimKey);
+		long window = client.getWindow().handle();
+		if (key.getType() == InputConstants.Type.MOUSE) {
+			return GLFW.glfwGetMouseButton(window, key.getValue()) == GLFW.GLFW_PRESS;
 		}
-		return InputUtil.isKeyPressed(client.getWindow(), key.getCode());
+		return InputConstants.isKeyDown(client.getWindow(), key.getValue());
 	}
 
 	/** The aim key's physical state regardless of what's held (throwables use it for an underhand
 	 * throw). Always false while a screen is open. */
-	public static boolean isAimKeyHeldRaw(MinecraftClient client) {
-		return client.currentScreen == null && isAimKeyDown(client);
+	public static boolean isAimKeyHeldRaw(Minecraft client) {
+		return client.screen == null && isAimKeyDown(client);
 	}
 
-	public static void tick(MinecraftClient client) {
-		PlayerEntity player = client.player;
+	public static void tick(Minecraft client) {
+		Player player = client.player;
 		previousProgress = progress;
 		previousSprintProgress = sprintProgress;
 		if (player == null) {
@@ -175,12 +175,12 @@ public final class AimController {
 			scoped = false;
 			return;
 		}
-		ItemStack main = player.getMainHandStack();
+		ItemStack main = player.getMainHandItem();
 		boolean weapon = HandheldWeaponItem.isWeapon(main);
 		boolean available = weapon && player.getVehicle() == null
 				&& TvMissileControlState.controlledEntityId == null;
-		boolean aimKeyDown = available && client.currentScreen == null && isAimKeyDown(client);
-		boolean usingWeapon = available && player.isUsingItem() && player.getActiveHand() == Hand.MAIN_HAND;
+		boolean aimKeyDown = available && client.screen == null && isAimKeyDown(client);
+		boolean usingWeapon = available && player.isUsingItem() && player.getUsedItemHand() == InteractionHand.MAIN_HAND;
 		HandheldDefinition heldDef = weapon ? ModDefinitions.HANDHELD.getAny(main.get(ModComponents.WEAPON)) : null;
 		int raiseTicks = heldDef != null ? heldDef.raiseTicks() : 0;
 		if (usingWeapon && !wasUsingWeapon && progress < 1f) {
@@ -230,10 +230,10 @@ public final class AimController {
 		}
 		binoculars = holdingBinoculars && !weapon;
 		rangefinder = binoculars && gear.rangefinder();
-		boolean firstPerson = client.options.getPerspective().isFirstPerson();
+		boolean firstPerson = client.options.getCameraType().isFirstPerson();
 		if (binoculars) {
 			// Held up with use, or the aim key.
-			boolean lookingThrough = (player.isUsingItem() && player.getActiveHand() == Hand.MAIN_HAND) || isAimKeyHeldRaw(client);
+			boolean lookingThrough = (player.isUsingItem() && player.getUsedItemHand() == InteractionHand.MAIN_HAND) || isAimKeyHeldRaw(client);
 			scoped = lookingThrough && scopeZoom != null && firstPerson;
 		} else {
 			scoped = aiming && aimKeyDown && scopeZoom != null && firstPerson;
@@ -246,10 +246,10 @@ public final class AimController {
 
 		// Other players only need the aim KEY; aiming with use is visible to them already. Also sent
 		// while holding a throwable: the server uses it to decide on an underhand throw.
-		boolean holdingThrowable = player.getMainHandStack().getItem() instanceof ThrowableItem
-				|| player.getOffHandStack().getItem() instanceof ThrowableItem;
+		boolean holdingThrowable = player.getMainHandItem().getItem() instanceof ThrowableItem
+				|| player.getOffhandItem().getItem() instanceof ThrowableItem;
 		boolean sendAimKey = aimKeyDown || (holdingThrowable && player.getVehicle() == null && isAimKeyHeldRaw(client));
-		if (sendAimKey != lastSentAimKey && client.getNetworkHandler() != null) {
+		if (sendAimKey != lastSentAimKey && client.getConnection() != null) {
 			lastSentAimKey = sendAimKey;
 			ClientPlayNetworking.send(new AimKeyPayload(sendAimKey));
 		}

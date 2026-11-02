@@ -8,20 +8,20 @@ import com.example.tudursvehiclemod.asset.MuzzleFlashConfig;
 import com.example.tudursvehiclemod.asset.WeaponStats;
 import com.example.tudursvehiclemod.asset.WeaponType;
 import com.example.tudursvehiclemod.entity.projectile.VehicleModelProjectileEntity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.particle.DustParticleEffect;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
 import org.joml.Vector3f;
 
 import java.util.List;
 import java.util.Optional;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.phys.Vec3;
 
 /** What a handheld shot or reload looks like around the weapon (a definition's "effects" - see
  * HandheldEffects): the muzzle flash, spent cartridges and empty magazines.
@@ -44,9 +44,9 @@ public final class FiringEffects {
 	// ---------------------------------------------------------------- events
 
 	/** A shot left the weapon at muzzle. */
-	public static void onFire(LivingEntity player, Hand hand, HandheldDefinition def, WeaponStats stats,
-			WeaponModifiers modifiers, Vec3d muzzle) {
-		ServerWorld world = (ServerWorld) player.getEntityWorld();
+	public static void onFire(LivingEntity player, InteractionHand hand, HandheldDefinition def, WeaponStats stats,
+			WeaponModifiers modifiers, Vec3 muzzle) {
+		ServerLevel world = (ServerLevel) player.level();
 		float flashScale = modifiers.muzzleFlashMultiplier();
 		HandheldEffects.MuzzleFlash flash = muzzleFlash(def, stats);
 		if (flash.enabled() && flashScale > 0f) {
@@ -55,9 +55,9 @@ public final class FiringEffects {
 		if (def.effects().muzzleFlash().isEmpty() && flashScale > 0f) {
 			// The weapon file's AddMuzzleFlashSmoke, drawn as a vehicle draws it.
 			stats.muzzleFlashSmoke().ifPresent(smoke -> {
-				Vec3d pos = muzzle.add(player.getRotationVec(1.0f).multiply(smoke.distanceFromMuzzle()));
-				DustParticleEffect effect = new DustParticleEffect(smoke.argbColor() & 0xFFFFFF, Math.min(4f, smoke.size() * 0.2f));
-				world.spawnParticles(effect, true, true, pos.x, pos.y, pos.z, smoke.count(),
+				Vec3 pos = muzzle.add(player.getViewVector(1.0f).scale(smoke.distanceFromMuzzle()));
+				DustParticleOptions effect = new DustParticleOptions(smoke.argbColor() & 0xFFFFFF, Math.min(4f, smoke.size() * 0.2f));
+				world.sendParticles(effect, true, true, pos.x, pos.y, pos.z, smoke.count(),
 						smoke.spreadRange() * 0.1, smoke.spreadRange() * 0.1, smoke.spreadRange() * 0.1, 0.02);
 			});
 		}
@@ -70,7 +70,7 @@ public final class FiringEffects {
 
 	/** A reload started. spent: rounds fired since the magazine was last full. */
 	public static void onReload(LivingEntity player, ItemStack stack, HandheldDefinition def, WeaponStats stats, int spent) {
-		Hand hand = player.getOffHandStack() == stack ? Hand.OFF_HAND : Hand.MAIN_HAND;
+		InteractionHand hand = player.getOffhandItem() == stack ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
 		for (HandheldEffects.Ejection ejection : List.of(cartridge(def, stats), magazine(def, stats))) {
 			if (!ejection.enabled() || ejection.on() != HandheldEffects.Trigger.RELOAD) {
 				continue;
@@ -102,7 +102,7 @@ public final class FiringEffects {
 		}
 		if (stats.muzzleFlash().isPresent()) {
 			MuzzleFlashConfig file = stats.muzzleFlash().get();
-			return new HandheldEffects.MuzzleFlash(true, MathHelper.clamp(file.size(), 0.01f, 4f), file.argbColor() & 0xFFFFFF,
+			return new HandheldEffects.MuzzleFlash(true, Mth.clamp(file.size(), 0.01f, 4f), file.argbColor() & 0xFFFFFF,
 					Math.max(1, file.displayTicks()), 0, file.distanceFromMuzzle());
 		}
 		return isGun(stats) || isLauncher(stats) ? HandheldEffects.MuzzleFlash.DEFAULT : HandheldEffects.MuzzleFlash.OFF;
@@ -139,28 +139,28 @@ public final class FiringEffects {
 				(float) (Math.cos(yaw) * Math.cos(pitch))).mul(cart.acceleration());
 		HandheldEffects.Ejection defaults = HandheldEffects.Ejection.CARTRIDGE;
 		return new HandheldEffects.Ejection(true, defaults.type(),
-				Optional.of(Identifier.of(namespace, "models/obj/bullet_" + cart.modelName() + ".obj")),
-				Optional.of(Identifier.of(namespace, "textures/vehicle/bullet_" + cart.modelName() + ".png")),
+				Optional.of(Identifier.fromNamespaceAndPath(namespace, "models/obj/bullet_" + cart.modelName() + ".obj")),
+				Optional.of(Identifier.fromNamespaceAndPath(namespace, "textures/vehicle/bullet_" + cart.modelName() + ".png")),
 				Math.max(0.01f, cart.modelScale()), Optional.of(new Vector3f()), velocity, defaults.velocityRandom(),
-				Math.max(0f, cart.gravity()), MathHelper.clamp(cart.bounce(), 0f, 1f), HandheldEffects.Trigger.FIRE, 0, 1,
+				Math.max(0f, cart.gravity()), Mth.clamp(cart.bounce(), 0f, 1f), HandheldEffects.Trigger.FIRE, 0, 1,
 				defaults.lifetime());
 	}
 
 	// ---------------------------------------------------------------- spawning
 
-	private static void spawnFlash(ServerWorld world, LivingEntity player, HandheldEffects.MuzzleFlash flash, float scale,
-			Vec3d muzzle) {
-		Vec3d pos = muzzle.add(player.getRotationVec(1.0f).multiply(flash.distance()));
+	private static void spawnFlash(ServerLevel world, LivingEntity player, HandheldEffects.MuzzleFlash flash, float scale,
+			Vec3 muzzle) {
+		Vec3 pos = muzzle.add(player.getViewVector(1.0f).scale(flash.distance()));
 		if (flash.count() > 0) {
-			DustParticleEffect effect = new DustParticleEffect(flash.color(), MathHelper.clamp(flash.size() * scale, 0.01f, 4f));
-			world.spawnParticles(effect, true, true, pos.x, pos.y, pos.z, flash.count(), 0.02, 0.02, 0.02, 0.0);
+			DustParticleOptions effect = new DustParticleOptions(flash.color(), Mth.clamp(flash.size() * scale, 0.01f, 4f));
+			world.sendParticles(effect, true, true, pos.x, pos.y, pos.z, flash.count(), 0.02, 0.02, 0.02, 0.0);
 		}
 		if (flash.smoke() > 0) {
-			world.spawnParticles(ParticleTypes.SMOKE, true, false, pos.x, pos.y, pos.z, flash.smoke(), 0.03, 0.03, 0.03, 0.01);
+			world.sendParticles(ParticleTypes.SMOKE, true, false, pos.x, pos.y, pos.z, flash.smoke(), 0.03, 0.03, 0.03, 0.01);
 		}
 	}
 
-	private static void schedule(LivingEntity player, Hand hand, HandheldDefinition def, HandheldEffects.Ejection ejection,
+	private static void schedule(LivingEntity player, InteractionHand hand, HandheldDefinition def, HandheldEffects.Ejection ejection,
 			int count) {
 		boolean rightSide = ViewSpace.rightSide(player, hand);
 		Vector3f muzzleOffset = new Vector3f(def.muzzleOffset());
@@ -181,33 +181,33 @@ public final class FiringEffects {
 
 	private static void eject(LivingEntity player, boolean rightSide, Vector3f muzzleOffset, HandheldEffects.Ejection ejection,
 			int count) {
-		ServerWorld world = (ServerWorld) player.getEntityWorld();
-		Vec3d forward = player.getRotationVec(1.0f);
-		Vec3d right = ViewSpace.right(player);
-		Vec3d up = right.crossProduct(forward).normalize();
+		ServerLevel world = (ServerLevel) player.level();
+		Vec3 forward = player.getViewVector(1.0f);
+		Vec3 right = ViewSpace.right(player);
+		Vec3 up = right.cross(forward).normalize();
 		if (up.y < 0) {
-			up = up.multiply(-1.0);
+			up = up.scale(-1.0);
 		}
 		double side = rightSide ? 1.0 : -1.0;
 		Vector3f offset = ejection.offset().orElseGet(() -> defaultOffset(ejection, muzzleOffset));
-		Vec3d origin = ViewSpace.point(player, offset, rightSide);
+		Vec3 origin = ViewSpace.point(player, offset, rightSide);
 		Vector3f v = ejection.velocity();
-		Vec3d baseVelocity = right.multiply(v.x() * side).add(up.multiply(v.y())).add(forward.multiply(v.z()))
-				.add(player.getVelocity());
+		Vec3 baseVelocity = right.scale(v.x() * side).add(up.scale(v.y())).add(forward.scale(v.z()))
+				.add(player.getDeltaMovement());
 		for (int i = 0; i < count; i++) {
 			VehicleModelProjectileEntity entity = new VehicleModelProjectileEntity(world, player, new ItemStack(Items.IRON_NUGGET),
 					0f, ejection.gravity(), 0f, false, false, ejection.modelId(), ejection.textureId(), ejection.scale());
 			((CosmeticProjectile) entity).tudursguns$setCosmetic(true);
-			entity.setPosition(origin.x, origin.y, origin.z);
+			entity.setPos(origin.x, origin.y, origin.z);
 			double r = ejection.velocityRandom();
-			Vec3d velocity = baseVelocity.add((world.random.nextDouble() * 2 - 1) * r, (world.random.nextDouble() * 2 - 1) * r,
+			Vec3 velocity = baseVelocity.add((world.random.nextDouble() * 2 - 1) * r, (world.random.nextDouble() * 2 - 1) * r,
 					(world.random.nextDouble() * 2 - 1) * r);
-			entity.setVelocity(velocity);
+			entity.setDeltaMovement(velocity);
 			ViewSpace.faceAlong(entity, velocity);
 			entity.tudursvehiclemod$setBounceStrength(ejection.bounce());
 			// Gone lifetime ticks after landing, and in any case a while after that.
 			entity.tudursvehiclemod$setFuseTicks(ejection.lifetime(), ejection.lifetime() + 200);
-			world.spawnEntity(entity);
+			world.addFreshEntity(entity);
 		}
 	}
 }

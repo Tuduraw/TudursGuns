@@ -3,11 +3,10 @@ package com.example.tudursguns.handheld;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.item.ItemDisplayContext;
-import net.minecraft.util.Identifier;
-
 import java.util.Map;
 import java.util.Optional;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemDisplayContext;
 
 /** One placeable explosive - mine, claymore, demolition charge (data/<namespace>/mine/<name>.json;
  * keys in the README). It explodes as its weapon file says, through a Tudur's Vehicle Mod projectile,

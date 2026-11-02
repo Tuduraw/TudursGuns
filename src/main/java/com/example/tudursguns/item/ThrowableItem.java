@@ -4,18 +4,17 @@ import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.handheld.ThrowableDefinition;
 import com.example.tudursguns.registry.ModComponents;
 import com.example.tudursguns.weapon.ThrowableCombat;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.world.World;
-
 import java.util.Locale;
 import java.util.function.Consumer;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 /** The one item every throwable is; which one comes from its tudursguns:throwable component.
  *
@@ -26,7 +25,7 @@ public class ThrowableItem extends DefinedItem<ThrowableDefinition> {
 
 	private static final int MAX_USE_TICKS = 72000;
 
-	public ThrowableItem(Settings settings) {
+	public ThrowableItem(Properties settings) {
 		super(settings, ModDefinitions.THROWABLES, ModComponents.THROWABLE);
 	}
 
@@ -35,24 +34,24 @@ public class ThrowableItem extends DefinedItem<ThrowableDefinition> {
 	}
 
 	@Override
-	public ActionResult use(World world, PlayerEntity user, Hand hand) {
-		ItemStack stack = user.getStackInHand(hand);
-		if (user.getVehicle() != null || !stack.contains(ModComponents.THROWABLE)) {
-			return ActionResult.PASS;
+	public InteractionResult use(Level world, Player user, InteractionHand hand) {
+		ItemStack stack = user.getItemInHand(hand);
+		if (user.getVehicle() != null || !stack.has(ModComponents.THROWABLE)) {
+			return InteractionResult.PASS;
 		}
-		user.setCurrentHand(hand);
-		if (user instanceof ServerPlayerEntity player) {
+		user.startUsingItem(hand);
+		if (user instanceof ServerPlayer player) {
 			ThrowableDefinition def = serverDefinition(stack);
 			if (def != null) {
 				ThrowableCombat.pullPin(player, def);
 			}
 		}
-		return ActionResult.CONSUME;
+		return InteractionResult.CONSUME;
 	}
 
 	@Override
-	public void usageTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
-		if (!(user instanceof ServerPlayerEntity player)) {
+	public void onUseTick(Level world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
+		if (!(user instanceof ServerPlayer player)) {
 			return;
 		}
 		ThrowableDefinition def = serverDefinition(stack);
@@ -60,18 +59,18 @@ public class ThrowableItem extends DefinedItem<ThrowableDefinition> {
 			return;
 		}
 		if (player.getVehicle() != null) {
-			ThrowableCombat.forget(player.getUuid());
-			player.stopUsingItem();
+			ThrowableCombat.forget(player.getUUID());
+			player.releaseUsingItem();
 			return;
 		}
 		if (ThrowableCombat.checkCookedOff(player, stack, def)) {
-			player.stopUsingItem();
+			player.releaseUsingItem();
 		}
 	}
 
 	@Override
-	public boolean onStoppedUsing(ItemStack stack, World world, LivingEntity user, int remainingUseTicks) {
-		if (user instanceof ServerPlayerEntity player && player.getVehicle() == null) {
+	public boolean releaseUsing(ItemStack stack, Level world, LivingEntity user, int remainingUseTicks) {
+		if (user instanceof ServerPlayer player && player.getVehicle() == null) {
 			ThrowableDefinition def = serverDefinition(stack);
 			if (def != null && !stack.isEmpty()) {
 				ThrowableCombat.throwHeld(player, stack, def);
@@ -81,21 +80,21 @@ public class ThrowableItem extends DefinedItem<ThrowableDefinition> {
 	}
 
 	@Override
-	public int getMaxUseTime(ItemStack stack, LivingEntity user) {
+	public int getUseDuration(ItemStack stack, LivingEntity user) {
 		return MAX_USE_TICKS;
 	}
 
 	@Override
-	protected void appendDetails(ItemStack stack, ThrowableDefinition def, Consumer<Text> textConsumer) {
+	protected void appendDetails(ItemStack stack, ThrowableDefinition def, Consumer<Component> textConsumer) {
 		if (def.impact()) {
-			textConsumer.accept(Text.translatable("tooltip.tudursguns.throwable.impact").formatted(Formatting.GRAY));
+			textConsumer.accept(Component.translatable("tooltip.tudursguns.throwable.impact").withStyle(ChatFormatting.GRAY));
 		} else if (def.fuseTicks() > 0) {
-			textConsumer.accept(Text.translatable("tooltip.tudursguns.throwable.fuse",
-					String.format(Locale.ROOT, "%.1f", def.fuseTicks() / 20f)).formatted(Formatting.GRAY));
+			textConsumer.accept(Component.translatable("tooltip.tudursguns.throwable.fuse",
+					String.format(Locale.ROOT, "%.1f", def.fuseTicks() / 20f)).withStyle(ChatFormatting.GRAY));
 		}
 		def.movement().appendTooltip(textConsumer);
 		if (def.cooks()) {
-			textConsumer.accept(Text.translatable("tooltip.tudursguns.throwable.cookable").formatted(Formatting.GRAY));
+			textConsumer.accept(Component.translatable("tooltip.tudursguns.throwable.cookable").withStyle(ChatFormatting.GRAY));
 		}
 	}
 }

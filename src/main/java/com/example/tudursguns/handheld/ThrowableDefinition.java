@@ -2,12 +2,12 @@ package com.example.tudursguns.handheld;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.item.ItemDisplayContext;
-import net.minecraft.util.Identifier;
 import org.joml.Vector3f;
 
 import java.util.Map;
 import java.util.Optional;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemDisplayContext;
 
 /** One throwable (grenade, smoke, flash, ...), read from data/<namespace>/throwable/<name>.json.
  *

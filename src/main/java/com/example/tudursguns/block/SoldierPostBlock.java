@@ -2,52 +2,52 @@ package com.example.tudursguns.block;
 
 import com.example.tudursguns.registry.ModBlockEntities;
 import com.mojang.serialization.MapCodec;
-import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.BlockWithEntity;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityTicker;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 
 /** Soldier post: sends out and supplies one soldier - see SoldierPostBlockEntity. */
-public class SoldierPostBlock extends BlockWithEntity {
+public class SoldierPostBlock extends BaseEntityBlock {
 
-	public static final MapCodec<SoldierPostBlock> CODEC = createCodec(SoldierPostBlock::new);
+	public static final MapCodec<SoldierPostBlock> CODEC = simpleCodec(SoldierPostBlock::new);
 
-	public SoldierPostBlock(Settings settings) {
+	public SoldierPostBlock(Properties settings) {
 		super(settings);
 	}
 
 	@Override
-	protected MapCodec<? extends BlockWithEntity> getCodec() {
+	protected MapCodec<? extends BaseEntityBlock> codec() {
 		return CODEC;
 	}
 
 	@Override
-	protected BlockRenderType getRenderType(BlockState state) {
-		return BlockRenderType.MODEL;
+	protected RenderShape getRenderShape(BlockState state) {
+		return RenderShape.MODEL;
 	}
 
 	@Override
-	public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
 		return new SoldierPostBlockEntity(pos, state);
 	}
 
 	@Override
-	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-		if (!world.isClient() && world.getBlockEntity(pos) instanceof SoldierPostBlockEntity post) {
-			player.openHandledScreen(post);
+	protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
+		if (!world.isClientSide() && world.getBlockEntity(pos) instanceof SoldierPostBlockEntity post) {
+			player.openMenu(post);
 		}
-		return ActionResult.SUCCESS;
+		return InteractionResult.SUCCESS;
 	}
 
 	@Override
-	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-		return world.isClient() ? null : validateTicker(type, ModBlockEntities.SOLDIER_POST, SoldierPostBlockEntity::tick);
+	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level world, BlockState state, BlockEntityType<T> type) {
+		return world.isClientSide() ? null : createTickerHelper(type, ModBlockEntities.SOLDIER_POST, SoldierPostBlockEntity::tick);
 	}
 }

@@ -10,23 +10,22 @@ import com.example.tudursguns.weapon.WeaponAnimationEvents;
 import com.example.tudursguns.weapon.WeaponModifiers;
 import com.example.tudursvehiclemod.asset.WeaponStats;
 import com.example.tudursvehiclemod.asset.WeaponStatsLoader;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.mob.PathAwareEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.RaycastContext;
-
 import java.util.EnumSet;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.Vec3;
 
 /** Fights the mob's target with the weapon in its main hand, as a player would: closes in until it
  * can see the target within engage range, raises the weapon, aims (allowing for the round's drop),
  * then fires at the weapon's own rate - automatic weapons in short bursts, semi-automatic ones with
  * a moment between shots, lock-on weapons once the lock is complete. Keeps its distance from a target
  * too close for an explosive round. */
-public class SoldierWeaponGoal<T extends PathAwareEntity & Soldier> extends Goal {
+public class SoldierWeaponGoal<T extends PathfinderMob & Soldier> extends Goal {
 
 	/** Extra spread (degrees) on top of the weapon's own - a soldier isn't a perfect shot. */
 	private static final float AIM_ERROR_DEGREES = 1.5f;
@@ -42,22 +41,22 @@ public class SoldierWeaponGoal<T extends PathAwareEntity & Soldier> extends Goal
 	public SoldierWeaponGoal(T soldier, double moveSpeed) {
 		this.soldier = soldier;
 		this.moveSpeed = moveSpeed;
-		this.setControls(EnumSet.of(Control.MOVE, Control.LOOK));
+		this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
 	}
 
 	@Override
-	public boolean canStart() {
+	public boolean canUse() {
 		LivingEntity target = this.soldier.getTarget();
-		return target != null && target.isAlive() && HandheldWeaponItem.isWeapon(this.soldier.getMainHandStack());
+		return target != null && target.isAlive() && HandheldWeaponItem.isWeapon(this.soldier.getMainHandItem());
 	}
 
 	@Override
-	public boolean shouldContinue() {
-		return canStart();
+	public boolean canContinueToUse() {
+		return canUse();
 	}
 
 	@Override
-	public boolean shouldRunEveryTick() {
+	public boolean requiresUpdateEveryTick() {
 		return true;
 	}
 
@@ -72,28 +71,28 @@ public class SoldierWeaponGoal<T extends PathAwareEntity & Soldier> extends Goal
 	@Override
 	public void tick() {
 		LivingEntity target = this.soldier.getTarget();
-		ItemStack stack = this.soldier.getMainHandStack();
+		ItemStack stack = this.soldier.getMainHandItem();
 		HandheldDefinition def = HandheldWeaponItem.serverDefinition(stack);
 		if (target == null || def == null) {
 			return;
 		}
 		WeaponStats stats = WeaponStatsLoader.get(def.weapon());
-		this.soldier.getLookControl().lookAt(target, 30f, 30f);
+		this.soldier.getLookControl().setLookAt(target, 30f, 30f);
 		double distance = this.soldier.distanceTo(target);
-		boolean visible = this.soldier.canSee(target);
+		boolean visible = this.soldier.hasLineOfSight(target);
 		boolean explosive = stats.explosionPower() > 0f;
 
 		if (!visible || distance > this.soldier.engageRange()) {
 			this.soldier.setAimingWeapon(false);
 			this.lockTicks = 0;
-			this.soldier.getNavigation().startMovingTo(target, this.moveSpeed);
+			this.soldier.getNavigation().moveTo(target, this.moveSpeed);
 			return;
 		}
 		if (explosive && distance < EXPLOSIVE_MIN_DISTANCE) {
 			// Back off rather than blow itself up.
-			Vec3d away = this.soldier.getEntityPos().subtract(target.getEntityPos()).normalize().multiply(4.0);
-			Vec3d to = this.soldier.getEntityPos().add(away);
-			this.soldier.getNavigation().startMovingTo(to.x, to.y, to.z, this.moveSpeed);
+			Vec3 away = this.soldier.position().subtract(target.position()).normalize().scale(4.0);
+			Vec3 to = this.soldier.position().add(away);
+			this.soldier.getNavigation().moveTo(to.x, to.y, to.z, this.moveSpeed);
 			this.soldier.setAimingWeapon(false);
 			return;
 		}
@@ -101,7 +100,7 @@ public class SoldierWeaponGoal<T extends PathAwareEntity & Soldier> extends Goal
 		this.soldier.setAimingWeapon(true);
 		faceTowards(target);
 
-		long now = this.soldier.getEntityWorld().getTime();
+		long now = this.soldier.level().getGameTime();
 		if (tickReload(stack, def, stats, now)) {
 			return;
 		}
@@ -131,21 +130,21 @@ public class SoldierWeaponGoal<T extends PathAwareEntity & Soldier> extends Goal
 
 	private void fire(ItemStack stack, HandheldDefinition def, WeaponStats stats, WeaponModifiers modifiers, LivingEntity target,
 			LivingEntity lockTarget) {
-		Vec3d eye = this.soldier.getEyePos();
-		Vec3d aimPoint = target.getBoundingBox().getCenter().add(0.0, target.getHeight() * 0.15, 0.0);
+		Vec3 eye = this.soldier.getEyePosition();
+		Vec3 aimPoint = target.getBoundingBox().getCenter().add(0.0, target.getBbHeight() * 0.15, 0.0);
 		// Aim above the target by how far the round drops on the way (drag ignored).
-		double horizontal = Math.sqrt(MathHelper.square(aimPoint.x - eye.x) + MathHelper.square(aimPoint.z - eye.z));
+		double horizontal = Math.sqrt(Mth.square(aimPoint.x - eye.x) + Mth.square(aimPoint.z - eye.z));
 		double time = stats.velocity() > 0f ? horizontal / stats.velocity() : 0.0;
-		Vec3d direction = aimPoint.add(0.0, 0.5 * stats.gravity() * time * time, 0.0).subtract(eye).normalize();
-		Vec3d right = new Vec3d(-direction.z, 0.0, direction.x).normalize();
-		Vec3d muzzle = eye.add(direction.multiply(0.6)).add(right.multiply(0.25)).add(0.0, -0.1, 0.0);
-		if (this.soldier.getEntityWorld().raycast(new RaycastContext(eye, muzzle, RaycastContext.ShapeType.COLLIDER,
-				RaycastContext.FluidHandling.NONE, this.soldier)).getType() != net.minecraft.util.hit.HitResult.Type.MISS) {
+		Vec3 direction = aimPoint.add(0.0, 0.5 * stats.gravity() * time * time, 0.0).subtract(eye).normalize();
+		Vec3 right = new Vec3(-direction.z, 0.0, direction.x).normalize();
+		Vec3 muzzle = eye.add(direction.scale(0.6)).add(right.scale(0.25)).add(0.0, -0.1, 0.0);
+		if (this.soldier.level().clip(new ClipContext(eye, muzzle, ClipContext.Block.COLLIDER,
+				ClipContext.Fluid.NONE, this.soldier)).getType() != net.minecraft.world.phys.HitResult.Type.MISS) {
 			muzzle = eye;
 		}
 		float spread = stats.accuracyDegrees() * modifiers.accuracyMultiplier() + AIM_ERROR_DEGREES;
-		HandheldCombat.shoot(this.soldier, stack, Hand.MAIN_HAND, def, stats, modifiers, muzzle, direction, spread, lockTarget,
-				target.getEntityPos());
+		HandheldCombat.shoot(this.soldier, stack, InteractionHand.MAIN_HAND, def, stats, modifiers, muzzle, direction, spread, lockTarget,
+				target.position());
 	}
 
 	/** Automatic weapons fire bursts of 3-6 rounds, then pause; burst weapons their burst_count; the rest
@@ -167,13 +166,13 @@ public class SoldierWeaponGoal<T extends PathAwareEntity & Soldier> extends Goal
 
 	/** Turns body and head to the target, so the shot, its effects and the pose all agree. */
 	private void faceTowards(LivingEntity target) {
-		Vec3d delta = target.getEyePos().subtract(this.soldier.getEyePos());
+		Vec3 delta = target.getEyePosition().subtract(this.soldier.getEyePosition());
 		float yaw = (float) Math.toDegrees(Math.atan2(-delta.x, delta.z));
 		float pitch = (float) Math.toDegrees(-Math.atan2(delta.y, Math.sqrt(delta.x * delta.x + delta.z * delta.z)));
-		this.soldier.setYaw(yaw);
-		this.soldier.setBodyYaw(yaw);
-		this.soldier.setHeadYaw(yaw);
-		this.soldier.setPitch(pitch);
+		this.soldier.setYRot(yaw);
+		this.soldier.setYBodyRot(yaw);
+		this.soldier.setYHeadRot(yaw);
+		this.soldier.setXRot(pitch);
 	}
 
 	// ---------------------------------------------------------------- reloading (endless ammo)
@@ -198,6 +197,6 @@ public class SoldierWeaponGoal<T extends PathAwareEntity & Soldier> extends Goal
 		FiringEffects.onReload(this.soldier, stack, def, stats, modifiers.magazineSize(stats.magazineSize()));
 		stack.set(ModComponents.RELOAD_UNTIL, now + reloadTicks);
 		WeaponAnimationEvents.trigger(this.soldier, stack, AnimationDefinition.Event.RELOAD, reloadTicks);
-		def.reloadSound().ifPresent(sound -> HandheldCombat.playSound(this.soldier, sound, this.soldier.getEyePos(), 1.0f, 1.0f, 0.05f));
+		def.reloadSound().ifPresent(sound -> HandheldCombat.playSound(this.soldier, sound, this.soldier.getEyePosition(), 1.0f, 1.0f, 0.05f));
 	}
 }

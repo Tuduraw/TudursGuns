@@ -1,15 +1,14 @@
 package com.example.tudursguns.soldier;
 
 import com.example.tudursguns.block.SoldierPostBlockEntity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.mob.Monster;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
-
 import java.util.EnumSet;
 import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 /** Picks a post's soldier's target: the nearest monster it can see within its engage range that is
  * also within engage range of the route (or of the post, with no route). The soldier lets a target
@@ -26,11 +25,11 @@ public class SoldierTargetGoal extends Goal {
 
 	public SoldierTargetGoal(FriendlySoldierEntity soldier) {
 		this.soldier = soldier;
-		this.setControls(EnumSet.of(Control.TARGET));
+		this.setFlags(EnumSet.of(Flag.TARGET));
 	}
 
 	@Override
-	public boolean canStart() {
+	public boolean canUse() {
 		if (--this.cooldown > 0 || !this.soldier.canFight()) {
 			return false;
 		}
@@ -45,14 +44,14 @@ public class SoldierTargetGoal extends Goal {
 	}
 
 	@Override
-	public boolean shouldContinue() {
+	public boolean canContinueToUse() {
 		LivingEntity target = this.soldier.getTarget();
 		SoldierPostBlockEntity post = this.soldier.post();
 		if (target == null || !target.isAlive() || post == null || !this.soldier.canFight()) {
 			return false;
 		}
 		double range = this.soldier.engageRange() + LEASH;
-		return this.soldier.distanceTo(target) <= range && distanceToRoute(post, target.getEntityPos()) <= range;
+		return this.soldier.distanceTo(target) <= range && distanceToRoute(post, target.position()) <= range;
 	}
 
 	@Override
@@ -79,16 +78,16 @@ public class SoldierTargetGoal extends Goal {
 			return null;
 		}
 		double range = this.soldier.engageRange();
-		List<LivingEntity> candidates = this.soldier.getEntityWorld().getEntitiesByClass(LivingEntity.class,
-				new Box(this.soldier.getBlockPos()).expand(range),
-				entity -> entity instanceof Monster && entity.isAlive() && !entity.isInvisible()
-						&& this.soldier.squaredDistanceTo(entity) <= range * range
-						&& distanceToRoute(post, entity.getEntityPos()) <= range
-						&& this.soldier.canSee(entity));
+		List<LivingEntity> candidates = this.soldier.level().getEntitiesOfClass(LivingEntity.class,
+				new AABB(this.soldier.blockPosition()).inflate(range),
+				entity -> entity instanceof Enemy && entity.isAlive() && !entity.isInvisible()
+						&& this.soldier.distanceToSqr(entity) <= range * range
+						&& distanceToRoute(post, entity.position()) <= range
+						&& this.soldier.hasLineOfSight(entity));
 		LivingEntity nearest = null;
 		double nearestDistance = Double.MAX_VALUE;
 		for (LivingEntity candidate : candidates) {
-			double distance = this.soldier.squaredDistanceTo(candidate);
+			double distance = this.soldier.distanceToSqr(candidate);
 			if (distance < nearestDistance) {
 				nearestDistance = distance;
 				nearest = candidate;
@@ -98,25 +97,25 @@ public class SoldierTargetGoal extends Goal {
 	}
 
 	/** Distance from pos to the route walked as a loop, or to the post when there's no route. */
-	private static double distanceToRoute(SoldierPostBlockEntity post, Vec3d pos) {
-		BlockPos postPos = post.getPos();
+	private static double distanceToRoute(SoldierPostBlockEntity post, Vec3 pos) {
+		BlockPos postPos = post.getBlockPos();
 		List<SoldierWaypoint> route = post.route();
 		if (route.isEmpty()) {
-			return pos.distanceTo(Vec3d.ofCenter(postPos));
+			return pos.distanceTo(Vec3.atCenterOf(postPos));
 		}
 		double best = Double.MAX_VALUE;
 		for (int i = 0; i < route.size(); i++) {
-			Vec3d a = Vec3d.ofCenter(route.get(i).absolute(postPos));
-			Vec3d b = Vec3d.ofCenter(route.get((i + 1) % route.size()).absolute(postPos));
+			Vec3 a = Vec3.atCenterOf(route.get(i).absolute(postPos));
+			Vec3 b = Vec3.atCenterOf(route.get((i + 1) % route.size()).absolute(postPos));
 			best = Math.min(best, distanceToSegment(pos, a, b));
 		}
 		return best;
 	}
 
-	private static double distanceToSegment(Vec3d p, Vec3d a, Vec3d b) {
-		Vec3d ab = b.subtract(a);
-		double lengthSquared = ab.lengthSquared();
-		double t = lengthSquared < 1.0E-6 ? 0.0 : Math.max(0.0, Math.min(1.0, p.subtract(a).dotProduct(ab) / lengthSquared));
-		return p.distanceTo(a.add(ab.multiply(t)));
+	private static double distanceToSegment(Vec3 p, Vec3 a, Vec3 b) {
+		Vec3 ab = b.subtract(a);
+		double lengthSquared = ab.lengthSqr();
+		double t = lengthSquared < 1.0E-6 ? 0.0 : Math.max(0.0, Math.min(1.0, p.subtract(a).dot(ab) / lengthSquared));
+		return p.distanceTo(a.add(ab.scale(t)));
 	}
 }
