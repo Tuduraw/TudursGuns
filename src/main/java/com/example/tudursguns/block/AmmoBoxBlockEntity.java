@@ -8,6 +8,7 @@ import com.example.tudursguns.registry.ModBlockEntities;
 import com.example.tudursguns.registry.ModComponents;
 import com.example.tudursguns.soldier.FriendlySoldierEntity;
 import com.example.tudursguns.weapon.EquipmentActions;
+import com.example.tudursguns.weapon.AmmoSupply;
 import com.example.tudursguns.weapon.Firing;
 import com.example.tudursguns.weapon.HandheldCombat;
 import com.example.tudursguns.weapon.WeaponModifiers;
@@ -77,14 +78,16 @@ public class AmmoBoxBlockEntity extends BlockEntity {
 		if (def == null) {
 			return;
 		}
+		// A weapon that can't be reloaded ("ammo": "none") isn't refilled either.
 		int magazineSize = WeaponModifiers.of(stack, def).magazineSize(WeaponStatsLoader.get(def.weapon()).magazineSize());
-		if (magazineSize > 0 && stack.getOrDefault(ModComponents.AMMO, 0) < magazineSize) {
+		if (magazineSize > 0 && stack.getOrDefault(ModComponents.AMMO, 0) < magazineSize && AmmoSupply.of(def, magazineSize).reloadable()) {
 			stack.set(ModComponents.AMMO, magazineSize);
 		}
 		AttachmentDefinition.Underbarrel launcher = Firing.underbarrel(stack, def);
 		if (launcher != null) {
 			int launcherSize = WeaponStatsLoader.get(launcher.weapon()).magazineSize();
-			if (launcherSize > 0 && stack.getOrDefault(ModComponents.ALT_AMMO, 0) < launcherSize) {
+			if (launcherSize > 0 && stack.getOrDefault(ModComponents.ALT_AMMO, 0) < launcherSize
+					&& AmmoSupply.of(launcher.ammo(), launcher.ammoItem(), launcher.roundsPerAmmoItem(), launcherSize).reloadable()) {
 				stack.set(ModComponents.ALT_AMMO, launcherSize);
 			}
 		}

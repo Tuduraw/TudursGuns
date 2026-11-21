@@ -4,6 +4,7 @@ import com.example.tudursguns.handheld.HandheldDefinition;
 import com.example.tudursguns.handheld.ModDefinitions;
 import com.example.tudursguns.handheld.WeaponSummary;
 import com.example.tudursguns.registry.ModComponents;
+import com.example.tudursguns.weapon.AmmoSupply;
 import com.example.tudursguns.weapon.Firing;
 import com.example.tudursguns.weapon.HandheldCombat;
 import com.example.tudursguns.weapon.WeaponModifiers;
@@ -165,6 +166,7 @@ public class HandheldWeaponItem extends DefinedItem<HandheldDefinition> {
 		if (magazineSize > 0) {
 			textConsumer.accept(Component.translatable("tooltip.tudursguns.ammo",
 					stack.getOrDefault(ModComponents.AMMO, 0), magazineSize).withStyle(ChatFormatting.GRAY));
+			textConsumer.accept(AmmoSupply.of(def, magazineSize).describe().withStyle(ChatFormatting.GRAY));
 		}
 		def.movement().appendTooltip(textConsumer);
 		for (Identifier attachmentId : WeaponModifiers.fitted(stack).values()) {

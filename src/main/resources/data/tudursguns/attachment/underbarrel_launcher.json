@@ -125,8 +125,7 @@
   },
   "underbarrel": {
     "weapon": "tg_ugl",
-    "ammo_item": "minecraft:fire_charge",
-    "rounds_per_ammo_item": 1,
+    "ammo": "tudursguns:launcher_grenade",
     "reload_sound": "tg_reload_launcher",
     "muzzle_offset": [
       0.0,

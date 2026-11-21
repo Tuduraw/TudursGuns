@@ -1,0 +1,129 @@
+{
+  "display_name": "Rifle Clip (5)",
+  "rounds": 5,
+  "max_stack": 16,
+  "model": "tudursguns:models/obj/ammo_rifle_clip.obj",
+  "texture": "tudursguns:textures/handheld/ammo/rifle_clip.png",
+  "icon": "tudursguns:textures/handheld/ammo/rifle_clip_icon.png",
+  "display": {
+    "gui": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        20,
+        -30,
+        0
+      ],
+      "scale": [
+        5.091,
+        5.091,
+        5.091
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        3.273,
+        3.273,
+        3.273
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        5.091,
+        5.091,
+        5.091
+      ]
+    },
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.35,
+        0.55
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        2.545,
+        2.545,
+        2.545
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.35,
+        0.55
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        2.545,
+        2.545,
+        2.545
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.6,
+        0.45,
+        0.45
+      ],
+      "rotation": [
+        0,
+        -20,
+        0
+      ],
+      "scale": [
+        3.636,
+        3.636,
+        3.636
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.4,
+        0.45,
+        0.45
+      ],
+      "rotation": [
+        0,
+        20,
+        0
+      ],
+      "scale": [
+        3.636,
+        3.636,
+        3.636
+      ]
+    }
+  }
+}

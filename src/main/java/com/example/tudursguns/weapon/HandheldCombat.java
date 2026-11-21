@@ -259,9 +259,11 @@ public final class HandheldCombat {
 		if (magazineSize <= 0 || isReloading(stack) || stack.getOrDefault(Firing.ammoComponent(stack), 0) >= magazineSize) {
 			return;
 		}
-		if (availableRounds(player, def) <= 0) {
+		AmmoSupply supply = AmmoSupply.of(def, magazineSize);
+		if (!supply.reloadable() || availableRounds(player, supply) <= 0) {
 			if (notifyIfEmpty) {
-				player.displayClientMessage(Component.translatable("message.tudursguns.no_ammo"), true);
+				player.displayClientMessage(Component.translatable(supply.reloadable() ? "message.tudursguns.no_ammo"
+						: "message.tudursguns.not_reloadable"), true);
 			}
 			return;
 		}
@@ -282,14 +284,21 @@ public final class HandheldCombat {
 		stack.remove(ModComponents.RELOAD_UNTIL);
 		int loaded = stack.getOrDefault(Firing.ammoComponent(stack), 0);
 		int wanted = Math.max(0, WeaponModifiers.of(stack, def).magazineSize(stats.magazineSize()) - loaded);
-		stack.set(Firing.ammoComponent(stack), loaded + takeRounds(player, def, wanted));
+		stack.set(Firing.ammoComponent(stack), loaded + takeRounds(player, AmmoSupply.of(stack, def), wanted));
 		WeaponAnimationEvents.trigger(player, stack, WeaponAnimationEvents.forSelection(stack, AnimationDefinition.Event.RELOAD_END));
 	}
 
-	/** Rounds the player could load right now. Unlimited without ammo, or in creative mode. */
-	public static int availableRounds(Player player, HandheldDefinition def) {
-		AmmoSupply supply = AmmoSupply.of(def);
-		if (supply == null || player.isCreative()) {
+	/** Rounds the player could load into stack (fired as def - see Firing) right now: unlimited in
+	 * creative mode, none for a weapon that can't be reloaded. */
+	public static int availableRounds(Player player, ItemStack stack, HandheldDefinition def) {
+		return availableRounds(player, AmmoSupply.of(stack, def));
+	}
+
+	private static int availableRounds(Player player, AmmoSupply supply) {
+		if (!supply.reloadable()) {
+			return 0;
+		}
+		if (player.isCreative()) {
 			return Integer.MAX_VALUE;
 		}
 		long rounds = (long) supply.countItems(player) * supply.roundsPerItem();
@@ -299,12 +308,11 @@ public final class HandheldCombat {
 	/** Consumes ammo items for up to wanted rounds; returns the rounds actually loaded. One ammo item
 	 * gives rounds_per_ammo_item rounds, so a partly used item's remainder is lost - like
 	 * discarding a partly used magazine. */
-	private static int takeRounds(Player player, HandheldDefinition def, int wanted) {
-		if (wanted <= 0) {
+	private static int takeRounds(Player player, AmmoSupply supply, int wanted) {
+		if (wanted <= 0 || !supply.reloadable()) {
 			return 0;
 		}
-		AmmoSupply supply = AmmoSupply.of(def);
-		if (supply == null || player.isCreative()) {
+		if (player.isCreative()) {
 			return wanted;
 		}
 		int perItem = supply.roundsPerItem();

@@ -76,7 +76,9 @@ public record HandheldDefinition(
 	 * icon: a flat picture shown in inventories instead of the model (a PNG, e.g.
 	 *   "ns:textures/vehicle/icons/rifle.png").
 	 * ammo: an ammo definition (data/<ns>/ammo/) to reload from - a magazine item giving its own
-	 *   number of rounds. Takes the place of ammo_item / rounds_per_ammo_item.
+	 *   number of rounds. Takes the place of ammo_item / rounds_per_ammo_item. "none": no ammunition
+	 *   at all - the weapon can't be reloaded (it comes loaded). With neither ammo nor ammo_item the
+	 *   weapon reloads from the universal ammo, tudursguns:generic (see AmmoSupply).
 	 * soldier_weight: how often enemy soldiers carry it, relative to other weapons (0 = never). */
 	public record Handling(HeldMovement movement, float recoil, Optional<Float> recoilSneaking, float adsSpreadMultiplier,
 			int pellets, int burstCount, float meleeDamage, Optional<Identifier> icon, Optional<Identifier> ammo, int soldierWeight) {
@@ -94,10 +96,10 @@ public record HandheldDefinition(
 				Codec.intRange(0, 10000).optionalFieldOf("soldier_weight", 0).forGetter(Handling::soldierWeight)
 		).apply(instance, Handling::new));
 
-		/** The same, reloading from something else (an underbarrel launcher has its own ammo). */
-		public Handling withoutAmmo() {
+		/** The same, reloading from ammo instead (an underbarrel launcher has its own ammo). */
+		public Handling withAmmo(Optional<Identifier> ammo) {
 			return new Handling(this.movement, this.recoil, this.recoilSneaking, this.adsSpreadMultiplier, this.pellets,
-					this.burstCount, this.meleeDamage, this.icon, Optional.empty(), 0);
+					this.burstCount, this.meleeDamage, this.icon, ammo, 0);
 		}
 
 		public float recoilFor(boolean sneaking) {

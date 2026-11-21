@@ -2,7 +2,7 @@
   "weapon": "tg_sample_at_launcher",
   "model": "tudursguns:models/obj/sample_at_launcher.obj",
   "texture": "tudursguns:textures/handheld/sample_weapons.png",
-  "ammo_item": "minecraft:tnt",
+  "ammo": "tudursguns:rocket",
   "fire_mode": "semi",
   "soldier_weight": 2,
   "muzzle_offset": [

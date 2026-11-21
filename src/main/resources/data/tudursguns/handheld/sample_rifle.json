@@ -2,8 +2,7 @@
   "weapon": "tg_sample_rifle",
   "model": "tudursguns:models/obj/sample_rifle.obj",
   "texture": "tudursguns:textures/handheld/sample_weapons.png",
-  "ammo_item": "minecraft:iron_nugget",
-  "rounds_per_ammo_item": 5,
+  "ammo": "tudursguns:rifle_clip",
   "fire_mode": "auto",
   "soldier_weight": 30,
   "muzzle_offset": [

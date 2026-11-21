@@ -30,6 +30,7 @@ public class AmmoItem extends DefinedItem<AmmoDefinition> {
 
 	@Override
 	protected void appendDetails(ItemStack stack, AmmoDefinition def, Consumer<Component> textConsumer) {
-		textConsumer.accept(Component.translatable("tooltip.tudursguns.ammo_rounds", def.rounds()).withStyle(ChatFormatting.GRAY));
+		textConsumer.accept((def.fullMagazine() ? Component.translatable("tooltip.tudursguns.ammo_full_magazine")
+				: Component.translatable("tooltip.tudursguns.ammo_rounds", def.rounds())).withStyle(ChatFormatting.GRAY));
 	}
 }
