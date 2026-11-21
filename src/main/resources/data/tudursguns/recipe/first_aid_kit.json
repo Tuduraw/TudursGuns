@@ -15,7 +15,8 @@
     "id": "tudursguns:equipment",
     "count": 2,
     "components": {
-      "tudursguns:equipment": "tudursguns:first_aid_kit"
+      "tudursguns:equipment": "tudursguns:first_aid_kit",
+      "minecraft:max_stack_size": 8
     }
   }
 }
