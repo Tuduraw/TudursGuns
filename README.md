@@ -105,8 +105,27 @@
   - **武器を下げているときだけ補給します。** 構えている間、ロック中、最後の射撃から3秒間は補給しません(撃ちながら弾が尽きない状態を防ぐため)。
 - 半径8ブロック以内の止まっている車両に、前提MODの補給車両と同じ補給を1回分します(弾倉の10%、満タンなら予備弾薬の10%)。燃料と修理はしません。
 - 半径8ブロック以内の、交戦していない味方兵士(下記)の武器の弾倉を満たします。
+- 再装填できない武器(`"ammo": "none"`)は補給しません。
 
 補給の処理は、前提MODの補給(`receiveAmmoSupply`)をそのまま呼んでいます。OBJ モデルの補給地点が必要な場合は、前提MODの固定設置物(補給機能付き)で作れます。
+
+## 弾薬アイテム
+
+携帯武器はリロードで弾薬アイテムを消費します(クリエイティブモードでは消費しません)。似た弾を使う武器は同じ弾薬を共有します。収録の弾薬は銃器製作台で作れます。
+
+| 弾薬 | ID | 1個あたり | 使う武器 |
+|---|---|---|---|
+| Rifle Clip (5) | `tudursguns:rifle_clip` | 5発 | 歩兵銃、狙撃銃、サンプルライフル |
+| Pistol Rounds (6) | `tudursguns:pistol_rounds` | 6発 | リボルバー |
+| 40mm Grenade | `tudursguns:launcher_grenade` | 1発 | アンダーバレル擲弾発射器 |
+| Rocket | `tudursguns:rocket` | 1発 | サンプル対戦車ランチャー |
+| Universal Ammunition | `tudursguns:generic` | 弾倉1つ分 | 弾薬の設定がない武器(アドオンを含む) |
+
+- 武器のツールチップに、使う弾薬(または「再装填できません」)が出ます。
+- 使いかけの弾薬アイテムの残りは捨てる扱いです(5発のクリップで3発だけ補充しても、クリップ1個を消費します)。
+- Universal Ammunition は、使う武器の弾倉をいっぱいにします(拡張マガジン付きなら、その容量)。
+
+模型・画像・定義・レシピは `tools/ammo/build_ammo.py`(meshkit を使用)で作っています。変えるときはスクリプトの数値を変えて実行し直してください。
 
 ## 銃器製作台
 
@@ -238,8 +257,7 @@
   "model": "tudursguns:models/obj/sample_rifle.obj",
   "texture": "tudursguns:textures/handheld/sample_weapons.png",
   "projectile_item": "minecraft:iron_nugget",
-  "ammo_item": "minecraft:iron_nugget",
-  "rounds_per_ammo_item": 5,
+  "ammo": "tudursguns:rifle_clip",
   "fire_mode": "auto",
   "muzzle_offset": [0.25, -0.15, 0.9],
   "inherit_shooter_velocity": false,
@@ -258,8 +276,8 @@
 | `model` | | なし | OBJモデル(`<namespace>:models/obj/<name>.obj`) |
 | `texture` | | なし | テクスチャ(`<namespace>:textures/.../<name>.png`) |
 | `projectile_item` | | `minecraft:iron_nugget` | 弾の見た目に使うアイテム。武器ファイルに `ModelBullet` がある場合はそちらが使われます |
-| `ammo_item` | | なし(弾薬無制限) | リロードで消費するアイテム。クリエイティブモードでは消費しません |
-| `rounds_per_ammo_item` | | `1` | 弾薬アイテム1個あたりの弾数。端数は切り捨てです(使いかけの弾倉を捨てる扱い) |
+| `ammo_item` | | なし | リロードで消費する通常のアイテム(`ammo` を書いた場合は使いません)。クリエイティブモードでは消費しません |
+| `rounds_per_ammo_item` | | `1` | `ammo_item` 1個あたりの弾数。端数は切り捨てです(使いかけの弾倉を捨てる扱い) |
 | `fire_mode` | | `semi` | `semi`、`auto`、または `burst`(1回押すと `burst_count` 発を `Delay` 間隔で撃つ) |
 | `burst_count` | | `3` | `burst` の1回の発数 |
 | `pellets` | | `1` | 1発で撃ち出す弾の数(散弾銃)。弾は1発分だけ減り、1つずつばらつきます |
@@ -268,7 +286,7 @@
 | `ads_spread_multiplier` | | `1` | 構えキーで構えているときの拡散の倍率(右クリックだけでの射撃には掛かりません) |
 | `melee_damage` | | `0` | メインハンドに持っているときの近接攻撃力の加算値 |
 | `icon` | | なし | インベントリで模型の代わりに表示する画像(PNG。例: `ns:textures/vehicle/icons/rifle.png`) |
-| `ammo` | | なし | 弾薬定義(下記)のID。弾薬アイテム(マガジン)から装填します。`ammo_item` の代わりに使います |
+| `ammo` | | なし | 弾薬定義(下記)のID。弾薬アイテム(マガジン)から装填します。`ammo_item` の代わりに使います。`"none"` と書くと弾薬なしで、再装填できません(使い捨ての武器。作ったときは装填済みで、弾薬箱でも補給されません)。`ammo` も `ammo_item` もない場合は汎用弾薬 `tudursguns:generic`(1個で弾倉1つ分)から装填します |
 | `muzzle_offset` | | `[0.25, -0.2, 0.8]` | 目の位置から見た発射位置(右, 上, 前)。単位はブロックで、左手のときは左右が反転します |
 | `inherit_shooter_velocity` | | `false` | 射手の移動速度を弾に加えるか |
 | `hud` | | なし | HUDスクリプト名(下記) |
@@ -603,7 +621,8 @@
 |---|---|---|
 | `weapon` | (必須) | 武器ファイル名(弾数は `Round`、リロードは `ReloadTime`) |
 | `projectile_item` | `minecraft:iron_nugget` | 弾の見た目のアイテム |
-| `ammo_item` / `rounds_per_ammo_item` | なし / `1` | 弾薬 |
+| `ammo` | なし | 弾薬定義のID、または `"none"`(武器の `ammo` と同じ。どちらもなければ汎用弾薬) |
+| `ammo_item` / `rounds_per_ammo_item` | なし / `1` | 通常のアイテムを弾薬にする場合 |
 | `reload_sound` | なし | リロードの音 |
 | `muzzle_offset` | 武器本体の値 | 発射位置 |
 
@@ -615,6 +634,7 @@
 |---|---|---|
 | `display_name` | ファイル名 | 表示名 |
 | `rounds` | `1` | 1個あたりの弾数 |
+| `full_magazine` | `false` | `true` にすると `rounds` の代わりに、使う武器の弾倉1つ分を装填します(汎用弾薬 `tudursguns:generic` はこの設定) |
 | `max_stack` | `16` | 重ねられる数 |
 | `model` / `texture` / `display` | なし | OBJ の見た目 |
 | `icon` | なし | インベントリの画像(PNG)。模型がなければどこでもこの画像 |

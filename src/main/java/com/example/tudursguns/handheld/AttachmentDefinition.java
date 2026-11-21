@@ -75,14 +75,16 @@ public record AttachmentDefinition(
 
 	/** A second weapon under the barrel (a grenade launcher): the weapon it's fitted to can switch
 	 * between its own fire and this one (the underbarrel switch key). It has its own weapon file,
-	 * rounds (loaded separately - the weapon file's Round), ammo item and projectile item, and fires
-	 * one shot per press. muzzle_offset defaults to the weapon's own. */
-	public record Underbarrel(String weapon, Identifier projectileItem, Optional<Identifier> ammoItem, int roundsPerAmmoItem,
-			Optional<String> reloadSound, Optional<Vector3f> muzzleOffset) {
+	 * rounds (loaded separately - the weapon file's Round), ammo (an ammo definition, or "none") or ammo
+	 * item, and projectile item, and fires one shot per press - ammo works as a weapon's "ammo" does,
+	 * universal ammo included. muzzle_offset defaults to the weapon's own. */
+	public record Underbarrel(String weapon, Identifier projectileItem, Optional<Identifier> ammo, Optional<Identifier> ammoItem,
+			int roundsPerAmmoItem, Optional<String> reloadSound, Optional<Vector3f> muzzleOffset) {
 
 		public static final Codec<Underbarrel> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 				Codec.STRING.fieldOf("weapon").forGetter(Underbarrel::weapon),
 				Identifier.CODEC.optionalFieldOf("projectile_item", Identifier.withDefaultNamespace("iron_nugget")).forGetter(Underbarrel::projectileItem),
+				Identifier.CODEC.optionalFieldOf("ammo").forGetter(Underbarrel::ammo),
 				Identifier.CODEC.optionalFieldOf("ammo_item").forGetter(Underbarrel::ammoItem),
 				Codec.intRange(1, 1_000_000).optionalFieldOf("rounds_per_ammo_item", 1).forGetter(Underbarrel::roundsPerAmmoItem),
 				Codec.STRING.optionalFieldOf("reload_sound").forGetter(Underbarrel::reloadSound),

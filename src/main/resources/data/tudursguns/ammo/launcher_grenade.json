@@ -1,0 +1,129 @@
+{
+  "display_name": "40mm Grenade",
+  "rounds": 1,
+  "max_stack": 8,
+  "model": "tudursguns:models/obj/ammo_launcher_grenade.obj",
+  "texture": "tudursguns:textures/handheld/ammo/launcher_grenade.png",
+  "icon": "tudursguns:textures/handheld/ammo/launcher_grenade_icon.png",
+  "display": {
+    "gui": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        20,
+        -30,
+        0
+      ],
+      "scale": [
+        8.0,
+        8.0,
+        8.0
+      ]
+    },
+    "ground": {
+      "translation": [
+        0.5,
+        0.3,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        5.143,
+        5.143,
+        5.143
+      ]
+    },
+    "fixed": {
+      "translation": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        8.0,
+        8.0,
+        8.0
+      ]
+    },
+    "thirdperson_righthand": {
+      "translation": [
+        0.5,
+        0.35,
+        0.55
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        4.0,
+        4.0,
+        4.0
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0.5,
+        0.35,
+        0.55
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        4.0,
+        4.0,
+        4.0
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        0.6,
+        0.45,
+        0.45
+      ],
+      "rotation": [
+        0,
+        -20,
+        0
+      ],
+      "scale": [
+        5.714,
+        5.714,
+        5.714
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        0.4,
+        0.45,
+        0.45
+      ],
+      "rotation": [
+        0,
+        20,
+        0
+      ],
+      "scale": [
+        5.714,
+        5.714,
+        5.714
+      ]
+    }
+  }
+}

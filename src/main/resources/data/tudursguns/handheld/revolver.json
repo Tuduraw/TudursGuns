@@ -3,8 +3,7 @@
   "model": "tudursguns:models/obj/revolver.obj",
   "texture": "tudursguns:textures/handheld/weapons.png",
   "projectile_item": "minecraft:iron_nugget",
-  "ammo_item": "minecraft:iron_nugget",
-  "rounds_per_ammo_item": 2,
+  "ammo": "tudursguns:pistol_rounds",
   "fire_mode": "semi",
   "soldier_weight": 30,
   "muzzle_offset": [
